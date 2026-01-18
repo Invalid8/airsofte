@@ -1,348 +1,236 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import { gsap } from 'gsap'
-  import PlayerShip from '../../assets/sprites/player-ship-i.png'
-  import { ShootSound1 } from '../../lib/sounds'
+  import type { Enemy, Bullet } from '../../types/gameTypes'
+  import { EnemyController } from '../../lib/enemyController'
+  import { EnemySpawner } from '../../lib/enemySpawner'
+  import { gameManager } from '../../lib/gameManager'
+  import { gameEvents } from '../../lib/eventBus'
+  import { combatSystem } from '../../lib/combatSystem'
+  import { particleSystem } from '../../lib/particleSystem'
+  import { ScreenEffects } from '../../lib/screenEffects'
+  import { getBoundingBox } from '../../utils/collisionSystem'
+  import EnemyBasic from '../../assets/sprites/enemy-basic.png'
+  import EnemyScout from '../../assets/sprites/enemy-scout.png'
+  import EnemyBomber from '../../assets/sprites/enemy-bomber.png'
 
-  export let game_pad: HTMLDivElement
+  let {
+    game_pad,
+    playerBullets = $bindable([]),
+    playerX = 0,
+    playerY = 0
+  }: {
+    game_pad: HTMLDivElement
+    playerBullets?: Bullet[]
+    playerX?: number
+    playerY?: number
+  } = $props()
 
-  let ship: HTMLImageElement
-  let starting = true
-  let idleTween: gsap.core.Tween
-  let x = 0
-  let y = 0
-  const moveStep = 20
-  let bullets: Array<{ x: number; y: number; width: number; height: number; active: boolean }> = []
-  const bulletSpeed = 10
-  let canShoot = true
-  const shootCoolDown = 150
+  let enemyController: EnemyController
+  let enemySpawner: EnemySpawner
+  let enemies = $state<Enemy[]>([])
+  let enemyBullets = $state<Bullet[]>([])
   let animationFrameId: number
-  let gameActive = true
 
-  // Shooting modes
-  let autoShoot = false
-  let doubleShot = false
-  let autoShootInterval: number
-
-  // Performance monitoring
-  let lastFrameTime = performance.now()
-  let frameCount = 0
-  let fps = 0
-  let showPerformance = false
-
-  const shootSound1 = ShootSound1()
-
-  const keys = {
-    ArrowUp: () => (y -= moveStep),
-    ArrowLeft: () => (x -= moveStep),
-    ArrowRight: () => (x += moveStep),
-    ArrowDown: () => (y += moveStep),
-    w: () => (y -= moveStep),
-    a: () => (x -= moveStep),
-    d: () => (x += moveStep),
-    s: () => (y += moveStep)
+  const enemySprites = {
+    BASIC: EnemyBasic,
+    SCOUT: EnemyScout,
+    BOMBER: EnemyBomber,
+    BOSS: EnemyBasic
   }
 
-  function shoot(): void {
-    if (!canShoot || !gameActive) return
+  function getEnemySprite(type: Enemy['type']): string {
+    return enemySprites[type]
+  }
 
-    try {
-      if (doubleShot) {
-        const leftBullet = {
-          x: x + 33,
-          y: y + 35,
-          width: 8,
-          height: 25,
-          active: true
-        }
+  function getEnemyClass(enemy: Enemy): string {
+    const healthPercent = (enemy.health / enemy.maxHealth) * 100
+    if (healthPercent < 30) return 'damaged-critical'
+    if (healthPercent < 60) return 'damaged'
+    return ''
+  }
 
-        const rightBullet = {
-          x: x + ship.width - 37,
-          y: y + 35,
-          width: 8,
-          height: 25,
-          active: true
-        }
+  function updateGame(): void {
+    if (!gameManager.isPlaying || gameManager.isPaused) {
+      animationFrameId = requestAnimationFrame(updateGame)
+      return
+    }
 
-        bullets = [...bullets, leftBullet, rightBullet]
-      } else {
-        const singleBullet = {
-          x: x + ship.width / 2 - 5,
-          y: y,
-          width: 10,
-          height: 30,
-          active: true
-        }
+    const bounds = getBoundingBox(0, 0, game_pad.clientWidth, game_pad.clientHeight)
 
-        bullets = [...bullets, singleBullet]
+    const newBullets = enemyController.updateEnemies(16, bounds, playerX, playerY)
+    enemyBullets = [...enemyBullets, ...newBullets]
+
+    enemyBullets = enemyBullets.filter((bullet) => {
+      if (!bullet.active) return false
+
+      bullet.y += bullet.speed
+
+      if (bullet.y > bounds.height + 30) {
+        bullet.active = false
+        return false
       }
 
-      shootSound1.play()
+      return true
+    })
 
-      canShoot = false
-      setTimeout(() => {
-        canShoot = true
-      }, shootCoolDown)
-    } catch (error) {
-      console.error('Error during shooting:', error)
-      canShoot = true
-    }
+    checkCollisions()
+
+    enemies = [...enemyController.getActiveEnemies()]
+
+    animationFrameId = requestAnimationFrame(updateGame)
   }
 
-  function toggleAutoShoot(): void {
-    try {
-      autoShoot = !autoShoot
+  function checkCollisions(): void {
+    const playerBulletHits = combatSystem.checkPlayerBulletCollisions(playerBullets, enemies)
 
-      if (autoShoot) {
-        if (autoShootInterval) clearInterval(autoShootInterval)
+    playerBulletHits.forEach(({ bulletId, enemyId, damage }) => {
+      const bullet = playerBullets.find((b) => b.id === bulletId)
+      if (!bullet) return
 
-        autoShootInterval = Number(
-          setInterval(() => {
-            if (!starting && gameActive) shoot()
-          }, shootCoolDown + 50)
+      const enemy = enemyController.getEnemyById(enemyId)
+      if (!enemy) return
+
+      particleSystem.createHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 6)
+
+      const killed = enemyController.damageEnemy(enemyId, damage)
+
+      bullet.active = false
+
+      if (killed) {
+        particleSystem.createExplosion(
+          enemy.x + enemy.width / 2,
+          enemy.y + enemy.height / 2,
+          25,
+          '#ff6600'
         )
-      } else {
-        clearInterval(autoShootInterval)
+        ScreenEffects.shake(5, 0.2)
       }
-    } catch (error) {
-      console.error('Error toggling auto shoot:', error)
-      autoShoot = false
-      if (autoShootInterval) clearInterval(autoShootInterval)
-    }
+    })
+
+    const playerBox = getBoundingBox(playerX, playerY, 150, 150)
+    const enemyBulletHits = combatSystem.checkEnemyBulletCollisions(enemyBullets, playerBox)
+
+    enemyBulletHits.forEach(({ bulletId, damage }) => {
+      const bullet = enemyBullets.find((b) => b.id === bulletId)
+      if (!bullet) return
+
+      gameManager.damagePlayer(damage)
+      bullet.active = false
+
+      particleSystem.createHitEffect(bullet.x, bullet.y, 8)
+      ScreenEffects.shake(8, 0.3)
+      ScreenEffects.flash('rgba(255, 0, 0, 0.3)', 0.15)
+    })
+
+    const playerEnemyCollisions = combatSystem.checkPlayerEnemyCollisions(playerBox, enemies)
+
+    playerEnemyCollisions.forEach(({ enemyId }) => {
+      const enemy = enemyController.getEnemyById(enemyId)
+      if (!enemy) return
+
+      gameManager.damagePlayer(20)
+      enemy.active = false
+
+      particleSystem.createExplosion(
+        enemy.x + enemy.width / 2,
+        enemy.y + enemy.height / 2,
+        20,
+        '#ff3300'
+      )
+      ScreenEffects.shake(12, 0.4)
+      ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
+    })
   }
 
-  function toggleDoubleShot(): void {
-    doubleShot = !doubleShot
+  function handleWaveStart(): void {
+    if (!gameManager.currentWave) return
+    enemySpawner.startWave(gameManager.currentWave)
   }
 
-  function togglePerformanceMonitor(): void {
-    showPerformance = !showPerformance
-  }
-
-  function updateBullets(): void {
-    if (!gameActive) return
-
-    try {
-      // Calculate FPS
-      const now = performance.now()
-      frameCount++
-
-      if (now - lastFrameTime >= 1000) {
-        fps = Math.round((frameCount * 1000) / (now - lastFrameTime))
-        frameCount = 0
-        lastFrameTime = now
-
-        // Auto-throttle if FPS drops too low
-        if (fps < 30 && bullets.length > 30) {
-          bullets = bullets.slice(-20) // Keep only the 20 most recent bullets
-        }
-      }
-
-      // Limit maximum bullets to prevent performance issues
-      if (bullets.length > 100) {
-        bullets = bullets.slice(-75)
-      }
-
-      const updatedBullets = []
-
-      for (let i = 0; i < bullets.length; i++) {
-        const bullet = bullets[i]
-        bullet.y -= bulletSpeed
-
-        if (bullet.y > -30) {
-          // Only keep bullets that are still on screen or just above
-          updatedBullets.push(bullet)
-        }
-      }
-
-      bullets = updatedBullets
-    } catch (error) {
-      console.error('Error updating bullets:', error)
-    }
-
-    animationFrameId = requestAnimationFrame(updateBullets)
-  }
-
-  function handleKeyDown(event: KeyboardEvent): void {
-    if (starting || !gameActive) return
-
-    const pad: HTMLElement = game_pad || window.document.body
-
-    try {
-      if (event.key in keys) {
-        if (idleTween) {
-          idleTween.kill()
-          idleTween = null
-        }
-
-        keys[event.key]()
-
-        const bounds = pad?.getBoundingClientRect()
-        if (!bounds) return
-
-        x = Math.max(0, Math.min(x, bounds.width - (ship?.width || 150)))
-        y = Math.max(0, Math.min(y, bounds.height - (ship?.height || 150)))
-
-        gsap.to(ship, {
-          x,
-          y,
-          duration: 0.2,
-          ease: 'power1.out',
-          onComplete: () => {
-            if (!idleTween && gameActive) {
-              idleTween = gsap.to(ship, {
-                y: y + 10,
-                duration: 1,
-                yoyo: true,
-                repeat: -1,
-                ease: 'sine.inOut'
-              })
-            }
-          }
-        })
-      }
-
-      if (event.key === ' ' || event.key === 'Space') {
-        if (!autoShoot) shoot()
-      }
-
-      if (event.key === 'c' || event.key === 'C') {
-        toggleAutoShoot()
-      }
-
-      if (event.key === 'v' || event.key === 'V') {
-        toggleDoubleShot()
-      }
-
-      if (event.key === 'p' || event.key === 'P') {
-        togglePerformanceMonitor()
-      }
-    } catch (error) {
-      console.error('Error handling keydown:', error)
-    }
+  function handleGameStart(): void {
+    enemyController.clearAllEnemies()
+    enemies = []
+    enemyBullets = []
   }
 
   onMount(() => {
-    try {
-      if (!ship) {
-        console.error('Required elements not found')
-        return
-      }
+    if (!game_pad) return null
 
-      const pad: HTMLElement = game_pad || window.document.body
+    const bounds = {
+      width: game_pad.clientWidth,
+      height: game_pad.clientHeight
+    }
 
-      const centerX = (pad.clientWidth - ship.clientWidth) / 2
-      const startY = ship.clientHeight
+    ScreenEffects.initialize(game_pad)
 
-      x = centerX
-      y = startY
+    enemyController = new EnemyController()
+    enemySpawner = new EnemySpawner(enemyController, bounds)
 
-      gsap.set(ship, { x, y, rotate: 180 })
+    const unsubWaveStart = gameEvents.on('WAVE_START', handleWaveStart)
+    const unsubGameStart = gameEvents.on('GAME_START', handleGameStart)
 
-      gsap.to(ship, {
-        y: y - 80,
-        duration: 2,
-        ease: 'none',
-        onComplete: () => {
-          y = y - 80
-          starting = false
+    animationFrameId = requestAnimationFrame(updateGame)
 
-          idleTween = gsap.to(ship, {
-            y: y + 10,
-            duration: 1,
-            yoyo: true,
-            repeat: -1,
-            ease: 'sine.inOut'
-          })
-        }
-      })
-
-      // window.addEventListener('keydown', handleKeyDown)k
-
-      // Start the game loop
-      animationFrameId = requestAnimationFrame(updateBullets)
-
-      // Add visibility change detection to pause when tab is inactive
-      document.addEventListener('visibilitychange', handleVisibilityChange)
-    } catch (error) {
-      console.error('Error during initialization:', error)
+    return () => {
+      cancelAnimationFrame(animationFrameId)
+      enemySpawner.stopSpawning()
+      unsubWaveStart()
+      unsubGameStart()
     }
   })
 
-  function handleVisibilityChange(): void {
-    if (document.hidden) {
-      // Pause game when tab is not visible
-      gameActive = false
-      if (autoShootInterval) clearInterval(autoShootInterval)
-      if (idleTween) idleTween.pause()
-      cancelAnimationFrame(animationFrameId)
-    } else {
-      // Resume game when tab becomes visible again
-      gameActive = true
-      if (autoShoot) toggleAutoShoot()
-      if (idleTween) idleTween.resume()
-      animationFrameId = requestAnimationFrame(updateBullets)
-    }
-  }
-
   onDestroy(() => {
-    // Clean up all resources when component is destroyed
-    gameActive = false
-    window.removeEventListener('keydown', handleKeyDown)
-    document.removeEventListener('visibilitychange', handleVisibilityChange)
     cancelAnimationFrame(animationFrameId)
-    clearInterval(autoShootInterval)
-    if (idleTween) idleTween.kill()
-
-    // Clear references
-    bullets = []
+    if (enemySpawner) {
+      enemySpawner.stopSpawning()
+    }
   })
 </script>
 
-<img bind:this={ship} class="ship absolute" src={PlayerShip} alt="Player Ship" />
+{#each enemies as enemy (enemy.id)}
+  <img
+    class="enemy absolute pointer-events-none {getEnemyClass(enemy)}"
+    src={getEnemySprite(enemy.type)}
+    alt="Enemy {enemy.type}"
+    style="left: {enemy.x}px; top: {enemy.y}px; width: {enemy.width}px; height: {enemy.height}px; transform: rotate(180deg);"
+  />
+{/each}
 
-{#each bullets as bullet, i (i)}
+{#each enemyBullets as bullet (bullet.id)}
   <div
-    class="bullet absolute"
+    class="enemy-bullet absolute pointer-events-none"
     style="left: {bullet.x}px; top: {bullet.y}px; width: {bullet.width}px; height: {bullet.height}px;"
   ></div>
 {/each}
 
-<div class="controls absolute top-4 right-4 text-white">
-  <div>Mode: {autoShoot ? 'Auto' : 'Manual'} (Press C to toggle)</div>
-  <div>Shot: {doubleShot ? 'Double' : 'Single'} (Press V to toggle)</div>
-  {#if showPerformance}
-    <div class="performance mt-2">
-      <div>FPS: {fps}</div>
-      <div>Bullets: {bullets.length}</div>
-    </div>
-  {/if}
-  <div class="text-xs mt-1 opacity-75">Press P for performance stats</div>
-</div>
-
 <style>
-  img.ship {
-    width: 150px;
-    height: auto;
+  .enemy {
+    filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.5));
+    transition: filter 0.2s;
   }
 
-  .bullet {
-    background-color: #ff7700;
-    border-radius: 50% 50% 0 0;
-    box-shadow: 0 0 8px #ff9933;
+  .enemy.damaged {
+    filter: drop-shadow(0 0 12px rgba(255, 100, 0, 0.8)) brightness(1.2);
   }
 
-  .controls {
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 14px;
+  .enemy.damaged-critical {
+    filter: drop-shadow(0 0 16px rgba(255, 0, 0, 1)) brightness(1.5);
+    animation: flash 0.2s infinite;
   }
 
-  .performance {
-    background-color: rgba(0, 0, 0, 0.7);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: monospace;
+  @keyframes flash {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .enemy-bullet {
+    background: linear-gradient(to bottom, #ff0000, #ff6600);
+    border-radius: 0 0 50% 50%;
+    box-shadow: 0 0 8px #ff3333;
   }
 </style>

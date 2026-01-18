@@ -12,6 +12,8 @@ export type GameRoute =
   | 'STORY_MODE_PLAY'
   | 'DEBUG'
 
+  export type GameDifficulty = 'Easy' | 'Normal' | 'Hard'
+
 export type GameState = {
   route: GameRoute
   score: number

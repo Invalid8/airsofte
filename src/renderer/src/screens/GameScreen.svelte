@@ -9,30 +9,6 @@
   let load: boolean = false
 
   let loadFunction: () => void
-
-  const menuOptions = [
-    {
-      label: 'Quick Play',
-      value: 'quick-game',
-      isFirst: true,
-      onClick: () => navigateTo('GAME_SCREEN')
-    },
-    {
-      label: 'Story Mode',
-      value: 'story-mode',
-      onClick: () => navigateTo('STORY_MODE_MENU')
-    },
-    {
-      label: 'Settings',
-      value: 'settings',
-      onClick: () => toggleHelp()
-    },
-    {
-      label: 'Exit',
-      value: 'exit',
-      onClick: () => goBack()
-    }
-  ]
 </script>
 
 <div class="flex flex-col gap-4 text-center p-6 items-center" in:fly={{ y: 200, duration: 500 }}>
