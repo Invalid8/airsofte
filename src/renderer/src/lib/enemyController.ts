@@ -1,6 +1,7 @@
 import type { Enemy, EnemyType, MovementPattern, Bullet, BoundingBox } from '../types/gameTypes'
 import { ENEMY_CONFIG, GAME_CONFIG, DIFFICULTY_MODIFIERS } from '../config/gameConstants'
 import { gameManager } from '../lib/gameManager'
+import { soundManager } from '../lib/soundManager'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 
@@ -101,7 +102,12 @@ export class EnemyController {
     }
   }
 
-  updateEnemies(deltaTime: number, bounds: BoundingBox, playerX?: number, playerY?: number): Bullet[] {
+  updateEnemies(
+    deltaTime: number,
+    bounds: BoundingBox,
+    playerX?: number,
+    playerY?: number
+  ): Bullet[] {
     const newBullets: Bullet[] = []
 
     this.enemies = this.enemies.filter((enemy) => {
@@ -125,7 +131,12 @@ export class EnemyController {
     return newBullets
   }
 
-  private updateEnemyPosition(enemy: Enemy, deltaTime: number, playerX?: number, playerY?: number): void {
+  private updateEnemyPosition(
+    enemy: Enemy,
+    deltaTime: number,
+    playerX?: number,
+    playerY?: number
+  ): void {
     switch (enemy.pattern) {
       case 'STRAIGHT':
         enemy.y += enemy.speed
@@ -134,7 +145,9 @@ export class EnemyController {
       case 'WAVE':
         enemy.y += enemy.speed
         if (enemy.patternData) {
-          const offset = Math.sin((enemy.y - enemy.patternData.startY!) * enemy.patternData.frequency!) * enemy.patternData.amplitude!
+          const offset =
+            Math.sin((enemy.y - enemy.patternData.startY!) * enemy.patternData.frequency!) *
+            enemy.patternData.amplitude!
           enemy.x = enemy.patternData.startX! + offset
         }
         break
@@ -152,7 +165,8 @@ export class EnemyController {
         if (enemy.patternData) {
           enemy.patternData.angle = (enemy.patternData.angle || 0) + 0.02
           enemy.x = enemy.patternData.startX! + Math.cos(enemy.patternData.angle) * 100
-          enemy.y = enemy.patternData.startY! + Math.sin(enemy.patternData.angle) * 100 + enemy.speed
+          enemy.y =
+            enemy.patternData.startY! + Math.sin(enemy.patternData.angle) * 100 + enemy.speed
           enemy.patternData.startY! += enemy.speed * 0.5
         }
         break
@@ -185,9 +199,13 @@ export class EnemyController {
     bullet.x = enemy.x + enemy.width / 2 - bullet.width / 2
     bullet.y = enemy.y + enemy.height
     bullet.active = true
-    bullet.damage = GAME_CONFIG.BULLET.ENEMY.DAMAGE * DIFFICULTY_MODIFIERS[gameManager.difficulty].enemyDamageMultiplier
+    bullet.damage =
+      GAME_CONFIG.BULLET.ENEMY.DAMAGE *
+      DIFFICULTY_MODIFIERS[gameManager.difficulty].enemyDamageMultiplier
 
     enemy.lastShot = Date.now()
+
+    soundManager.play('enemyShoot')
 
     return bullet
   }

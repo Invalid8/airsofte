@@ -4,6 +4,7 @@ import type { GameSessionState, PlayerStats } from '../types/gameTypes'
 import { GameSoundManager } from '../lib/sounds'
 import { gameManager } from '../lib/gameManager'
 import { StorageManager } from '../utils/storageManager'
+import { AudioEventHandler } from '../lib/audioIntegration'
 
 export type ExtendedGameState = GameState & {
   session: GameSessionState | null
@@ -28,6 +29,8 @@ const initialState: ExtendedGameState = {
 
 function createGameStore() {
   const { subscribe, set, update } = writable<ExtendedGameState>(initialState)
+
+  AudioEventHandler.initialize()
 
   return {
     subscribe,
@@ -102,11 +105,32 @@ function createGameStore() {
     },
 
     toggleSound: () => {
-      update((state) => GameSoundManager.toggleMute(state) as any)
+      update((state) => {
+        const baseState = GameSoundManager.toggleMute({
+          route: state.route,
+          score: state.score,
+          difficulty: state.difficulty,
+          sound: state.sound,
+          theme: state.theme,
+          previousRoute: state.previousRoute,
+          isPaused: state.isPaused,
+          showHighScore: state.showHighScore,
+          showSettings: state.showSettings,
+          showHelp: state.showHelp,
+          showExit: state.showExit
+        })
+        AudioEventHandler.toggleMute()
+        return {
+          ...baseState,
+          session: state.session,
+          player: state.player
+        }
+      })
     },
 
     adjustVolume: (value: number) => {
       GameSoundManager.setVolume(value)
+      AudioEventHandler.setMasterVolume(value)
     },
 
     startQuickPlay: (difficulty?: GameDifficulty) => {
@@ -137,7 +161,7 @@ function createGameStore() {
     },
 
     startStoryMode: (missionId: number) => {
-      gameManager.startGame('STORY_MODE')
+      gameManager.startGame('STORY_MODE', undefined, missionId)
 
       update((state) => ({
         ...state,
@@ -145,6 +169,20 @@ function createGameStore() {
         session: gameManager.session,
         player: gameManager.player
       }))
+
+      const syncInterval = setInterval(() => {
+        if (!gameManager.isPlaying) {
+          clearInterval(syncInterval)
+          return
+        }
+
+        update((state) => ({
+          ...state,
+          session: { ...gameManager.session },
+          player: { ...gameManager.player },
+          score: gameManager.session.score
+        }))
+      }, 100)
     },
 
     syncGameState: () => {
@@ -216,6 +254,9 @@ function createGameStore() {
       }))
 
       GameSoundManager.setVolume(settings.volume.master)
+      AudioEventHandler.setMasterVolume(settings.volume.master)
+      AudioEventHandler.setMusicVolume(settings.volume.music)
+      AudioEventHandler.setSFXVolume(settings.volume.sfx)
     }
   }
 }

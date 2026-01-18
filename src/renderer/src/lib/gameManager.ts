@@ -7,6 +7,7 @@ import {
 } from '../config/gameConstants'
 import { StorageManager } from '../utils/storageManager'
 import { gameEvents } from './eventBus'
+import { storyMissionManager } from './storyMissionData'
 
 type GameMode = 'QUICK_PLAY' | 'STORY_MODE'
 
@@ -66,13 +67,18 @@ export class GameManager {
     this.difficulty = settings.difficulty
   }
 
-  startGame(mode: GameMode, difficulty?: GameDifficulty): void {
+  startGame(mode: GameMode, difficulty?: GameDifficulty, missionId?: number): void {
     this.mode = mode
     if (difficulty) this.difficulty = difficulty
 
     this.resetSession()
     this.resetPlayer()
-    this.initializeWaves()
+
+    if (mode === 'STORY_MODE' && missionId) {
+      this.initializeStoryMission(missionId)
+    } else {
+      this.initializeWaves()
+    }
 
     this.isPlaying = true
     this.isPaused = false
@@ -80,7 +86,23 @@ export class GameManager {
     this.startTime = Date.now()
     this.lastFrameTime = performance.now()
 
-    gameEvents.emit('GAME_START', { mode, difficulty: this.difficulty })
+    gameEvents.emit('GAME_START', { mode, difficulty: this.difficulty, missionId })
+  }
+
+  private initializeStoryMission(missionId: number): void {
+    const mission = storyMissionManager.getMissionById(missionId)
+    if (!mission) {
+      console.error(`Mission ${missionId} not found`)
+      return
+    }
+
+    this.waves = mission.waves.map((wave) => ({
+      ...wave,
+      completed: false
+    }))
+
+    this.currentWave = this.waves[0]
+    this.session.currentWave = 1
   }
 
   private resetSession(): void {

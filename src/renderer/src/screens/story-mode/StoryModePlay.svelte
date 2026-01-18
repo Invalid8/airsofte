@@ -16,6 +16,8 @@
   import VictoryScreen from '../../components/VictoryScreen.svelte'
   import type { Bullet, StoryMission } from '../../types/gameTypes'
 
+  let { missionId = 1 }: { missionId?: number } = $props()
+
   let game_pad: HTMLDivElement = $state()
   let playerBullets = $state<Bullet[]>([])
   let playerX = $state(0)
@@ -36,7 +38,7 @@
     if (!currentMission) return
     showBriefing = false
     missionStarted = true
-    gameManager.startGame('STORY_MODE')
+    gameManager.startGame('STORY_MODE', undefined, currentMission.id)
   }
 
   function cancelMission(): void {
@@ -57,7 +59,7 @@
   }
 
   onMount(() => {
-    currentMission = storyMissionManager.getMissionById(1)
+    currentMission = storyMissionManager.getMissionById(missionId)
     if (!currentMission) {
       navigateTo('STORY_MODE_MENU')
       return null

@@ -1,7 +1,7 @@
 import type { Bullet, BoundingBox } from '../types/gameTypes'
 import { GAME_CONFIG, WEAPON_CONFIG } from '../config/gameConstants'
 import { gameManager } from '../lib/gameManager'
-import { ShootSound1 } from '../lib/sounds'
+import { soundManager } from '../lib/soundManager'
 import { clampToBox, getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 
@@ -13,7 +13,6 @@ export class PlayerController {
 
   private canShoot: boolean = true
   private lastShotTime: number = 0
-  private shootSound = ShootSound1()
   private bulletPool = poolManager.getPool<Bullet>('playerBullets')
 
   constructor(startX: number, startY: number) {
@@ -89,7 +88,7 @@ export class PlayerController {
     const bullets = this.createBullets()
 
     if (bullets.length > 0) {
-      this.shootSound.play()
+      soundManager.play('shoot')
       gameManager.onBulletFired()
     }
 
