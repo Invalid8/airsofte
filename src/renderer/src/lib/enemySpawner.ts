@@ -31,8 +31,6 @@ export class EnemySpawner {
     this.spawning = true
     this.enemiesSpawned = 0
     this.totalEnemiesInWave = wave.enemies.reduce((sum, e) => sum + e.count, 0)
-
-    gameEvents.emit('WAVE_START', { wave: wave.id })
     this.processSpawnQueue()
   }
 

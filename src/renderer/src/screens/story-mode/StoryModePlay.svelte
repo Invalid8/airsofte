@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import { navigateTo, togglePause } from '../../stores/gameStore'
+  import { navigateTo, togglePause, syncGameState } from '../../stores/gameStore'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import { gameManager } from '../../lib/gameManager'
   import { gameEvents } from '../../lib/eventBus'
@@ -32,20 +32,8 @@
     }
   }
 
-  onMount(() => {
-    currentMission = storyMissionManager.getMissionById(1)
-
-    if (!currentMission) {
-      navigateTo('STORY_MODE_MENU')
-      return
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-  })
-
   function startMission(): void {
     if (!currentMission) return
-
     showBriefing = false
     missionStarted = true
     gameManager.startGame('STORY_MODE')
@@ -69,13 +57,28 @@
   }
 
   onMount(() => {
+    currentMission = storyMissionManager.getMissionById(1)
+    if (!currentMission) {
+      navigateTo('STORY_MODE_MENU')
+      return null
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
     const unsubMissionComplete = gameEvents.on('MISSION_COMPLETE', handleMissionComplete)
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
+
+    const syncInterval = setInterval(() => {
+      if (missionStarted) {
+        syncGameState()
+      }
+    }, 100)
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       unsubMissionComplete()
       unsubGameOver()
+      clearInterval(syncInterval)
     }
   })
 
@@ -95,7 +98,6 @@
   <GameHUD />
   <DialogueSystem mission={currentMission} />
   <BossHealthBar />
-
   <div class="p-8 h-svh">
     <div
       class="border-2 border-white/50 w-full h-full rounded-lg bg-white/4 overflow-hidden relative min-w-3xl"

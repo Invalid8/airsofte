@@ -10,7 +10,7 @@
   import BossHealthBar from '../components/BossHealthBar.svelte'
   import VictoryScreen from '../components/VictoryScreen.svelte'
   import { BgSound1 } from '../lib/sounds'
-  import { startQuickPlay, gameState, togglePause } from '../stores/gameStore'
+  import { startQuickPlay, gameState, togglePause, syncGameState } from '../stores/gameStore'
   import { gameEvents } from '../lib/eventBus'
   import type { Bullet } from '../types/gameTypes'
 
@@ -43,9 +43,14 @@
 
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
 
+    const syncInterval = setInterval(() => {
+      syncGameState()
+    }, 100)
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       unsubGameOver()
+      clearInterval(syncInterval)
     }
   })
 

@@ -44,11 +44,12 @@
   >
     <div class="victory-container max-w-3xl w-full" in:scale={{ duration: 800, start: 0.8 }}>
       <div class="victory-header text-center mb-12" in:fly={{ y: -50, duration: 600, delay: 200 }}>
-        <div class="victory-badge text-8xl mb-4 animate-bounce">🏆</div>
+        <div class="victory-badge text-8xl mb-2 animate-bounce">🏆</div>
+        <br />
         <h1 class="victory-title text-6xl uppercase glow-text title mb-4">Victory!</h1>
         <p class="victory-subtitle text-2xl opacity-80">Mission Accomplished</p>
       </div>
-
+      <br />
       <div
         class="stats-grid grid grid-cols-2 gap-6 mb-8"
         in:fly={{ y: 50, duration: 600, delay: 400 }}
@@ -73,10 +74,10 @@
           <div class="stat-value">{stats?.accuracy.toFixed(1) || 0}%</div>
         </div>
       </div>
-
+      <br />
       {#if bonusScore > 0}
         <div
-          class="bonus-section mb-8 p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg"
+          class="bonus-section p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg"
           in:fly={{ y: 30, duration: 600, delay: 600 }}
         >
           <div class="text-2xl font-bold text-yellow-400 mb-3 text-center">⭐ Bonus Points ⭐</div>
@@ -84,8 +85,10 @@
         </div>
       {/if}
 
+      <br />
+
       <div
-        class="total-score-section mb-8 p-8 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500 rounded-lg"
+        class="total-score-section p-8 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500 rounded-lg"
         in:fly={{ y: 30, duration: 600, delay: 800 }}
       >
         <div class="text-3xl font-bold text-center mb-2">TOTAL SCORE</div>
@@ -93,6 +96,8 @@
           {totalScore.toLocaleString()}
         </div>
       </div>
+
+      <br />
 
       <div class="actions flex gap-4 justify-center" in:fly={{ y: 30, duration: 600, delay: 1000 }}>
         <Button label="Continue" onClick={handleContinue} isFirst={true} />

@@ -120,6 +120,20 @@ function createGameStore() {
         player: gameManager.player,
         difficulty: diff
       }))
+
+      const syncInterval = setInterval(() => {
+        if (!gameManager.isPlaying) {
+          clearInterval(syncInterval)
+          return
+        }
+
+        update((state) => ({
+          ...state,
+          session: { ...gameManager.session },
+          player: { ...gameManager.player },
+          score: gameManager.session.score
+        }))
+      }, 100)
     },
 
     startStoryMode: (missionId: number) => {

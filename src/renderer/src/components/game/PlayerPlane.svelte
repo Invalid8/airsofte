@@ -26,6 +26,7 @@
   let idleTween: gsap.core.Tween | null = null
   let animationFrameId: number
   let isFlashing = false
+  let keysPressed = $state<Set<string>>(new Set()) // Track held keys
 
   const keys = {
     ArrowUp: () =>
@@ -73,6 +74,10 @@
   function handleKeyDown(event: KeyboardEvent): void {
     if (starting || !gameManager.isPlaying || gameManager.isPaused) return
 
+    // Add key to pressed set
+    keysPressed.add(event.key)
+    keysPressed = new Set(keysPressed) // trigger reactivity
+
     if (event.key in keys) {
       event.preventDefault()
 
@@ -85,10 +90,16 @@
       updateShipPosition()
     }
 
+    // Prevent default for spacebar
     if (event.key === ' ' || event.key === 'Space') {
       event.preventDefault()
-      shoot()
     }
+  }
+
+  function handleKeyUp(event: KeyboardEvent): void {
+    // Remove key from pressed set
+    keysPressed.delete(event.key)
+    keysPressed = new Set(keysPressed) // trigger reactivity
   }
 
   function updateShipPosition(): void {
@@ -120,15 +131,41 @@
     if (!playerController) return
 
     const newBullets = playerController.shoot()
-    bullets = [...bullets, ...newBullets]
+    if (newBullets.length > 0) {
+      bullets = [...bullets, ...newBullets]
+    }
   }
 
-  function updateBullets(): void {
+  function updateGame(): void {
     if (!gameManager.isPlaying || gameManager.isPaused) {
-      animationFrameId = requestAnimationFrame(updateBullets)
+      animationFrameId = requestAnimationFrame(updateGame)
       return
     }
 
+    // Handle continuous shooting when spacebar is held
+    if (keysPressed.has(' ') || keysPressed.has('Space')) {
+      shoot()
+    }
+
+    // Handle continuous movement
+    if (keysPressed.has('ArrowUp') || keysPressed.has('w')) {
+      keys['w']()
+      updateShipPosition()
+    }
+    if (keysPressed.has('ArrowDown') || keysPressed.has('s')) {
+      keys['s']()
+      updateShipPosition()
+    }
+    if (keysPressed.has('ArrowLeft') || keysPressed.has('a')) {
+      keys['a']()
+      updateShipPosition()
+    }
+    if (keysPressed.has('ArrowRight') || keysPressed.has('d')) {
+      keys['d']()
+      updateShipPosition()
+    }
+
+    // Update bullets
     bullets = bullets.filter((bullet) => {
       if (!bullet.active) return false
 
@@ -142,7 +179,7 @@
       return true
     })
 
-    animationFrameId = requestAnimationFrame(updateBullets)
+    animationFrameId = requestAnimationFrame(updateGame)
   }
 
   function handlePlayerHit(): void {
@@ -226,7 +263,8 @@
     })
 
     window.addEventListener('keydown', handleKeyDown)
-    animationFrameId = requestAnimationFrame(updateBullets)
+    window.addEventListener('keyup', handleKeyUp) // Add keyup listener
+    animationFrameId = requestAnimationFrame(updateGame) // Use updateGame instead of updateBullets
 
     const unsubHit = gameEvents.on('PLAYER_HIT', handlePlayerHit)
     const unsubDeath = gameEvents.on('PLAYER_DEATH', handlePlayerDeath)
@@ -234,6 +272,7 @@
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp) // Remove keyup listener
       cancelAnimationFrame(animationFrameId)
       if (idleTween) idleTween.kill()
       unsubHit()
@@ -244,6 +283,7 @@
 
   onDestroy(() => {
     window.removeEventListener('keydown', handleKeyDown)
+    window.removeEventListener('keyup', handleKeyUp) // Remove keyup listener
     cancelAnimationFrame(animationFrameId)
     if (idleTween) idleTween.kill()
   })
