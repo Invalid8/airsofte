@@ -27,7 +27,7 @@
 
     <div class="objectives-section bg-black/50 border border-cyan-500/30 rounded-lg p-6 mb-6">
       <h2 class="text-2xl font-bold mb-4 text-cyan-400">Mission Objectives</h2>
-      <div class="objectives-list space-y-3">
+      <div class="objectives-list flex-col gap-3">
         {#each mission.objectives as objective, i (i)}
           <div class="objective-item flex items-start gap-3">
             <div

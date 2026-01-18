@@ -17,20 +17,32 @@
   import { onDestroy, onMount } from 'svelte'
 
   const bgSound1 = BgSound1()
+  let audioInitialized = false
+
+  function initializeAudio(): void {
+    if (!audioInitialized) {
+      bgSound1.play()
+      audioInitialized = true
+    }
+  }
 
   $effect(() => {
     if (['STARTUP', 'QUICK_PLAY', 'STORY_MODE_PLAY'].includes($gameState.route)) {
-      // bgSound1.fade(4, 7, 2)
       bgSound1.pause()
+    } else if ($gameState.route === 'MAIN_MENU' && audioInitialized) {
+      bgSound1.play()
     }
   })
 
   onMount(() => {
-    bgSound1.play()
+    document.addEventListener('click', initializeAudio, { once: true })
+    document.addEventListener('keydown', initializeAudio, { once: true })
   })
 
   onDestroy(() => {
     bgSound1.unload()
+    document.removeEventListener('click', initializeAudio)
+    document.removeEventListener('keydown', initializeAudio)
   })
 </script>
 
@@ -115,34 +127,16 @@
 </main>
 
 <style>
-  /* main {
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.3s ease;
-  }
-
-  :global(.dark-theme) {
-    background-color: #121212;
-    color: #ffffff;
-  }
-
-  :global(.light-theme) {
-    background-color: #f0f0f0;
-    color: #121212;
-  } */
-
   .sound-toggle {
     position: absolute;
-    top: 30px;
+    bottom: 30px;
     right: 30px;
     background: none;
     border: none;
     cursor: pointer;
     color: inherit;
     padding: 0;
+    z-index: 1000;
   }
 
   .sound-toggle svg {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
+
   import type { Enemy, Bullet } from '../../types/gameTypes'
   import { EnemyController } from '../../lib/enemyController'
   import { EnemySpawner } from '../../lib/enemySpawner'
@@ -75,7 +76,7 @@
 
     checkCollisions()
 
-    enemies = [...enemyController.getActiveEnemies()]
+    enemies = enemyController.getActiveEnemies()
 
     animationFrameId = requestAnimationFrame(updateGame)
   }
@@ -151,6 +152,12 @@
     enemyController.clearAllEnemies()
     enemies = []
     enemyBullets = []
+
+    setTimeout(() => {
+      if (gameManager.currentWave) {
+        enemySpawner.startWave(gameManager.currentWave)
+      }
+    }, 1000)
   }
 
   onMount(() => {
@@ -170,6 +177,12 @@
     const unsubGameStart = gameEvents.on('GAME_START', handleGameStart)
 
     animationFrameId = requestAnimationFrame(updateGame)
+
+    if (gameManager.isPlaying && gameManager.currentWave) {
+      setTimeout(() => {
+        enemySpawner.startWave(gameManager.currentWave!)
+      }, 1000)
+    }
 
     return () => {
       cancelAnimationFrame(animationFrameId)

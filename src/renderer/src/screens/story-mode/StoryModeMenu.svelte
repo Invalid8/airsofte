@@ -61,7 +61,7 @@
           {mission.description}
         </div>
 
-        <div class="mission-objectives space-y-2">
+        <div class="mission-objectives flex-col gap-2">
           <div class="text-xs opacity-70 font-bold">OBJECTIVES:</div>
           {#each mission.objectives as objective, i (i)}
             <div class="objective-item text-xs opacity-70 text-left">

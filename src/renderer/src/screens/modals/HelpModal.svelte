@@ -48,7 +48,7 @@
 
     <div class="help-content bg-black/30 border border-cyan-500/30 rounded-xl p-6 min-h-[400px]">
       {#if activeSection === 'controls'}
-        <div class="space-y-6">
+        <div class="flex-col gap-6">
           <h3 class="text-2xl font-bold mb-4 text-cyan-400">Game Controls</h3>
 
           <div class="controls-grid grid grid-cols-2 gap-4">
@@ -85,7 +85,7 @@
       {/if}
 
       {#if activeSection === 'mechanics'}
-        <div class="space-y-6">
+        <div class="flex-col gap-6">
           <h3 class="text-2xl font-bold mb-4 text-cyan-400">Game Mechanics</h3>
 
           <div class="mechanic-item">
@@ -128,7 +128,7 @@
       {/if}
 
       {#if activeSection === 'enemies'}
-        <div class="space-y-6">
+        <div class="flex-col gap-6">
           <h3 class="text-2xl font-bold mb-4 text-cyan-400">Enemy Types</h3>
 
           <div class="enemy-item">
@@ -182,7 +182,7 @@
       {/if}
 
       {#if activeSection === 'powerups'}
-        <div class="space-y-6">
+        <div class="flex-col gap-6">
           <h3 class="text-2xl font-bold mb-4 text-cyan-400">Power-Ups</h3>
 
           <div class="powerup-item">

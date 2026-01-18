@@ -135,7 +135,7 @@
 
     <div class="tab-content min-h-[300px]">
       {#if activeTab === 'audio'}
-        <div class="space-y-6">
+        <div class="flex-col gap-6">
           <div class="setting-item">
             <label class="flex justify-between items-center mb-2">
               <span class="text-lg">Master Volume</span>
@@ -187,7 +187,7 @@
       {/if}
 
       {#if activeTab === 'gameplay'}
-        <div class="space-y-6">
+        <div class="flex-col gap-6">
           <div class="setting-item">
             <label class="block text-lg mb-3">Difficulty</label>
             <div class="grid grid-cols-3 gap-3">
@@ -215,7 +215,7 @@
       {/if}
 
       {#if activeTab === 'controls'}
-        <div class="space-y-4">
+        <div class="flex-col gap-4">
           <div class="controls-grid grid grid-cols-2 gap-4">
             {#each Object.entries(settings.keyBindings) as [action, key], i (i)}
               <div class="control-item">
@@ -232,7 +232,7 @@
       {/if}
 
       {#if activeTab === 'graphics'}
-        <div class="space-y-4">
+        <div class="flex-col gap-4">
           <div class="setting-item">
             <label class="flex items-center justify-between">
               <span class="text-lg">Particle Effects</span>
