@@ -137,7 +137,7 @@
       {#if activeTab === 'audio'}
         <div class="flex-col gap-6">
           <div class="setting-item">
-            <label class="flex justify-between items-center mb-2">
+            <label class="flex justify-between items-center grid mb-2">
               <span class="text-lg">Master Volume</span>
               <span class="text-cyan-400 hud">{Math.round(settings.volume.master * 100)}%</span>
             </label>
@@ -153,7 +153,7 @@
           </div>
 
           <div class="setting-item">
-            <label class="flex justify-between items-center mb-2">
+            <label class="flex justify-between items-center grid mb-2">
               <span class="text-lg">Music Volume</span>
               <span class="text-cyan-400 hud">{Math.round(settings.volume.music * 100)}%</span>
             </label>
@@ -169,7 +169,7 @@
           </div>
 
           <div class="setting-item">
-            <label class="flex justify-between items-center mb-2">
+            <label class="flex justify-between items-center grid mb-2">
               <span class="text-lg">SFX Volume</span>
               <span class="text-cyan-400 hud">{Math.round(settings.volume.sfx * 100)}%</span>
             </label>
@@ -189,7 +189,7 @@
       {#if activeTab === 'gameplay'}
         <div class="flex-col gap-6">
           <div class="setting-item">
-            <label class="block text-lg mb-3">Difficulty</label>
+            <label class="block text-lg grid mb-3">Difficulty</label>
             <div class="grid grid-cols-3 gap-3">
               {#each ['Easy', 'Normal', 'Hard'] as diff, i (i)}
                 <button

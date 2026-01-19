@@ -1,6 +1,9 @@
 @import "tailwindcss";
-@import './font.css';
+@import "./font.css";
 
+/* =========================
+   Design Tokens
+   ========================= */
 :root {
   --ev-c-white: #ffffff;
   --ev-c-white-soft: #f8f8f8;
@@ -25,39 +28,52 @@
   --ev-button-alt-hover-text: var(--ev-c-text-1);
   --ev-button-alt-hover-bg: var(--ev-c-gray-2);
 
-  /* fonts */
-  --font-press-start: 'Press Start 2P', cursive;
-  --font-vt323: 'VT323', monospace;
-  --font-orbitron: 'Orbitron', sans-serif;
-}
+  /* Fonts */
+  --font-press-start: "Press Start 2P", cursive;
+  --font-vt323: "VT323", monospace;
+  --font-orbitron: "Orbitron", sans-serif;
 
-:root {
+  /* App colors */
   --color-background: var(--ev-c-black);
   --color-background-soft: var(--ev-c-black-soft);
   --color-background-mute: var(--ev-c-black-mute);
-
   --color-text: var(--ev-c-text-1);
 }
 
+/* =========================
+   Minimal Base (NON-DESTRUCTIVE)
+   ========================= */
+
+/* IMPORTANT:
+   Do NOT reset margin here — Tailwind utilities rely on it */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-  margin: 0;
-  font-weight: normal;
 }
 
-ul {
-  list-style: none;
+html,
+body {
+  height: 100%;
 }
 
 body {
+  margin: 0;
+  /* only safe place to zero margin */
   min-height: 100vh;
   color: var(--color-text);
-  background: var(--color-background);
-  line-height: 1.6;
+  background-color: var(--color-background);
   font-family: var(--font-orbitron), sans-serif;
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optional: only reset lists if you truly want this globally */
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }

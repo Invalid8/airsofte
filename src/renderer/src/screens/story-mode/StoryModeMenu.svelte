@@ -29,8 +29,8 @@
   }
 </script>
 
-<div class="flex size-full h-svh flex-col gap-4 text-center p-6 items-center">
-  <h1 class="title text-4xl uppercase glow-text mb-4">Story Mode</h1>
+<div class="flex size-full h-svh flex-col gap-4 text-center p-6 items-center pt-10">
+  <h1 class="title text-4xl uppercase glow-text pb-4">Story Mode</h1>
 
   <div
     class="scroll size-full overflow-auto max-h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 place-content-start place-items-center w-full gap-6 px-5 pb-10"
@@ -45,9 +45,9 @@
         onclick={() => startMission(mission)}
         disabled={!mission.unlocked}
       >
-        <div class="mission-header mb-4">
-          <div class="mission-number text-sm opacity-70 mb-2">Mission {mission.id}</div>
-          <h3 class="mission-title text-2xl font-bold title mb-2">{mission.title}</h3>
+        <div class="mission-header pb-4">
+          <div class="mission-number text-sm opacity-70 grid mb-2">Mission {mission.id}</div>
+          <h3 class="mission-title text-2xl font-bold title grid mb-2">{mission.title}</h3>
           <div
             class="mission-status text-sm font-bold {mission.unlocked
               ? 'text-cyan-400'
@@ -57,7 +57,7 @@
           </div>
         </div>
 
-        <div class="mission-description text-sm opacity-80 mb-4 min-h-[60px]">
+        <div class="mission-description text-sm opacity-80 pb-4 min-h-[60px]">
           {mission.description}
         </div>
 

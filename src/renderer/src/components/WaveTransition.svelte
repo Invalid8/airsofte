@@ -49,13 +49,13 @@
     <div class="content relative z-10" in:fly={{ y: -50, duration: 500 }}>
       {#if transitionType === 'start'}
         <div class="text-center">
-          <div class="title text-6xl uppercase glow-text mb-4">Wave {waveNumber}</div>
+          <div class="title text-6xl uppercase glow-text grid mb-4">Wave {waveNumber}</div>
           <div class="subtitle text-2xl opacity-80">Prepare for Battle!</div>
         </div>
       {:else}
         <div class="text-center">
           <div
-            class="title text-5xl uppercase text-green-400 mb-4"
+            class="title text-5xl uppercase text-green-400 grid mb-4"
             style="text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);"
           >
             Wave {waveNumber} Complete!

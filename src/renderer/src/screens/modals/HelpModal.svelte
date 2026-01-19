@@ -49,7 +49,7 @@
     <div class="help-content bg-black/30 border border-cyan-500/30 rounded-xl p-6 min-h-[400px]">
       {#if activeSection === 'controls'}
         <div class="flex-col gap-6">
-          <h3 class="text-2xl font-bold mb-4 text-cyan-400">Game Controls</h3>
+          <h3 class="text-2xl font-bold grid mb-4 text-cyan-400">Game Controls</h3>
 
           <div class="controls-grid grid grid-cols-2 gap-4">
             <div class="control-item">
@@ -86,10 +86,10 @@
 
       {#if activeSection === 'mechanics'}
         <div class="flex-col gap-6">
-          <h3 class="text-2xl font-bold mb-4 text-cyan-400">Game Mechanics</h3>
+          <h3 class="text-2xl font-bold grid mb-4 text-cyan-400">Game Mechanics</h3>
 
           <div class="mechanic-item">
-            <h4 class="text-xl font-bold text-cyan-300 mb-2">⚡ Combo System</h4>
+            <h4 class="text-xl font-bold text-cyan-300 grid mb-2">⚡ Combo System</h4>
             <p>
               Destroy enemies consecutively without getting hit to build your combo multiplier.
               Higher combos mean more points!
@@ -102,7 +102,7 @@
           </div>
 
           <div class="mechanic-item">
-            <h4 class="text-xl font-bold text-cyan-300 mb-2">❤️ Health System</h4>
+            <h4 class="text-xl font-bold text-cyan-300 grid mb-2">❤️ Health System</h4>
             <p>
               You have 100 HP and 3 lives. When your health reaches 0, you lose a life and respawn
               with full health and temporary invincibility.
@@ -110,7 +110,7 @@
           </div>
 
           <div class="mechanic-item">
-            <h4 class="text-xl font-bold text-cyan-300 mb-2">🌊 Wave Progression</h4>
+            <h4 class="text-xl font-bold text-cyan-300 grid mb-2">🌊 Wave Progression</h4>
             <p>
               Defeat all enemies in a wave to advance. Each wave gets progressively harder with more
               enemies and tougher patterns.
@@ -118,7 +118,7 @@
           </div>
 
           <div class="mechanic-item">
-            <h4 class="text-xl font-bold text-cyan-300 mb-2">🎯 Accuracy</h4>
+            <h4 class="text-xl font-bold text-cyan-300 grid mb-2">🎯 Accuracy</h4>
             <p>
               Your accuracy is tracked based on bullets fired vs enemies destroyed. Higher accuracy
               shows your skill!
@@ -129,10 +129,10 @@
 
       {#if activeSection === 'enemies'}
         <div class="flex-col gap-6">
-          <h3 class="text-2xl font-bold mb-4 text-cyan-400">Enemy Types</h3>
+          <h3 class="text-2xl font-bold grid mb-4 text-cyan-400">Enemy Types</h3>
 
           <div class="enemy-item">
-            <h4 class="text-xl font-bold text-red-400 mb-2">👾 Basic Fighter</h4>
+            <h4 class="text-xl font-bold text-red-400 grid mb-2">👾 Basic Fighter</h4>
             <div class="stats">
               <span>Health: 30</span>
               <span>Speed: Medium</span>
@@ -144,7 +144,7 @@
           </div>
 
           <div class="enemy-item">
-            <h4 class="text-xl font-bold text-yellow-400 mb-2">⚡ Scout</h4>
+            <h4 class="text-xl font-bold text-yellow-400 grid mb-2">⚡ Scout</h4>
             <div class="stats">
               <span>Health: 15</span>
               <span>Speed: Fast</span>
@@ -156,7 +156,7 @@
           </div>
 
           <div class="enemy-item">
-            <h4 class="text-xl font-bold text-orange-400 mb-2">💣 Bomber</h4>
+            <h4 class="text-xl font-bold text-orange-400 grid mb-2">💣 Bomber</h4>
             <div class="stats">
               <span>Health: 80</span>
               <span>Speed: Slow</span>
@@ -168,7 +168,7 @@
           </div>
 
           <div class="enemy-item">
-            <h4 class="text-xl font-bold text-purple-400 mb-2">👑 Boss</h4>
+            <h4 class="text-xl font-bold text-purple-400 grid mb-2">👑 Boss</h4>
             <div class="stats">
               <span>Health: 1000</span>
               <span>Speed: Variable</span>
@@ -183,32 +183,32 @@
 
       {#if activeSection === 'powerups'}
         <div class="flex-col gap-6">
-          <h3 class="text-2xl font-bold mb-4 text-cyan-400">Power-Ups</h3>
+          <h3 class="text-2xl font-bold grid mb-4 text-cyan-400">Power-Ups</h3>
 
           <div class="powerup-item">
-            <h4 class="text-xl font-bold text-green-400 mb-2">❤️ Health</h4>
+            <h4 class="text-xl font-bold text-green-400 grid mb-2">❤️ Health</h4>
             <p>Restores 30 HP. Cannot exceed maximum health.</p>
           </div>
 
           <div class="powerup-item">
-            <h4 class="text-xl font-bold text-red-400 mb-2">🔫 Weapon Upgrade</h4>
+            <h4 class="text-xl font-bold text-red-400 grid mb-2">🔫 Weapon Upgrade</h4>
             <p>
               Temporarily upgrades your weapon to DOUBLE, TRIPLE, or SPREAD shot. Lasts 15 seconds.
             </p>
           </div>
 
           <div class="powerup-item">
-            <h4 class="text-xl font-bold text-blue-400 mb-2">🛡️ Shield</h4>
+            <h4 class="text-xl font-bold text-blue-400 grid mb-2">🛡️ Shield</h4>
             <p>Grants a protective shield that blocks one hit. Lasts 10 seconds or until hit.</p>
           </div>
 
           <div class="powerup-item">
-            <h4 class="text-xl font-bold text-yellow-400 mb-2">⚡ Speed Boost</h4>
+            <h4 class="text-xl font-bold text-yellow-400 grid mb-2">⚡ Speed Boost</h4>
             <p>Increases movement speed by 50%. Lasts 8 seconds. Great for dodging!</p>
           </div>
 
           <div class="powerup-item">
-            <h4 class="text-xl font-bold text-purple-400 mb-2">⭐ Score Bonus</h4>
+            <h4 class="text-xl font-bold text-purple-400 grid mb-2">⭐ Score Bonus</h4>
             <p>Instantly grants 500 bonus points. Collect these to boost your high score!</p>
           </div>
 

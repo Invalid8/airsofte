@@ -88,7 +88,7 @@
     <div
       class="dialogue-box bg-black/90 border-2 border-cyan-500 rounded-lg p-6 shadow-lg shadow-cyan-500/50"
     >
-      <div class="character-name text-xl font-bold text-cyan-400 mb-2 title">
+      <div class="character-name text-xl font-bold text-cyan-400 grid mb-2 title">
         {currentDialogue.character}
       </div>
       <div class="dialogue-text text-lg leading-relaxed">

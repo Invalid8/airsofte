@@ -50,7 +50,7 @@
     class="boss-health-container fixed top-20 left-1/2 -translate-x-1/2 z-[55] w-full max-w-2xl px-8"
     in:fly={{ y: -50, duration: 500 }}
   >
-    <div class="boss-info mb-2 flex justify-between items-center">
+    <div class="boss-info grid mb-2 flex justify-between items-center">
       <div class="boss-name text-2xl font-bold text-red-500 title animate-pulse">
         ⚔️ THE GUARDIAN
       </div>

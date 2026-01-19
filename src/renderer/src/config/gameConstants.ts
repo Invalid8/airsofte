@@ -17,7 +17,7 @@ export const GAME_CONFIG = {
     SPEED: 20,
     FIRE_RATE: 150,
     MAX_HEALTH: 100,
-    MAX_LIVES: 5,
+    MAX_LIVES: 3,
     INVINCIBILITY_DURATION: 2000,
     RESPAWN_DELAY: 1500
   },

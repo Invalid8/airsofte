@@ -87,14 +87,14 @@
       >
         {#if currentScores.length === 0}
           <div class="empty-state text-center py-12">
-            <div class="text-4xl mb-4 opacity-50">🏆</div>
+            <div class="text-4xl grid mb-4 opacity-50">🏆</div>
             <p class="text-xl opacity-70">No high scores yet!</p>
             <p class="text-sm opacity-50 mt-2">Play some games to set records</p>
           </div>
         {:else}
           <div class="scores-table">
             <div
-              class="table-header grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 pb-3 border-b-2 border-cyan-500/30 mb-4 font-bold text-sm"
+              class="table-header grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 pb-3 border-b-2 border-cyan-500/30 grid mb-4 font-bold text-sm"
             >
               <div class="text-center">Rank</div>
               <div>Name</div>

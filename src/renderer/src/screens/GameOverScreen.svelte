@@ -87,8 +87,8 @@
 
     {#if showNameInput}
       <div class="name-input-panel bg-black/70 border-2 border-cyan-500 rounded-xl p-6 w-full">
-        <label class="block mb-4">
-          <span class="text-lg mb-2 block">Enter Your Name:</span>
+        <label class="block grid mb-4">
+          <span class="text-lg grid mb-2 block">Enter Your Name:</span>
           <input
             type="text"
             bind:value={playerName}
