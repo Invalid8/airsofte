@@ -1,5 +1,22 @@
 import { Howl, Howler } from 'howler'
 
+import menuClickMp3 from '../assets/sounds/sound1.mp3'
+import shootMp3 from '../assets/sounds/shoot1.mp3'
+import enemyShootMp3 from '../assets/sounds/enemy-shoot.mp3'
+import explosion1Mp3 from '../assets/sounds/explosion-1.mp3'
+import explosion2Mp3 from '../assets/sounds/explosion-2.mp3'
+import explosion3Mp3 from '../assets/sounds/explosion-3.mp3'
+import playerHitMp3 from '../assets/sounds/player-hit.mp3'
+import powerupMp3 from '../assets/sounds/powerup.mp3'
+import bossWarningMp3 from '../assets/sounds/boss-warning.mp3'
+import victoryMp3 from '../assets/sounds/victory.mp3'
+import gameOverMp3 from '../assets/sounds/game-over.mp3'
+import flyMp3 from '../assets/sounds/fly.mp3'
+
+// Music
+import backgroundMusicMp3 from '../assets/sounds/bg1.mp3'
+import bossMusicMp3 from '../assets/sounds/boss-battle.mp3'
+
 interface SoundConfig {
   src: string
   volume?: number
@@ -22,21 +39,21 @@ class SoundManager {
 
   private loadSounds() {
     const soundConfigs: Record<string, SoundConfig> = {
-      shoot1: { src: '/assets/sounds/shoot1.mp3', volume: 0.3, pool: 5 },
-      'enemy-shoot': { src: '/assets/sounds/enemy-shoot.mp3', volume: 0.25, pool: 5 },
-      'explosion-1': { src: '/assets/sounds/explosion-1.mp3', volume: 0.5, pool: 3 },
-      'explosion-2': { src: '/assets/sounds/explosion-2.mp3', volume: 0.6, pool: 3 },
-      'explosion-3': { src: '/assets/sounds/explosion-3.mp3', volume: 0.7, pool: 2 },
-      'player-hit': { src: '/assets/sounds/player-hit.mp3', volume: 0.6 },
-      powerup: { src: '/assets/sounds/powerup.mp3', volume: 0.5 },
-      'boss-warning': { src: '/assets/sounds/boss-warning.mp3', volume: 0.7 },
-      victory: { src: '/assets/sounds/victory.mp3', volume: 0.6 },
-      'game-over': { src: '/assets/sounds/game-over.mp3', volume: 0.6 },
-      sound1: { src: '/assets/sounds/sound1.mp3', volume: 0.4 },
-      fly: { src: '/assets/sounds/fly.mp3', volume: 0.3, loop: true },
-      playerHit: { src: '/assets/sounds/player-hit.mp3', volume: 0.6 },
-      bossWarning: { src: '/assets/sounds/boss-warning.mp3', volume: 0.7 },
-      gameOver: { src: '/assets/sounds/game-over.mp3', volume: 0.6 }
+      menuClick: { src: menuClickMp3, volume: 0.3, pool: 5 },
+      shoot: { src: shootMp3, volume: 0.3, pool: 5 },
+      enemyShoot: { src: enemyShootMp3, volume: 0.25, pool: 5 },
+
+      'explosion-1': { src: explosion1Mp3, volume: 0.5, pool: 3 },
+      'explosion-2': { src: explosion2Mp3, volume: 0.6, pool: 3 },
+      'explosion-3': { src: explosion3Mp3, volume: 0.7, pool: 2 },
+
+      playerHit: { src: playerHitMp3, volume: 0.6 },
+      powerup: { src: powerupMp3, volume: 0.5 },
+      bossWarning: { src: bossWarningMp3, volume: 0.7 },
+      victory: { src: victoryMp3, volume: 0.6 },
+      gameOver: { src: gameOverMp3, volume: 0.6 },
+
+      flyOver: { src: flyMp3, volume: 0.3, loop: false }
     }
 
     Object.entries(soundConfigs).forEach(([key, config]) => {
@@ -44,9 +61,9 @@ class SoundManager {
         key,
         new Howl({
           src: [config.src],
-          volume: (config.volume || 0.5) * this.sfxVolume * this.masterVolume,
-          loop: config.loop || false,
-          pool: config.pool || 1
+          volume: (config.volume ?? 0.5) * this.sfxVolume * this.masterVolume,
+          loop: config.loop ?? false,
+          pool: config.pool ?? 1
         })
       )
     })
@@ -54,8 +71,16 @@ class SoundManager {
 
   private loadMusic() {
     const musicConfigs: Record<string, SoundConfig> = {
-      background: { src: '/assets/sounds/bg1.mp3', volume: 0.4, loop: true },
-      boss: { src: '/assets/sounds/boss-battle.mp3', volume: 0.5, loop: true }
+      background: {
+        src: backgroundMusicMp3,
+        volume: 0.4,
+        loop: true
+      },
+      boss: {
+        src: bossMusicMp3,
+        volume: 0.5,
+        loop: true
+      }
     }
 
     Object.entries(musicConfigs).forEach(([key, config]) => {
@@ -63,8 +88,8 @@ class SoundManager {
         key,
         new Howl({
           src: [config.src],
-          volume: (config.volume || 0.5) * this.musicVolume * this.masterVolume,
-          loop: config.loop || false
+          volume: (config.volume ?? 0.5) * this.musicVolume * this.masterVolume,
+          loop: config.loop ?? false
         })
       )
     })
@@ -72,8 +97,10 @@ class SoundManager {
 
   playSound(soundName: string, volumeOverride?: number) {
     if (this.isMuted) return
+    console.log('sound', soundName)
 
     const sound = this.sounds.get(soundName)
+    console.log('sound', sound)
     if (sound) {
       if (volumeOverride !== undefined) {
         sound.volume(volumeOverride * this.sfxVolume * this.masterVolume)

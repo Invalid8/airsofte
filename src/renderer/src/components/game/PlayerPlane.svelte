@@ -74,7 +74,6 @@
   function handleKeyDown(event: KeyboardEvent): void {
     if (starting || !gameManager.isPlaying || gameManager.isPaused) return
 
-    // Add key to pressed set
     keysPressed.add(event.key)
     keysPressed = new Set(keysPressed) // trigger reactivity
 
@@ -90,14 +89,12 @@
       updateShipPosition()
     }
 
-    // Prevent default for spacebar
     if (event.key === ' ' || event.key === 'Space') {
       event.preventDefault()
     }
   }
 
   function handleKeyUp(event: KeyboardEvent): void {
-    // Remove key from pressed set
     keysPressed.delete(event.key)
     keysPressed = new Set(keysPressed) // trigger reactivity
   }
@@ -142,12 +139,10 @@
       return
     }
 
-    // Handle continuous shooting when spacebar is held
     if (keysPressed.has(' ') || keysPressed.has('Space')) {
       shoot()
     }
 
-    // Handle continuous movement
     if (keysPressed.has('ArrowUp') || keysPressed.has('w')) {
       keys['w']()
       updateShipPosition()
@@ -165,7 +160,6 @@
       updateShipPosition()
     }
 
-    // Update bullets
     bullets = bullets.filter((bullet) => {
       if (!bullet.active) return false
 
@@ -300,7 +294,7 @@
 {#each bullets as bullet (bullet.id)}
   <div
     class="bullet absolute pointer-events-none"
-    style="left: {bullet.x}px; top: {bullet.y}px; width: {bullet.width}px; height: {bullet.height}px;"
+    style="left: {bullet.x}px; top: {bullet.y}px; width: {bullet.width}px; height: {bullet.height}px; margin: 0 1px;"
   ></div>
 {/each}
 
