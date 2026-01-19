@@ -26,6 +26,8 @@
 
     if (event.data?.victory === true) {
       showVictory = true
+    } else {
+      showVictory = false
     }
   }
 

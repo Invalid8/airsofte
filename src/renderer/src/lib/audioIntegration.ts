@@ -45,7 +45,10 @@ export class AudioEventHandler {
       if (wave === 5 || event.data?.hasBoss) {
         soundManager.playSound('bossWarning')
         setTimeout(() => {
-          soundManager.playMusic('boss')
+          soundManager.stopMusic(true)
+          setTimeout(() => {
+            soundManager.playMusic('boss')
+          }, 1000)
         }, 2000)
       }
     })
@@ -60,7 +63,10 @@ export class AudioEventHandler {
     })
 
     gameEvents.on('GAME_START', () => {
-      soundManager.playMusic('background')
+      soundManager.stopMusic(false)
+      setTimeout(() => {
+        soundManager.playMusic('background')
+      }, 500)
     })
 
     gameEvents.on('GAME_OVER', (event) => {

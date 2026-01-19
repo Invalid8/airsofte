@@ -130,7 +130,7 @@
       if (!enemy) return
 
       if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
-        gameManager.damagePlayer(20)
+        gameManager.damagePlayer(30)
 
         particleSystem.createExplosion(
           enemy.x + enemy.width / 2,
@@ -142,7 +142,7 @@
         ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
       }
 
-      enemy.active = false
+      enemyController.damageEnemy(enemyId, enemy.maxHealth)
     })
   }
 
@@ -189,7 +189,7 @@
 
     return () => {
       cancelAnimationFrame(animationFrameId)
-      enemySpawner.stopSpawning()
+      // enemySpawner.stop()
       unsubWaveStart()
       unsubGameStart()
     }
@@ -198,7 +198,7 @@
   onDestroy(() => {
     cancelAnimationFrame(animationFrameId)
     if (enemySpawner) {
-      enemySpawner.stopSpawning()
+      // enemySpawner.stop()
     }
   })
 </script>

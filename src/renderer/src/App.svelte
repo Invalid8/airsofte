@@ -25,23 +25,42 @@
     }
   }
 
-  $effect(() => {
-    if (['STARTUP', 'QUICK_PLAY', 'STORY_MODE_PLAY'].includes($gameState.route)) {
-      soundManager.stopMusic(true)
-    } else if ($gameState.route === 'MAIN_MENU' && audioInitialized) {
-      soundManager.playMusic('background')
+  function handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      const currentRoute = $gameState.route
+
+      if (currentRoute === 'QUICK_PLAY' || currentRoute === 'STORY_MODE_PLAY') {
+        if ($gameState.isPaused) {
+          return
+        }
+      } else if (currentRoute === 'MAIN_MENU' && $gameState.showExit) {
+        return
+      }
+
+      if ($gameState.showSettings) {
+        $gameState.showSettings = false
+      } else if ($gameState.showHighScore) {
+        $gameState.showHighScore = false
+      } else if ($gameState.showHelp) {
+        $gameState.showHelp = false
+      } else if ($gameState.showExit) {
+        $gameState.showExit = false
+      }
     }
-  })
+  }
 
   onMount(() => {
     document.addEventListener('click', initializeAudio, { once: true })
     document.addEventListener('keydown', initializeAudio, { once: true })
+    window.addEventListener('keydown', handleKeyDown)
   })
 
   onDestroy(() => {
     soundManager.stopAll()
     document.removeEventListener('click', initializeAudio)
     document.removeEventListener('keydown', initializeAudio)
+    window.removeEventListener('keydown', handleKeyDown)
   })
 </script>
 

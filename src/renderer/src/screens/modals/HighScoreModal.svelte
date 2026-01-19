@@ -52,7 +52,7 @@
 <div class="overlay fixed size-full top-0 left-0 right-0 bottom-0 bg-black/70 z-[999]"></div>
 
 <div
-  class="high-score-modal fixed w-full max-w-2xl rounded-xl modal-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+  class="high-score-modal fixed w-full min-w-xl max-w-2xl rounded-xl modal-gradient-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
   in:fly={{ y: 200, duration: 500 }}
 >
   <div class="content flex flex-col items-center justify-center gap-4">
@@ -86,9 +86,7 @@
         class="content border p-6 min-h-[400px] rounded-xl bg-black/30 max-h-[calc(100svh_-_440px)] overflow-auto scroll"
       >
         {#if currentScores.length === 0}
-          <div
-            class="empty-state text-center py-12 flex flex-col items-center justify-center h-full"
-          >
+          <div class="empty-state flex flex-col items-center justify-center h-full min-h-[350px]">
             <div class="text-6xl mb-4 opacity-50">🏆</div>
             <p class="text-xl opacity-70">No high scores yet!</p>
             <p class="text-sm opacity-50 mt-2">Play some games to set records</p>
@@ -163,11 +161,21 @@
     line-height: 115%;
   }
 
-  .modal-bg {
-    background: linear-gradient(135deg, rgba(0, 10, 30, 0.95) 0%, rgba(0, 30, 60, 0.95) 100%);
-    border: 2px solid rgba(0, 170, 255, 0.5);
-    box-shadow: 0 0 40px rgba(0, 170, 255, 0.3);
-    backdrop-filter: blur(10px);
+  .modal-gradient-bg {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 10, 40, 0.98) 0%,
+      rgba(10, 20, 60, 0.98) 25%,
+      rgba(20, 10, 50, 0.98) 50%,
+      rgba(10, 5, 40, 0.98) 75%,
+      rgba(0, 10, 40, 0.98) 100%
+    );
+    border: 2px solid rgba(100, 150, 255, 0.4);
+    box-shadow:
+      0 0 40px rgba(100, 150, 255, 0.2),
+      inset 0 0 60px rgba(100, 150, 255, 0.05);
+    backdrop-filter: blur(12px);
+    position: relative;
   }
 
   .top-score {

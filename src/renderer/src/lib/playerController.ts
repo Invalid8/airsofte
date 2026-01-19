@@ -34,12 +34,16 @@ export class PlayerController {
           speed: GAME_CONFIG.BULLET.PLAYER.SPEED,
           damage: GAME_CONFIG.BULLET.PLAYER.DAMAGE,
           active: false,
-          owner: 'PLAYER'
+          owner: 'PLAYER',
+          vx: 0,
+          vy: -GAME_CONFIG.BULLET.PLAYER.SPEED
         }),
         (bullet) => {
           bullet.active = false
           bullet.x = 0
           bullet.y = 0
+          bullet.vx = 0
+          bullet.vy = -GAME_CONFIG.BULLET.PLAYER.SPEED
         },
         GAME_CONFIG.POOL_SIZES.BULLETS,
         GAME_CONFIG.POOL_SIZES.BULLETS
@@ -106,6 +110,8 @@ export class PlayerController {
       const bullet = this.bulletPool!.acquire()
       bullet.x = centerX - bullet.width / 2
       bullet.y = this.y
+      bullet.vx = 0
+      bullet.vy = -bullet.speed
       bullet.active = true
       bullet.damage = config.damage
       bullets.push(bullet)
@@ -116,10 +122,12 @@ export class PlayerController {
       for (let i = 0; i < config.bulletCount; i++) {
         const bullet = this.bulletPool!.acquire()
         const angle = startAngle + angleStep * i
-        const offset = Math.tan((angle * Math.PI) / 180) * 50
+        const angleRad = (angle * Math.PI) / 180
 
-        bullet.x = centerX + offset - bullet.width / 2
+        bullet.x = centerX - bullet.width / 2
         bullet.y = this.y
+        bullet.vx = Math.sin(angleRad) * bullet.speed
+        bullet.vy = -Math.cos(angleRad) * bullet.speed
         bullet.active = true
         bullet.damage = config.damage
         bullets.push(bullet)

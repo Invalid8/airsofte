@@ -32,7 +32,7 @@
       </div>
 
       {#if showCombo}
-        <div class="combo-display animate-pulse">
+        <div class="combo-display animate-pulse mt-2">
           <div class="label text-base tracking-wider opacity-70">COMBO</div>
           <div class="value text-3xl font-bold text-yellow-400 hud">
             x{comboMultiplier.toFixed(1)}
@@ -41,7 +41,7 @@
       {/if}
     </div>
 
-    <div class="right-panel flex  flex-col gap-3 text-right">
+    <div class="right-panel text-right">
       <div class="lives-display flex items-center justify-end gap-2">
         <!-- <div class="label text-base tracking-wider opacity-70">LIVES</div> -->
         <div class="hearts flex gap-1">
@@ -74,7 +74,9 @@
             {/if}
           </div>
         </div>
-        <div class="health-value text-base tracking-wider pt-1 hud">{$playerHealth} / {maxHealth}</div>
+        <div class="health-value text-base tracking-wider pt-1 hud">
+          {$playerHealth} / {maxHealth}
+        </div>
       </div>
       <div class="h-3"></div>
 
@@ -84,7 +86,11 @@
       </div>
 
       {#if invincible}
-        <div class="invincible-indicator text-base tracking-wider text-cyan-400 animate-pulse hud">INVINCIBLE</div>
+        <div
+          class="invincible-indicator text-base tracking-wider text-cyan-400 animate-pulse hud mt-2"
+        >
+          INVINCIBLE
+        </div>
       {/if}
     </div>
   </div>

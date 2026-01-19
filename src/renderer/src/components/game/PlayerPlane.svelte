@@ -163,7 +163,8 @@
     bullets = bullets.filter((bullet) => {
       if (!bullet.active) return false
 
-      bullet.y -= bullet.speed
+      bullet.x += bullet.vx || 0
+      bullet.y += bullet.vy || -bullet.speed
 
       if (bullet.y < -30) {
         bullet.active = false

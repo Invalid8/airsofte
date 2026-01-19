@@ -45,6 +45,8 @@ export class GameManager {
 
   public currentWave: Wave | null = null
   public waves: Wave[] = []
+  private enemiesRemaining = 0
+  private currentWaveIndex: number = 0
 
   private gameLoopId: number | null = null
   private lastFrameTime: number = 0
@@ -83,26 +85,29 @@ export class GameManager {
     this.isPlaying = true
     this.isPaused = false
     this.session.playing = true
-    this.startTime = Date.now()
-    this.lastFrameTime = performance.now()
+    this.startTime = performance.now()
+    this.lastFrameTime = this.startTime
+
+    this.startGameLoop()
 
     gameEvents.emit('GAME_START', { mode, difficulty: this.difficulty, missionId })
   }
 
-  private initializeStoryMission(missionId: number): void {
-    const mission = storyMissionManager.getMissionById(missionId)
-    if (!mission) {
-      console.error(`Mission ${missionId} not found`)
-      return
+  private startGameLoop(): void {
+    const loop = (timestamp: number) => {
+      if (!this.isPlaying) return
+
+      const deltaTime = timestamp - this.lastFrameTime
+      this.lastFrameTime = timestamp
+
+      if (!this.isPaused) {
+        this.updateTime(deltaTime)
+      }
+
+      this.gameLoopId = requestAnimationFrame(loop)
     }
 
-    this.waves = mission.waves.map((wave) => ({
-      ...wave,
-      completed: false
-    }))
-
-    this.currentWave = this.waves[0]
-    this.session.currentWave = 1
+    this.gameLoopId = requestAnimationFrame(loop)
   }
 
   private resetSession(): void {
@@ -133,25 +138,6 @@ export class GameManager {
     }
   }
 
-  private initializeWaves(): void {
-    const modifier = DIFFICULTY_MODIFIERS[this.difficulty]
-
-    this.waves = WAVE_TEMPLATES.map((template) => ({
-      id: template.id,
-      spawnInterval: template.spawnInterval,
-      completed: false,
-      enemies: template.enemies.map((e) => ({
-        type: e.type,
-        pattern: e.pattern,
-        spawnDelay: e.spawnDelay,
-        count: Math.ceil(e.count * modifier.enemyCountMultiplier)
-      }))
-    }))
-
-    this.currentWave = this.waves[0]
-    this.session.currentWave = 1
-  }
-
   pauseGame(): void {
     if (!this.isPlaying) return
     this.isPaused = true
@@ -172,6 +158,9 @@ export class GameManager {
     this.isPaused = false
     this.session.playing = false
 
+    if (this.gameLoopId) cancelAnimationFrame(this.gameLoopId)
+    this.gameLoopId = null
+
     const finalScore = this.session.score
     const finalWave = this.session.currentWave
 
@@ -185,6 +174,44 @@ export class GameManager {
       wave: finalWave,
       stats: { ...this.session }
     })
+  }
+
+  private updateTime(deltaTime: number): void {
+    this.session.timeElapsed += deltaTime
+  }
+
+  private initializeStoryMission(missionId: number): void {
+    const mission = storyMissionManager.getMissionById(missionId)
+    if (!mission) return
+
+    this.waves = mission.waves.map((wave) => ({
+      ...wave,
+      completed: false
+    }))
+
+    this.currentWaveIndex = 0
+    this.currentWave = this.waves[0]
+    this.session.currentWave = this.currentWaveIndex + 1
+  }
+
+  private initializeWaves(): void {
+    const modifier = DIFFICULTY_MODIFIERS[this.difficulty]
+
+    this.waves = WAVE_TEMPLATES.map((template) => ({
+      id: template.id,
+      spawnInterval: template.spawnInterval,
+      completed: false,
+      enemies: template.enemies.map((e) => ({
+        type: e.type,
+        pattern: e.pattern,
+        spawnDelay: e.spawnDelay,
+        count: Math.ceil(e.count * modifier.enemyCountMultiplier)
+      }))
+    }))
+
+    this.currentWaveIndex = 0
+    this.currentWave = this.waves[0]
+    this.session.currentWave = this.currentWaveIndex + 1
   }
 
   addScore(points: number): void {
@@ -201,7 +228,13 @@ export class GameManager {
     this.addScore(enemy.scoreValue)
     this.incrementCombo()
 
-    gameEvents.emit('ENEMY_DESTROYED', { enemy, score: enemy.scoreValue })
+    this.enemiesRemaining--
+
+    gameEvents.emit('ENEMY_DESTROYED', { enemy })
+
+    if (this.enemiesRemaining === 0) {
+      this.completeWave()
+    }
   }
 
   onBulletFired(): void {
@@ -289,7 +322,7 @@ export class GameManager {
 
   private setInvincibility(duration: number): void {
     this.player.invincible = true
-    this.player.invincibleUntil = Date.now() + duration
+    this.player.invincibleUntil = performance.now() + duration
 
     setTimeout(() => {
       this.player.invincible = false
@@ -342,27 +375,27 @@ export class GameManager {
     }
 
     gameEvents.emit('WAVE_COMPLETE', {
-      wave: this.session.currentWave,
+      wave: this.currentWaveIndex + 1,
       bonus: noDamageTaken
     })
 
-    if (this.session.currentWave < this.waves.length) {
-      this.nextWave()
-    } else {
-      this.endGame(true)
-    }
+    this.nextWave()
   }
 
   private nextWave(): void {
-    this.session.currentWave++
-    this.currentWave = this.waves[this.session.currentWave - 1]
+    this.currentWaveIndex++
 
-    gameEvents.emit('WAVE_START', { wave: this.session.currentWave })
-  }
+    if (this.currentWaveIndex >= this.waves.length) {
+      this.endGame(true)
+      return
+    }
 
-  updateTime(deltaTime: number): void {
-    if (!this.isPlaying || this.isPaused) return
-    this.session.timeElapsed += deltaTime
+    this.currentWave = this.waves[this.currentWaveIndex]
+    this.session.currentWave = this.currentWaveIndex + 1
+
+    gameEvents.emit('WAVE_START', {
+      wave: this.session.currentWave
+    })
   }
 
   saveHighScore(playerName: string = 'Player'): void {

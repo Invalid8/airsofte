@@ -81,7 +81,7 @@ export class EnemyController {
         }
       case 'ZIGZAG':
         return {
-          amplitude: 80,
+          amplitude: 60,
           frequency: 0.03,
           startX: x,
           startY: y
@@ -121,7 +121,7 @@ export class EnemyController {
         if (bullet) newBullets.push(bullet)
       }
 
-      if (enemy.y > bounds.height + 100) {
+      if (enemy.type !== 'BOSS' && enemy.y > bounds.height + 100) {
         enemy.active = false
         return false
       }
@@ -202,11 +202,11 @@ export class EnemyController {
     }
 
     if (bounds) {
-      const margin = 10
+      const margin = 50
       enemy.x = Math.max(margin, Math.min(enemy.x, bounds.width - enemy.width - margin))
 
       if (isBoss) {
-        enemy.y = Math.max(50, Math.min(enemy.y, 300))
+        enemy.y = Math.max(50, Math.min(enemy.y, 250))
       }
     }
   }

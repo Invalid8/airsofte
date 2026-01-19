@@ -97,10 +97,9 @@ class SoundManager {
 
   playSound(soundName: string, volumeOverride?: number) {
     if (this.isMuted) return
-    console.log('sound', soundName)
 
     const sound = this.sounds.get(soundName)
-    console.log('sound', sound)
+
     if (sound) {
       if (volumeOverride !== undefined) {
         sound.volume(volumeOverride * this.sfxVolume * this.masterVolume)
