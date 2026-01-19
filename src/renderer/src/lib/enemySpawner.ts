@@ -1,4 +1,4 @@
-import type { Wave, EnemyType, MovementPattern } from '../types/gameTypes'
+import type { EnemyType, MovementPattern, WaveInstance } from '../types/gameTypes'
 import { EnemyController } from './enemyController'
 import { gameManager } from './gameManager'
 import { gameEvents } from './eventBus'
@@ -12,7 +12,7 @@ type SpawnConfig = {
 
 export class EnemySpawner {
   private enemyController: EnemyController
-  private currentWave: Wave | null = null
+  private currentWave: WaveInstance | null = null
   private spawnQueue: SpawnConfig[] = []
   private spawning: boolean = false
   private spawnTimeoutId: number | null = null
@@ -25,12 +25,14 @@ export class EnemySpawner {
     this.bounds = bounds
   }
 
-  startWave(wave: Wave): void {
+  startWave(wave: WaveInstance): void {
     this.currentWave = wave
-    this.spawnQueue = [...wave.enemies]
+    this.spawnQueue = wave.enemies.map((e) => ({ ...e }))
+
     this.spawning = true
     this.enemiesSpawned = 0
-    this.totalEnemiesInWave = wave.enemies.reduce((sum, e) => sum + e.count, 0)
+    this.totalEnemiesInWave = this.spawnQueue.reduce((s, e) => s + e.count, 0)
+
     this.processSpawnQueue()
   }
 

@@ -136,14 +136,16 @@ export class GameManager {
   private initializeWaves(): void {
     const modifier = DIFFICULTY_MODIFIERS[this.difficulty]
 
-    this.waves = WAVE_TEMPLATES.map((template, index) => ({
+    this.waves = WAVE_TEMPLATES.map((template) => ({
       id: template.id,
+      spawnInterval: template.spawnInterval,
+      completed: false,
       enemies: template.enemies.map((e) => ({
-        ...e,
-        count: Math.ceil(e.count * modifier.enemyHealthMultiplier)
-      })),
-      spawnInterval: 1000,
-      completed: false
+        type: e.type,
+        pattern: e.pattern,
+        spawnDelay: e.spawnDelay,
+        count: Math.ceil(e.count * modifier.enemyCountMultiplier)
+      }))
     }))
 
     this.currentWave = this.waves[0]

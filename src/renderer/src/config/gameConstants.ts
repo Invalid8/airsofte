@@ -1,4 +1,10 @@
-import type { EnemyType, WeaponType, PowerUpType, GameDifficulty } from '../types/gameTypes'
+import type {
+  EnemyType,
+  WeaponType,
+  PowerUpType,
+  GameDifficulty,
+  WaveTemplate
+} from '../types/gameTypes'
 
 export const GAME_CONFIG = {
   FPS: 60,
@@ -50,15 +56,18 @@ export const GAME_CONFIG = {
   }
 } as const
 
-export const ENEMY_CONFIG: Record<EnemyType, {
-  width: number
-  height: number
-  health: number
-  speed: number
-  scoreValue: number
-  shootInterval: number
-  sprite: string
-}> = {
+export const ENEMY_CONFIG: Record<
+  EnemyType,
+  {
+    width: number
+    height: number
+    health: number
+    speed: number
+    scoreValue: number
+    shootInterval: number
+    sprite: string
+  }
+> = {
   BASIC: {
     width: 80,
     height: 80,
@@ -97,12 +106,15 @@ export const ENEMY_CONFIG: Record<EnemyType, {
   }
 }
 
-export const WEAPON_CONFIG: Record<WeaponType, {
-  bulletCount: number
-  spread: number
-  fireRate: number
-  damage: number
-}> = {
+export const WEAPON_CONFIG: Record<
+  WeaponType,
+  {
+    bulletCount: number
+    spread: number
+    fireRate: number
+    damage: number
+  }
+> = {
   SINGLE: {
     bulletCount: 1,
     spread: 0,
@@ -129,14 +141,17 @@ export const WEAPON_CONFIG: Record<WeaponType, {
   }
 }
 
-export const POWERUP_CONFIG: Record<PowerUpType, {
-  width: number
-  height: number
-  speed: number
-  value: number
-  duration?: number
-  sprite: string
-}> = {
+export const POWERUP_CONFIG: Record<
+  PowerUpType,
+  {
+    width: number
+    height: number
+    speed: number
+    value: number
+    duration?: number
+    sprite: string
+  }
+> = {
   HEALTH: {
     width: 40,
     height: 40,
@@ -177,71 +192,83 @@ export const POWERUP_CONFIG: Record<PowerUpType, {
   }
 }
 
-export const DIFFICULTY_MODIFIERS: Record<GameDifficulty, {
-  enemyHealthMultiplier: number
-  enemySpeedMultiplier: number
-  enemyDamageMultiplier: number
-  scoreMultiplier: number
-  powerUpSpawnRate: number
-}> = {
+export const DIFFICULTY_MODIFIERS: Record<
+  GameDifficulty,
+  {
+    enemyHealthMultiplier: number
+    enemySpeedMultiplier: number
+    enemyDamageMultiplier: number
+    enemyCountMultiplier: number
+    scoreMultiplier: number
+    powerUpSpawnRate: number
+  }
+> = {
   Easy: {
     enemyHealthMultiplier: 0.7,
     enemySpeedMultiplier: 0.8,
     enemyDamageMultiplier: 0.7,
+    enemyCountMultiplier: 0.8,
     scoreMultiplier: 0.8,
     powerUpSpawnRate: 0.3
   },
+
   Normal: {
     enemyHealthMultiplier: 1.0,
     enemySpeedMultiplier: 1.0,
     enemyDamageMultiplier: 1.0,
+    enemyCountMultiplier: 1.0,
     scoreMultiplier: 1.0,
     powerUpSpawnRate: 0.2
   },
+
   Hard: {
     enemyHealthMultiplier: 1.5,
     enemySpeedMultiplier: 1.3,
     enemyDamageMultiplier: 1.5,
+    enemyCountMultiplier: 1.3,
     scoreMultiplier: 1.5,
     powerUpSpawnRate: 0.1
   }
 }
 
-export const WAVE_TEMPLATES = [
+export const WAVE_TEMPLATES: readonly WaveTemplate[] = [
   {
     id: 1,
     enemies: [
       { type: 'BASIC' as EnemyType, count: 5, spawnDelay: 500, pattern: 'STRAIGHT' as const }
-    ]
+    ],
+    spawnInterval: 1000
   },
   {
     id: 2,
     enemies: [
       { type: 'BASIC' as EnemyType, count: 4, spawnDelay: 400, pattern: 'WAVE' as const },
       { type: 'SCOUT' as EnemyType, count: 2, spawnDelay: 600, pattern: 'ZIGZAG' as const }
-    ]
+    ],
+    spawnInterval: 900
   },
   {
     id: 3,
     enemies: [
       { type: 'SCOUT' as EnemyType, count: 6, spawnDelay: 300, pattern: 'WAVE' as const },
       { type: 'BASIC' as EnemyType, count: 3, spawnDelay: 500, pattern: 'STRAIGHT' as const }
-    ]
+    ],
+    spawnInterval: 800
   },
   {
     id: 4,
     enemies: [
       { type: 'BOMBER' as EnemyType, count: 2, spawnDelay: 1000, pattern: 'STRAIGHT' as const },
       { type: 'SCOUT' as EnemyType, count: 4, spawnDelay: 400, pattern: 'CIRCLE' as const }
-    ]
+    ],
+    spawnInterval: 700
   },
   {
     id: 5,
-    enemies: [
-      { type: 'BOSS' as EnemyType, count: 1, spawnDelay: 0, pattern: 'CIRCLE' as const }
-    ]
+    enemies: [{ type: 'BOSS' as EnemyType, count: 1, spawnDelay: 0, pattern: 'CIRCLE' as const }],
+    spawnInterval: 600
   }
-]
+] as const
 
 export const DEFAULT_KEY_BINDINGS = {
   up: 'w',

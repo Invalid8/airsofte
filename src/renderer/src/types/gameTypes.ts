@@ -31,7 +31,6 @@ export type Bullet = {
   active: boolean
   owner: 'PLAYER' | 'ENEMY'
   type?: string
-
 }
 
 export type Enemy = {
@@ -194,7 +193,36 @@ export type CollisionResult = {
 }
 
 export type GameEvent = {
-  type: 'ENEMY_DESTROYED' | 'PLAYER_HIT' | 'POWERUP_COLLECTED' | 'WAVE_COMPLETE' | 'BOSS_DEFEATED' | 'GAME_OVER'
+  type:
+    | 'ENEMY_DESTROYED'
+    | 'PLAYER_HIT'
+    | 'POWERUP_COLLECTED'
+    | 'WAVE_COMPLETE'
+    | 'BOSS_DEFEATED'
+    | 'GAME_OVER'
   data?: any
   timestamp: number
+}
+
+export type WaveTemplate = {
+  id: number
+  spawnInterval: number
+  enemies: ReadonlyArray<{
+    type: EnemyType
+    count: number
+    spawnDelay: number
+    pattern: MovementPattern
+  }>
+}
+
+export type WaveInstance = {
+  id: number
+  enemies: {
+    type: EnemyType
+    count: number
+    spawnDelay: number
+    pattern: MovementPattern
+  }[]
+  spawnInterval: number
+  completed: boolean
 }
