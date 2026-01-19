@@ -19,15 +19,15 @@
     class="briefing-container max-w-3xl w-full bg-black/80 border-2 border-cyan-500 rounded-xl p-8"
     in:fly={{ y: -50, duration: 500 }}
   >
-    <div class="header text-center grid mb-8">
-      <div class="mission-number text-sm opacity-70 grid mb-2">MISSION {mission.id}</div>
-      <h1 class="mission-title text-5xl uppercase glow-text title grid mb-4">{mission.title}</h1>
+    <div class="header text-center mb-8">
+      <div class="mission-number text-sm opacity-70 mb-2">MISSION {mission.id}</div>
+      <h1 class="mission-title text-5xl uppercase glow-text title mb-4">{mission.title}</h1>
       <p class="mission-description text-lg opacity-80">{mission.description}</p>
     </div>
 
-    <div class="objectives-section bg-black/50 border border-cyan-500/30 rounded-lg p-6 grid mb-6">
-      <h2 class="text-2xl font-bold grid mb-4 text-cyan-400">Mission Objectives</h2>
-      <div class="objectives-list flex-col gap-3">
+    <div class="objectives-section bg-black/50 border border-cyan-500/30 rounded-lg p-6 mb-6">
+      <h2 class="text-2xl font-bold mb-4 text-cyan-400">Mission Objectives</h2>
+      <div class="objectives-list flex flex-col gap-3">
         {#each mission.objectives as objective, i (i)}
           <div class="objective-item flex items-start gap-3">
             <div
@@ -47,8 +47,8 @@
       </div>
     </div>
 
-    <div class="intel-section bg-black/50 border border-cyan-500/30 rounded-lg p-6 grid mb-6">
-      <h2 class="text-2xl font-bold grid mb-4 text-cyan-400">Intel Report</h2>
+    <div class="intel-section bg-black/50 border border-cyan-500/30 rounded-lg p-6 mb-6">
+      <h2 class="text-2xl font-bold mb-4 text-cyan-400">Intel Report</h2>
       <div class="intel-grid grid grid-cols-2 gap-4">
         <div class="intel-item">
           <div class="label text-sm opacity-70">Waves</div>
@@ -76,7 +76,7 @@
 
       {#if mission.hasBoss}
         <div class="boss-warning mt-4 p-4 bg-red-500/20 border-2 border-red-500 rounded-lg">
-          <div class="text-lg font-bold text-red-400 grid mb-2">⚠️ WARNING: BOSS ENCOUNTER</div>
+          <div class="text-lg font-bold text-red-400 mb-2">⚠️ WARNING: BOSS ENCOUNTER</div>
           <div class="text-sm opacity-80">
             This mission contains a boss-class enemy. Extreme caution advised. Ensure you are
             adequately prepared before engaging.

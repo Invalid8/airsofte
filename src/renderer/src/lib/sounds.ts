@@ -4,7 +4,6 @@ import Fly from '../assets/sounds/fly.mp3'
 import BG1 from '../assets/sounds/bg1.mp3'
 import Shoot1 from '../assets/sounds/shoot1.mp3'
 import type { GameState } from '../routes/gameRoutes'
-// import Shoot2 from '../assets/sounds/shoot2.mp3'
 
 export function clickBtnSound(): void {
   const sound = new Howl({

@@ -46,8 +46,8 @@
         disabled={!mission.unlocked}
       >
         <div class="mission-header pb-4">
-          <div class="mission-number text-sm opacity-70 grid mb-2">Mission {mission.id}</div>
-          <h3 class="mission-title text-2xl font-bold title grid mb-2">{mission.title}</h3>
+          <div class="mission-number text-sm opacity-70 mb-2">Mission {mission.id}</div>
+          <h3 class="mission-title text-2xl font-bold title mb-2">{mission.title}</h3>
           <div
             class="mission-status text-sm font-bold {mission.unlocked
               ? 'text-cyan-400'

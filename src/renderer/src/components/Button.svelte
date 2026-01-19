@@ -1,6 +1,6 @@
 <script lang="ts">
   import { gsap } from 'gsap'
-  import { clickBtnSound } from '../lib/sounds'
+  import soundManager from '../lib/soundManager'
   import { onMount } from 'svelte'
   export let label: string | HTMLElement = 'START'
   export let onClick: () => void
@@ -8,21 +8,18 @@
   export let buttonRef: HTMLButtonElement | null = null
   let button: HTMLButtonElement
 
-  // Forward the reference when it's available
   $: if (button) {
     buttonRef = button
   }
 
-  // Apply hover effect
   const applyHoverEffect = (): void => {
     gsap.to(button, { scale: 1.05, duration: 0.15, ease: 'power1.out' })
-    gsap.to(button.previousElementSibling, { opacity: 1, duration: 0.2 }) // Target the glow element
+    gsap.to(button.previousElementSibling, { opacity: 1, duration: 0.2 })
   }
 
-  // Remove hover effect
   const removeHoverEffect = (): void => {
     gsap.to(button, { scale: 1, duration: 0.15, ease: 'power1.in' })
-    gsap.to(button.previousElementSibling, { opacity: 0.5, duration: 0.2 }) // Target the glow element
+    gsap.to(button.previousElementSibling, { opacity: 0.5, duration: 0.2 })
   }
 
   const handleMouseEnter = (): void => {
@@ -30,24 +27,20 @@
   }
 
   const handleMouseLeave = (): void => {
-    // Only remove effect if the button is not focused
     if (document.activeElement !== button) {
       removeHoverEffect()
     }
   }
 
-  // Add focus handler
   const handleFocus = (): void => {
     applyHoverEffect()
   }
 
-  // Add blur handler
   const handleBlur = (): void => {
     removeHoverEffect()
   }
 
   const handleClick = (): void => {
-    // Flash effect
     gsap.to(button, {
       backgroundColor: '#00ccff',
       duration: 0.1,
@@ -55,9 +48,8 @@
         gsap.to(button, { backgroundColor: '#0066cc', duration: 0.1 })
       }
     })
-    // Press down effect
     gsap.to(button, { y: 3, duration: 0.1, yoyo: true, repeat: 1 })
-    clickBtnSound()
+    soundManager.playSound('menuClick')
     onClick?.()
   }
 
@@ -129,7 +121,7 @@
       0px 8px 8px rgba(0, 0, 0, 0.5);
     text-transform: uppercase;
     z-index: 1;
-    outline: none; /* Remove default focus outline */
+    outline: none;
   }
 
   button:hover {
@@ -144,7 +136,6 @@
     text-shadow: 1px 1px 0px #004488;
   }
 
-  /* Add this to match the hover state in focus */
   button:focus {
     background-color: #0077dd;
   }

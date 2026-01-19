@@ -129,17 +129,20 @@
       const enemy = enemyController.getEnemyById(enemyId)
       if (!enemy) return
 
-      gameManager.damagePlayer(20)
-      enemy.active = false
+      if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
+        gameManager.damagePlayer(20)
 
-      particleSystem.createExplosion(
-        enemy.x + enemy.width / 2,
-        enemy.y + enemy.height / 2,
-        20,
-        '#ff3300'
-      )
-      ScreenEffects.shake(12, 0.4)
-      ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
+        particleSystem.createExplosion(
+          enemy.x + enemy.width / 2,
+          enemy.y + enemy.height / 2,
+          20,
+          '#ff3300'
+        )
+        ScreenEffects.shake(12, 0.4)
+        ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
+      }
+
+      enemy.active = false
     })
   }
 

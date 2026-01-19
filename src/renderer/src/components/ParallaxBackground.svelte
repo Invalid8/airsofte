@@ -54,7 +54,7 @@
 <style>
   .parallax-container {
     z-index: 0;
-    /* background: linear-gradient(180deg, #000428 0%, #001a3d 100%); */
+    background: linear-gradient(180deg, #00042849 0%, #001a3d59 100%);
   }
 
   .parallax-layer {
@@ -83,26 +83,26 @@
       0 0,
       100px 100px,
       200px 200px;
-    opacity: 0.3;
+    opacity: 0.6;
   }
 
   .stars-medium {
     background-image:
-      radial-gradient(circle, rgba(255, 255, 255, 0.8) 2.5px, transparent 2.5px),
-      radial-gradient(circle, rgba(255, 255, 255, 0.7) 2px, transparent 2px);
+      radial-gradient(circle, rgba(255, 255, 255, 0.9) 2.5px, transparent 2.5px),
+      radial-gradient(circle, rgba(255, 255, 255, 0.8) 2px, transparent 2px);
     background-size:
       500px 500px,
       700px 700px;
     background-position:
       50px 50px,
       250px 250px;
-    opacity: 0.4;
+    opacity: 0.7;
   }
 
   .stars-large {
     background-image:
-      radial-gradient(circle, rgba(100, 200, 255, 0.9) 3px, transparent 3px),
-      radial-gradient(circle, rgba(150, 220, 255, 0.8) 3.5px, transparent 3.5px);
+      radial-gradient(circle, rgba(100, 200, 255, 1) 3px, transparent 3px),
+      radial-gradient(circle, rgba(150, 220, 255, 0.9) 3.5px, transparent 3.5px);
     background-size:
       600px 600px,
       900px 900px;
@@ -119,7 +119,7 @@
       opacity: 1;
     }
     50% {
-      opacity: 0.25;
+      opacity: 0.4;
     }
   }
 </style>

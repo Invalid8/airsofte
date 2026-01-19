@@ -26,6 +26,7 @@
   let showBriefing = $state(true)
   let missionStarted = $state(false)
   let showVictory = $state(false)
+  let gameEnded = $state(false)
 
   function handleKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Escape' && missionStarted) {
@@ -46,6 +47,9 @@
   }
 
   function handleMissionComplete(): void {
+    if (gameEnded) return
+    gameEnded = true
+
     if (currentMission) {
       storyMissionManager.completeMission(currentMission.id)
       showVictory = true
@@ -53,7 +57,10 @@
   }
 
   function handleGameOver(event): void {
-    if (event.data.victory) {
+    if (gameEnded) return
+    gameEnded = true
+
+    if (event.data?.victory === true) {
       handleMissionComplete()
     }
   }
@@ -89,6 +96,8 @@
     if (gameManager.isPlaying) {
       gameManager.endGame(false)
     }
+    gameEnded = false
+    showVictory = false
   })
 </script>
 

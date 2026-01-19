@@ -31,6 +31,7 @@ export type Bullet = {
   active: boolean
   owner: 'PLAYER' | 'ENEMY'
   type?: string
+
 }
 
 export type Enemy = {
@@ -54,6 +55,7 @@ export type Enemy = {
     startX?: number
     startY?: number
     angle?: number
+    radius?: number
   }
 }
 

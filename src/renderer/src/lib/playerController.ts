@@ -1,7 +1,7 @@
 import type { Bullet, BoundingBox } from '../types/gameTypes'
 import { GAME_CONFIG, WEAPON_CONFIG } from '../config/gameConstants'
 import { gameManager } from '../lib/gameManager'
-import { soundManager } from '../lib/soundManager'
+import soundManager from '../lib/soundManager'
 import { clampToBox, getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 
@@ -88,7 +88,7 @@ export class PlayerController {
     const bullets = this.createBullets()
 
     if (bullets.length > 0) {
-      soundManager.play('shoot')
+      soundManager.playSound('shoot')
       gameManager.onBulletFired()
     }
 

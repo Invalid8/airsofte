@@ -5,8 +5,8 @@
   import Spaceship from '../components/Spaceship.svelte'
   import { replicateLoadFunctions } from '../lib/utils'
   import { navigateTo } from '../stores/gameStore'
+  import soundManager from '../lib/soundManager'
   import { onMount } from 'svelte'
-  import { flyOverSound } from '../lib/sounds'
 
   let isComplete = false
 
@@ -19,7 +19,7 @@
   }
 
   onMount(() => {
-    flyOverSound()
+    soundManager.playSound('flyOver')
   })
 </script>
 

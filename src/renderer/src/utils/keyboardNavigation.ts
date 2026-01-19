@@ -1,13 +1,6 @@
 import { onMount } from 'svelte'
-import { clickBtnSound } from '../lib/sounds'
+import soundManager from '../lib/soundManager'
 
-/**
- * A reusable utility for keyboard arrow navigation between elements
- *
- * @param getElements - Function that returns an array of elements to navigate between
- * @param options - Configuration options
- * @returns Object containing setup function
- */
 export function createKeyboardNavigation<T extends HTMLElement>(
   getElements: () => T[],
   options: {
@@ -29,14 +22,12 @@ export function createKeyboardNavigation<T extends HTMLElement>(
     const currentIndex = elements.findIndex((el) => el === document.activeElement)
     let nextIndex = currentIndex
 
-    // Handle vertical navigation (up/down arrows)
     if (vertical) {
       if (event.key === 'ArrowDown') {
         event.preventDefault()
         nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % elements.length
         if (!loop && nextIndex < currentIndex) nextIndex = currentIndex
-
-        clickBtnSound()
+        soundManager.playSound('sound1')
       } else if (event.key === 'ArrowUp') {
         event.preventDefault()
         nextIndex =
@@ -44,19 +35,16 @@ export function createKeyboardNavigation<T extends HTMLElement>(
             ? elements.length - 1
             : (currentIndex - 1 + elements.length) % elements.length
         if (!loop && nextIndex > currentIndex) nextIndex = currentIndex
-
-        clickBtnSound()
+        soundManager.playSound('sound1')
       }
     }
 
-    // Handle horizontal navigation (left/right arrows)
     if (horizontal) {
       if (event.key === 'ArrowRight') {
         event.preventDefault()
         nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % elements.length
         if (!loop && nextIndex < currentIndex) nextIndex = currentIndex
-
-        clickBtnSound()
+        soundManager.playSound('sound1')
       } else if (event.key === 'ArrowLeft') {
         event.preventDefault()
         nextIndex =
@@ -64,30 +52,25 @@ export function createKeyboardNavigation<T extends HTMLElement>(
             ? elements.length - 1
             : (currentIndex - 1 + elements.length) % elements.length
         if (!loop && nextIndex > currentIndex) nextIndex = currentIndex
-
-        clickBtnSound()
+        soundManager.playSound('sound1')
       }
     }
 
-    // Handle Enter/Space for selection
     if ((event.key === 'Enter' || event.key === ' ') && currentIndex >= 0 && onSelect) {
       event.preventDefault()
       onSelect(elements[currentIndex])
       return
     }
 
-    // Focus the next element
     if (nextIndex !== currentIndex && elements[nextIndex]) {
       elements[nextIndex]?.focus()
     }
   }
 
-  // Set up the keyboard navigation
   const setup = (): void => {
     onMount(() => {
       window.addEventListener('keydown', handleKeydown)
 
-      // Auto-focus the first element if requested
       if (autoFocus) {
         const elements = getElements()
         if (elements.length > 0) {

@@ -52,7 +52,7 @@
 <div class="overlay fixed size-full top-0 left-0 right-0 bottom-0 bg-black/70 z-[999]"></div>
 
 <div
-  class="high-score-modal fixed w-full max-w-2xl rounded-xl bg-white/10 space-1-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+  class="high-score-modal fixed w-full max-w-2xl rounded-xl modal-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
   in:fly={{ y: 200, duration: 500 }}
 >
   <div class="content flex flex-col items-center justify-center gap-4">
@@ -64,7 +64,7 @@
           class={cn(
             'border p-3 font-bold title rounded-xl cursor-pointer hover:opacity-80 transition-all',
             tab === 'quick_play' && 'bg-[#0066cc] border-cyan-400 shadow-lg shadow-cyan-500/50',
-            tab !== 'quick_play' && 'bg-black opacity-75 border-cyan-500/30'
+            tab !== 'quick_play' && 'bg-black/50 opacity-75 border-cyan-500/30'
           )}
           onclick={() => (tab = 'quick_play')}
         >
@@ -74,7 +74,7 @@
           class={cn(
             'border p-3 font-bold title rounded-xl cursor-pointer hover:opacity-80 transition-all',
             tab === 'story_mode' && 'bg-[#0066cc] border-cyan-400 shadow-lg shadow-cyan-500/50',
-            tab !== 'story_mode' && 'bg-black opacity-75 border-cyan-500/30'
+            tab !== 'story_mode' && 'bg-black/50 opacity-75 border-cyan-500/30'
           )}
           onclick={() => (tab = 'story_mode')}
         >
@@ -83,18 +83,20 @@
       </div>
 
       <div
-        class="content border p-6 min-h-[400px] rounded-xl bg-white/2 max-h-[calc(100svh_-_440px)] overflow-auto scroll"
+        class="content border p-6 min-h-[400px] rounded-xl bg-black/30 max-h-[calc(100svh_-_440px)] overflow-auto scroll"
       >
         {#if currentScores.length === 0}
-          <div class="empty-state text-center py-12">
-            <div class="text-4xl grid mb-4 opacity-50">🏆</div>
+          <div
+            class="empty-state text-center py-12 flex flex-col items-center justify-center h-full"
+          >
+            <div class="text-6xl mb-4 opacity-50">🏆</div>
             <p class="text-xl opacity-70">No high scores yet!</p>
             <p class="text-sm opacity-50 mt-2">Play some games to set records</p>
           </div>
         {:else}
           <div class="scores-table">
             <div
-              class="table-header grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 pb-3 border-b-2 border-cyan-500/30 grid mb-4 font-bold text-sm"
+              class="table-header grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 pb-3 border-b-2 border-cyan-500/30 mb-4 font-bold text-sm"
             >
               <div class="text-center">Rank</div>
               <div>Name</div>
@@ -148,7 +150,7 @@
           </li>
         {/if}
         <li>
-          <Button label="Close" onClick={toggleHighScore} />
+          <Button label="Close" onClick={toggleHighScore} isFirst={true} />
         </li>
       </ul>
     </div>
@@ -159,6 +161,13 @@
   h2 {
     word-spacing: -10px;
     line-height: 115%;
+  }
+
+  .modal-bg {
+    background: linear-gradient(135deg, rgba(0, 10, 30, 0.95) 0%, rgba(0, 30, 60, 0.95) 100%);
+    border: 2px solid rgba(0, 170, 255, 0.5);
+    box-shadow: 0 0 40px rgba(0, 170, 255, 0.3);
+    backdrop-filter: blur(10px);
   }
 
   .top-score {

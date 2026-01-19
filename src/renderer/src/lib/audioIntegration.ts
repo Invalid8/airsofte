@@ -1,5 +1,5 @@
 import { gameEvents } from './eventBus'
-import { soundManager } from './soundManager'
+import soundManager from './soundManager'
 
 export class AudioEventHandler {
   private static initialized = false
@@ -24,21 +24,26 @@ export class AudioEventHandler {
     })
 
     gameEvents.on('PLAYER_HIT', () => {
-      soundManager.play('playerHit')
+      soundManager.playSound('playerHit')
     })
 
     gameEvents.on('PLAYER_DEATH', () => {
       soundManager.playExplosion('medium')
     })
 
-    gameEvents.on('POWERUP_COLLECTED', () => {
-      soundManager.play('powerup')
+    gameEvents.on('POWERUP_COLLECTED', (event) => {
+      const type = event.data?.type
+      soundManager.playSound('powerup')
+
+      if (type === 'SCORE') {
+        setTimeout(() => soundManager.playSound('powerup'), 100)
+      }
     })
 
     gameEvents.on('WAVE_START', (event) => {
       const wave = event.data?.wave
-      if (wave === 5 || (event.data?.hasBoss)) {
-        soundManager.play('bossWarning')
+      if (wave === 5 || event.data?.hasBoss) {
+        soundManager.playSound('bossWarning')
         setTimeout(() => {
           soundManager.playMusic('boss')
         }, 2000)
@@ -63,9 +68,9 @@ export class AudioEventHandler {
 
       setTimeout(() => {
         if (event.data?.victory) {
-          soundManager.play('victory')
+          soundManager.playSound('victory')
         } else {
-          soundManager.play('gameOver')
+          soundManager.playSound('gameOver')
         }
       }, 500)
     })
@@ -84,19 +89,19 @@ export class AudioEventHandler {
       setTimeout(() => soundManager.playExplosion('large'), 600)
       setTimeout(() => {
         soundManager.stopMusic(true)
-        soundManager.play('victory')
+        soundManager.playSound('victory')
       }, 1000)
     })
 
     gameEvents.on('ENEMY_SPAWNED', (event) => {
       const type = event.data?.type
       if (type === 'BOSS') {
-        soundManager.play('bossWarning')
+        soundManager.playSound('bossWarning')
       }
     })
 
     gameEvents.on('SHIELD_ACTIVATED', () => {
-      soundManager.play('powerup')
+      soundManager.playSound('powerup')
     })
 
     gameEvents.on('SHIELD_BROKEN', () => {
@@ -104,18 +109,22 @@ export class AudioEventHandler {
     })
 
     gameEvents.on('WEAPON_CHANGED', () => {
-      soundManager.play('powerup')
+      soundManager.playSound('powerup')
     })
 
     gameEvents.on('COMBO_UPDATED', (event) => {
       const multiplier = event.data?.multiplier
-      if (multiplier && multiplier >= 3) {
-        soundManager.play('powerup')
+      if (multiplier && multiplier >= 2) {
+        soundManager.playSound('powerup')
       }
     })
 
     gameEvents.on('NEW_HIGH_SCORE', () => {
-      soundManager.play('victory')
+      soundManager.playSound('victory')
+    })
+
+    gameEvents.on('PLAYER_RESPAWN', () => {
+      soundManager.playSound('powerup')
     })
   }
 

@@ -9,7 +9,6 @@
   import ParallaxBackground from '../components/ParallaxBackground.svelte'
   import BossHealthBar from '../components/BossHealthBar.svelte'
   import VictoryScreen from '../components/VictoryScreen.svelte'
-  import { BgSound1 } from '../lib/sounds'
   import { startQuickPlay, gameState, togglePause, syncGameState } from '../stores/gameStore'
   import { gameEvents } from '../lib/eventBus'
   import type { Bullet } from '../types/gameTypes'
@@ -19,11 +18,13 @@
   let playerX = $state(0)
   let playerY = $state(0)
   let showVictory = $state(false)
-
-  const bgSound1 = BgSound1()
+  let gameEnded = $state(false)
 
   function handleGameOver(event): void {
-    if (event.data.victory) {
+    if (gameEnded) return
+    gameEnded = true
+
+    if (event.data?.victory === true) {
       showVictory = true
     }
   }
@@ -36,7 +37,6 @@
   }
 
   onMount(() => {
-    bgSound1.play()
     startQuickPlay($gameState.difficulty)
 
     window.addEventListener('keydown', handleKeyDown)
@@ -56,7 +56,8 @@
 
   onDestroy(() => {
     window.removeEventListener('keydown', handleKeyDown)
-    bgSound1.pause()
+    gameEnded = false
+    showVictory = false
   })
 </script>
 

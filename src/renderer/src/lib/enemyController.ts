@@ -1,7 +1,7 @@
 import type { Enemy, EnemyType, MovementPattern, Bullet, BoundingBox } from '../types/gameTypes'
 import { ENEMY_CONFIG, GAME_CONFIG, DIFFICULTY_MODIFIERS } from '../config/gameConstants'
 import { gameManager } from '../lib/gameManager'
-import { soundManager } from '../lib/soundManager'
+import soundManager from '../lib/soundManager'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 
@@ -90,7 +90,8 @@ export class EnemyController {
         return {
           angle: 0,
           startX: x,
-          startY: y
+          startY: y,
+          radius: 100
         }
       case 'CHASE':
         return {
@@ -113,7 +114,7 @@ export class EnemyController {
     this.enemies = this.enemies.filter((enemy) => {
       if (!enemy.active) return false
 
-      this.updateEnemyPosition(enemy, deltaTime, playerX, playerY)
+      this.updateEnemyPosition(enemy, deltaTime, playerX, playerY, bounds)
 
       if (this.shouldShoot(enemy)) {
         const bullet = this.shootBullet(enemy)
@@ -135,8 +136,11 @@ export class EnemyController {
     enemy: Enemy,
     deltaTime: number,
     playerX?: number,
-    playerY?: number
+    playerY?: number,
+    bounds?: BoundingBox
   ): void {
+    const isBoss = enemy.type === 'BOSS'
+
     switch (enemy.pattern) {
       case 'STRAIGHT':
         enemy.y += enemy.speed
@@ -164,10 +168,20 @@ export class EnemyController {
       case 'CIRCLE':
         if (enemy.patternData) {
           enemy.patternData.angle = (enemy.patternData.angle || 0) + 0.02
-          enemy.x = enemy.patternData.startX! + Math.cos(enemy.patternData.angle) * 100
-          enemy.y =
-            enemy.patternData.startY! + Math.sin(enemy.patternData.angle) * 100 + enemy.speed
-          enemy.patternData.startY! += enemy.speed * 0.5
+
+          if (isBoss) {
+            const centerX = bounds ? bounds.width / 2 - enemy.width / 2 : 400
+            const centerY = 150
+            const radius = enemy.patternData.radius || 100
+
+            enemy.x = centerX + Math.cos(enemy.patternData.angle) * radius
+            enemy.y = centerY + Math.sin(enemy.patternData.angle) * 50
+          } else {
+            enemy.x = enemy.patternData.startX! + Math.cos(enemy.patternData.angle) * 100
+            enemy.y =
+              enemy.patternData.startY! + Math.sin(enemy.patternData.angle) * 100 + enemy.speed
+            enemy.patternData.startY! += enemy.speed * 0.5
+          }
         }
         break
 
@@ -185,6 +199,15 @@ export class EnemyController {
           enemy.y += enemy.speed
         }
         break
+    }
+
+    if (bounds) {
+      const margin = 10
+      enemy.x = Math.max(margin, Math.min(enemy.x, bounds.width - enemy.width - margin))
+
+      if (isBoss) {
+        enemy.y = Math.max(50, Math.min(enemy.y, 300))
+      }
     }
   }
 
@@ -205,7 +228,7 @@ export class EnemyController {
 
     enemy.lastShot = Date.now()
 
-    soundManager.play('enemyShoot')
+    soundManager.playSound('enemyShoot')
 
     return bullet
   }

@@ -41,7 +41,7 @@
       {/if}
     </div>
 
-    <div class="right-panel flex-col gap-3 text-right">
+    <div class="right-panel flex  flex-col gap-3 text-right">
       <div class="lives-display flex items-center justify-end gap-2">
         <!-- <div class="label text-base tracking-wider opacity-70">LIVES</div> -->
         <div class="hearts flex gap-1">

@@ -13,24 +13,23 @@
   import StoryModeMenu from './screens/story-mode/StoryModeMenu.svelte'
   import StoryModePlay from './screens/story-mode/StoryModePlay.svelte'
   import ExitModal from './screens/modals/ExitModal.svelte'
-  import { BgSound1 } from './lib/sounds'
+  import soundManager from './lib/soundManager'
   import { onDestroy, onMount } from 'svelte'
 
-  const bgSound1 = BgSound1()
   let audioInitialized = false
 
   function initializeAudio(): void {
     if (!audioInitialized) {
-      bgSound1.play()
+      soundManager.playMusic('background')
       audioInitialized = true
     }
   }
 
   $effect(() => {
     if (['STARTUP', 'QUICK_PLAY', 'STORY_MODE_PLAY'].includes($gameState.route)) {
-      bgSound1.pause()
+      soundManager.stopMusic(true)
     } else if ($gameState.route === 'MAIN_MENU' && audioInitialized) {
-      bgSound1.play()
+      soundManager.playMusic('background')
     }
   })
 
@@ -40,7 +39,7 @@
   })
 
   onDestroy(() => {
-    bgSound1.unload()
+    soundManager.stopAll()
     document.removeEventListener('click', initializeAudio)
     document.removeEventListener('keydown', initializeAudio)
   })

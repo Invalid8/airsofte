@@ -4,7 +4,7 @@
   import Button from '../../components/Button.svelte'
   import { toggleSettings, setDifficulty } from '../../stores/gameStore'
   import { StorageManager } from '../../utils/storageManager'
-  import { GameSoundManager } from '../../lib/sounds'
+  import soundManager from '../../lib/soundManager'
   import type { GameSettings } from '../../types/gameTypes'
 
   let settings = $state<GameSettings>({
@@ -35,6 +35,9 @@
 
   onMount(() => {
     settings = StorageManager.getSettings()
+    settings.volume.master = soundManager.getMasterVolume()
+    settings.volume.music = soundManager.getMusicVolume()
+    settings.volume.sfx = soundManager.getSFXVolume()
   })
 
   function handleVolumeChange(type: 'master' | 'music' | 'sfx', value: number): void {
@@ -42,7 +45,11 @@
     hasChanges = true
 
     if (type === 'master') {
-      GameSoundManager.setVolume(value)
+      soundManager.setMasterVolume(value)
+    } else if (type === 'music') {
+      soundManager.setMusicVolume(value)
+    } else if (type === 'sfx') {
+      soundManager.setSFXVolume(value)
     }
   }
 
@@ -59,7 +66,9 @@
 
   function saveSettings(): void {
     StorageManager.saveSettings(settings)
-    GameSoundManager.setVolume(settings.volume.master)
+    soundManager.setMasterVolume(settings.volume.master)
+    soundManager.setMusicVolume(settings.volume.music)
+    soundManager.setSFXVolume(settings.volume.sfx)
     hasChanges = false
   }
 
@@ -82,6 +91,9 @@
         showFPS: false
       }
     }
+    soundManager.setMasterVolume(1.0)
+    soundManager.setMusicVolume(0.8)
+    soundManager.setSFXVolume(0.5)
     hasChanges = true
   }
 
@@ -135,9 +147,9 @@
 
     <div class="tab-content min-h-[300px]">
       {#if activeTab === 'audio'}
-        <div class="flex-col gap-6">
+        <div class="flex flex-col gap-6">
           <div class="setting-item">
-            <label class="flex justify-between items-center grid mb-2">
+            <label class="flex justify-between items-center mb-2">
               <span class="text-lg">Master Volume</span>
               <span class="text-cyan-400 hud">{Math.round(settings.volume.master * 100)}%</span>
             </label>
@@ -153,7 +165,7 @@
           </div>
 
           <div class="setting-item">
-            <label class="flex justify-between items-center grid mb-2">
+            <label class="flex justify-between items-center mb-2">
               <span class="text-lg">Music Volume</span>
               <span class="text-cyan-400 hud">{Math.round(settings.volume.music * 100)}%</span>
             </label>
@@ -169,7 +181,7 @@
           </div>
 
           <div class="setting-item">
-            <label class="flex justify-between items-center grid mb-2">
+            <label class="flex justify-between items-center mb-2">
               <span class="text-lg">SFX Volume</span>
               <span class="text-cyan-400 hud">{Math.round(settings.volume.sfx * 100)}%</span>
             </label>
@@ -187,9 +199,9 @@
       {/if}
 
       {#if activeTab === 'gameplay'}
-        <div class="flex-col gap-6">
+        <div class="flex flex-col gap-6">
           <div class="setting-item">
-            <label class="block text-lg grid mb-3">Difficulty</label>
+            <label class="block text-lg mb-3">Difficulty</label>
             <div class="grid grid-cols-3 gap-3">
               {#each ['Easy', 'Normal', 'Hard'] as diff, i (i)}
                 <button
@@ -215,7 +227,7 @@
       {/if}
 
       {#if activeTab === 'controls'}
-        <div class="flex-col gap-4">
+        <div class="flex flex-col gap-4">
           <div class="controls-grid grid grid-cols-2 gap-4">
             {#each Object.entries(settings.keyBindings) as [action, key], i (i)}
               <div class="control-item">
@@ -232,7 +244,7 @@
       {/if}
 
       {#if activeTab === 'graphics'}
-        <div class="flex-col gap-4">
+        <div class="flex flex-col gap-4">
           <div class="setting-item">
             <label class="flex items-center justify-between">
               <span class="text-lg">Particle Effects</span>

@@ -1,7 +1,7 @@
 import { writable, derived, get } from 'svelte/store'
 import type { GameState, GameRoute, GameDifficulty } from '../routes/gameRoutes'
 import type { GameSessionState, PlayerStats } from '../types/gameTypes'
-import { GameSoundManager } from '../lib/sounds'
+import soundManager from '../lib/soundManager'
 import { gameManager } from '../lib/gameManager'
 import { StorageManager } from '../utils/storageManager'
 import { AudioEventHandler } from '../lib/audioIntegration'
@@ -106,31 +106,16 @@ function createGameStore() {
 
     toggleSound: () => {
       update((state) => {
-        const baseState = GameSoundManager.toggleMute({
-          route: state.route,
-          score: state.score,
-          difficulty: state.difficulty,
-          sound: state.sound,
-          theme: state.theme,
-          previousRoute: state.previousRoute,
-          isPaused: state.isPaused,
-          showHighScore: state.showHighScore,
-          showSettings: state.showSettings,
-          showHelp: state.showHelp,
-          showExit: state.showExit
-        })
-        AudioEventHandler.toggleMute()
+        soundManager.toggleMute()
         return {
-          ...baseState,
-          session: state.session,
-          player: state.player
+          ...state,
+          sound: !soundManager.isMutedState()
         }
       })
     },
 
     adjustVolume: (value: number) => {
-      GameSoundManager.setVolume(value)
-      AudioEventHandler.setMasterVolume(value)
+      soundManager.setMasterVolume(value)
     },
 
     startQuickPlay: (difficulty?: GameDifficulty) => {
@@ -223,9 +208,9 @@ function createGameStore() {
       const state = get({ subscribe })
       StorageManager.saveSettings({
         volume: {
-          master: GameSoundManager.getVolume(),
-          music: 0.8,
-          sfx: 0.5
+          master: soundManager.getMasterVolume(),
+          music: soundManager.getMusicVolume(),
+          sfx: soundManager.getSFXVolume()
         },
         difficulty: state.difficulty,
         keyBindings: {
@@ -253,10 +238,9 @@ function createGameStore() {
         difficulty: settings.difficulty
       }))
 
-      GameSoundManager.setVolume(settings.volume.master)
-      AudioEventHandler.setMasterVolume(settings.volume.master)
-      AudioEventHandler.setMusicVolume(settings.volume.music)
-      AudioEventHandler.setSFXVolume(settings.volume.sfx)
+      soundManager.setMasterVolume(settings.volume.master)
+      soundManager.setMusicVolume(settings.volume.music)
+      soundManager.setSFXVolume(settings.volume.sfx)
     }
   }
 }

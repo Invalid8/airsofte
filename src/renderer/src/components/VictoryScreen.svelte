@@ -44,15 +44,15 @@
   >
     <div class="victory-container max-w-3xl w-full" in:scale={{ duration: 800, start: 0.8 }}>
       <div
-        class="victory-header text-center grid mb-10"
+        class="victory-header text-center mb-10"
         in:fly={{ y: -50, duration: 600, delay: 200 }}
       >
-        <h1 class="victory-title text-6xl uppercase glow-text title grid mb-4">Victory!</h1>
+        <h1 class="victory-title text-6xl uppercase glow-text title mb-4">Victory!</h1>
         <p class="victory-subtitle text-2xl opacity-80">Mission Accomplished</p>
       </div>
 
       <div
-        class="stats-grid grid grid-cols-2 gap-6 grid mb-8"
+        class="stats-grid grid grid-cols-2 gap-6 mb-8"
         in:fly={{ y: 50, duration: 600, delay: 400 }}
       >
         <div class="stat-card">
@@ -81,7 +81,7 @@
           class="bonus-section p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg mb-4"
           in:fly={{ y: 30, duration: 600, delay: 600 }}
         >
-          <div class="text-2xl font-bold text-yellow-400 grid mb-3 text-center">
+          <div class="text-2xl font-bold text-yellow-400 mb-3 text-center">
             ⭐ Bonus Points ⭐
           </div>
           <div class="text-6xl text-center hud">{bonusScore.toLocaleString()} pts</div>
@@ -92,7 +92,7 @@
         class="total-score-section p-8 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500 rounded-lg mb-5"
         in:fly={{ y: 30, duration: 600, delay: 800 }}
       >
-        <div class="text-3xl font-bold text-center grid mb-2">TOTAL SCORE</div>
+        <div class="text-3xl font-bold text-center mb-2">TOTAL SCORE</div>
         <div class="text-6xl font-bold text-center glow-text hud">
           {totalScore.toLocaleString()}
         </div>

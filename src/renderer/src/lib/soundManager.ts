@@ -1,234 +1,231 @@
 import { Howl, Howler } from 'howler'
-import { SOUNDS } from '../config/gameConstants'
+
+interface SoundConfig {
+  src: string
+  volume?: number
+  loop?: boolean
+  pool?: number
+}
 
 class SoundManager {
   private sounds: Map<string, Howl> = new Map()
-  private musicTracks: Map<string, Howl> = new Map()
-  private currentMusic: Howl | null = null
-  private isMuted: boolean = false
+  private music: Map<string, Howl> = new Map()
+  private masterVolume = 1.0
+  private musicVolume = 0.6
+  private sfxVolume = 0.8
+  private isMuted = false
 
   constructor() {
-    this.initializeSounds()
+    this.loadSounds()
+    this.loadMusic()
   }
 
-  private initializeSounds(): void {
-    this.sounds.set(
-      'shoot',
-      new Howl({
-        src: [SOUNDS.PLAYER_SHOOT],
-        volume: 0.3,
-        pool: 10
-      })
-    )
+  private loadSounds() {
+    const soundConfigs: Record<string, SoundConfig> = {
+      shoot1: { src: '/assets/sounds/shoot1.mp3', volume: 0.3, pool: 5 },
+      'enemy-shoot': { src: '/assets/sounds/enemy-shoot.mp3', volume: 0.25, pool: 5 },
+      'explosion-1': { src: '/assets/sounds/explosion-1.mp3', volume: 0.5, pool: 3 },
+      'explosion-2': { src: '/assets/sounds/explosion-2.mp3', volume: 0.6, pool: 3 },
+      'explosion-3': { src: '/assets/sounds/explosion-3.mp3', volume: 0.7, pool: 2 },
+      'player-hit': { src: '/assets/sounds/player-hit.mp3', volume: 0.6 },
+      powerup: { src: '/assets/sounds/powerup.mp3', volume: 0.5 },
+      'boss-warning': { src: '/assets/sounds/boss-warning.mp3', volume: 0.7 },
+      victory: { src: '/assets/sounds/victory.mp3', volume: 0.6 },
+      'game-over': { src: '/assets/sounds/game-over.mp3', volume: 0.6 },
+      sound1: { src: '/assets/sounds/sound1.mp3', volume: 0.4 },
+      fly: { src: '/assets/sounds/fly.mp3', volume: 0.3, loop: true },
+      playerHit: { src: '/assets/sounds/player-hit.mp3', volume: 0.6 },
+      bossWarning: { src: '/assets/sounds/boss-warning.mp3', volume: 0.7 },
+      gameOver: { src: '/assets/sounds/game-over.mp3', volume: 0.6 }
+    }
 
-    this.sounds.set(
-      'enemyShoot',
-      new Howl({
-        src: [SOUNDS.ENEMY_SHOOT],
-        volume: 0.2,
-        pool: 10
-      })
-    )
-
-    this.sounds.set(
-      'explosionSmall',
-      new Howl({
-        src: [SOUNDS.EXPLOSION_SMALL],
-        volume: 0.4,
-        pool: 5
-      })
-    )
-
-    this.sounds.set(
-      'explosionMedium',
-      new Howl({
-        src: [SOUNDS.EXPLOSION_MEDIUM],
-        volume: 0.5,
-        pool: 5
-      })
-    )
-
-    this.sounds.set(
-      'explosionLarge',
-      new Howl({
-        src: [SOUNDS.EXPLOSION_LARGE],
-        volume: 0.6,
-        pool: 3
-      })
-    )
-
-    this.sounds.set(
-      'playerHit',
-      new Howl({
-        src: [SOUNDS.PLAYER_HIT],
-        volume: 0.5
-      })
-    )
-
-    this.sounds.set(
-      'powerup',
-      new Howl({
-        src: [SOUNDS.POWERUP],
-        volume: 0.4
-      })
-    )
-
-    this.sounds.set(
-      'bossWarning',
-      new Howl({
-        src: [SOUNDS.BOSS_WARNING],
-        volume: 0.6
-      })
-    )
-
-    this.sounds.set(
-      'victory',
-      new Howl({
-        src: [SOUNDS.VICTORY],
-        volume: 0.7
-      })
-    )
-
-    this.sounds.set(
-      'gameOver',
-      new Howl({
-        src: [SOUNDS.GAME_OVER],
-        volume: 0.6
-      })
-    )
-
-    this.sounds.set(
-      'menuClick',
-      new Howl({
-        src: [SOUNDS.MENU_CLICK],
-        volume: 0.5
-      })
-    )
-
-    this.sounds.set(
-      'flyOver',
-      new Howl({
-        src: [SOUNDS.FLY_OVER],
-        volume: 0.5
-      })
-    )
-
-    this.musicTracks.set(
-      'background',
-      new Howl({
-        src: [SOUNDS.BG_MUSIC],
-        volume: 0.6,
-        loop: true
-      })
-    )
-
-    this.musicTracks.set(
-      'boss',
-      new Howl({
-        src: [SOUNDS.BOSS_BATTLE],
-        volume: 0.7,
-        loop: true
-      })
-    )
+    Object.entries(soundConfigs).forEach(([key, config]) => {
+      this.sounds.set(
+        key,
+        new Howl({
+          src: [config.src],
+          volume: (config.volume || 0.5) * this.sfxVolume * this.masterVolume,
+          loop: config.loop || false,
+          pool: config.pool || 1
+        })
+      )
+    })
   }
 
-  play(soundName: string): void {
+  private loadMusic() {
+    const musicConfigs: Record<string, SoundConfig> = {
+      background: { src: '/assets/sounds/bg1.mp3', volume: 0.4, loop: true },
+      boss: { src: '/assets/sounds/boss-battle.mp3', volume: 0.5, loop: true }
+    }
+
+    Object.entries(musicConfigs).forEach(([key, config]) => {
+      this.music.set(
+        key,
+        new Howl({
+          src: [config.src],
+          volume: (config.volume || 0.5) * this.musicVolume * this.masterVolume,
+          loop: config.loop || false
+        })
+      )
+    })
+  }
+
+  playSound(soundName: string, volumeOverride?: number) {
     if (this.isMuted) return
 
     const sound = this.sounds.get(soundName)
     if (sound) {
+      if (volumeOverride !== undefined) {
+        sound.volume(volumeOverride * this.sfxVolume * this.masterVolume)
+      }
       sound.play()
     }
   }
 
-  playMusic(trackName: string, fadeIn: boolean = true): void {
-    const track = this.musicTracks.get(trackName)
-    if (!track) return
-
-    if (this.currentMusic && this.currentMusic !== track) {
-      this.stopMusic(true)
+  playExplosion(size: 'small' | 'medium' | 'large') {
+    const explosionMap = {
+      small: 'explosion-1',
+      medium: 'explosion-2',
+      large: 'explosion-3'
     }
+    this.playSound(explosionMap[size])
+  }
 
-    this.currentMusic = track
+  playMusic(musicName: string, loop = true, volumeOverride?: number) {
+    if (this.isMuted) return
 
-    if (fadeIn) {
-      track.volume(0)
-      track.play()
-      track.fade(0, 0.6, 2000)
-    } else {
-      track.play()
+    const music = this.music.get(musicName)
+    if (music) {
+      music.loop(loop)
+      if (volumeOverride !== undefined) {
+        music.volume(volumeOverride * this.musicVolume * this.masterVolume)
+      }
+      music.play()
     }
   }
 
-  stopMusic(fadeOut: boolean = true): void {
-    if (!this.currentMusic) return
-
+  stopMusic(fadeOut = false) {
     if (fadeOut) {
-      this.currentMusic.fade(this.currentMusic.volume(), 0, 1000)
-      setTimeout(() => {
-        this.currentMusic?.stop()
-        this.currentMusic = null
-      }, 1000)
+      this.music.forEach((music) => {
+        if (music.playing()) {
+          music.fade(music.volume(), 0, 1000)
+          setTimeout(() => music.stop(), 1000)
+        }
+      })
     } else {
-      this.currentMusic.stop()
-      this.currentMusic = null
+      this.stopAllMusic()
     }
   }
 
-  pauseMusic(): void {
-    this.currentMusic?.pause()
+  stopAllMusic() {
+    this.music.forEach((music) => music.stop())
   }
 
-  resumeMusic(): void {
-    this.currentMusic?.play()
+  pauseMusic() {
+    this.music.forEach((music) => {
+      if (music.playing()) {
+        music.pause()
+      }
+    })
   }
 
-  setVolume(volume: number): void {
-    Howler.volume(volume)
+  resumeMusic() {
+    this.music.forEach((music) => {
+      if (!music.playing()) {
+        music.play()
+      }
+    })
   }
 
-  setMusicVolume(volume: number): void {
-    this.musicTracks.forEach((track) => track.volume(volume))
+  fadeOutMusic(musicName: string, duration = 1000) {
+    const music = this.music.get(musicName)
+    if (music && music.playing()) {
+      music.fade(music.volume(), 0, duration)
+      setTimeout(() => music.stop(), duration)
+    }
   }
 
-  setSFXVolume(volume: number): void {
-    this.sounds.forEach((sound) => sound.volume(volume))
+  fadeInMusic(musicName: string, targetVolume = 0.5, duration = 1000) {
+    const music = this.music.get(musicName)
+    if (music) {
+      music.volume(0)
+      music.play()
+      music.fade(0, targetVolume * this.musicVolume * this.masterVolume, duration)
+    }
   }
 
-  mute(): void {
+  setMasterVolume(volume: number) {
+    this.masterVolume = Math.max(0, Math.min(1, volume))
+    Howler.volume(this.masterVolume)
+    this.updateAllVolumes()
+  }
+
+  setMusicVolume(volume: number) {
+    this.musicVolume = Math.max(0, Math.min(1, volume))
+    this.updateAllVolumes()
+  }
+
+  setSFXVolume(volume: number) {
+    this.sfxVolume = Math.max(0, Math.min(1, volume))
+    this.updateAllVolumes()
+  }
+
+  private updateAllVolumes() {
+    this.music.forEach((music, key) => {
+      const baseVolume = key === 'boss' ? 0.5 : 0.4
+      music.volume(baseVolume * this.musicVolume * this.masterVolume)
+    })
+
+    this.sounds.forEach((sound) => {
+      const currentVol = sound.volume()
+      sound.volume(currentVol * this.sfxVolume * this.masterVolume)
+    })
+  }
+
+  mute() {
     this.isMuted = true
     Howler.mute(true)
   }
 
-  unmute(): void {
+  unmute() {
     this.isMuted = false
     Howler.mute(false)
   }
 
-  toggleMute(): void {
-    this.isMuted = !this.isMuted
-    Howler.mute(this.isMuted)
-  }
-
-  stopAll(): void {
-    Howler.stop()
-    this.currentMusic = null
-  }
-
-  playExplosion(size: 'small' | 'medium' | 'large' = 'medium'): void {
-    const soundMap = {
-      small: 'explosionSmall',
-      medium: 'explosionMedium',
-      large: 'explosionLarge'
+  toggleMute() {
+    if (this.isMuted) {
+      this.unmute()
+    } else {
+      this.mute()
     }
-    this.play(soundMap[size])
   }
 
-  playRandomExplosion(): void {
-    const sizes: Array<'small' | 'medium' | 'large'> = ['small', 'medium', 'large']
-    const randomSize = sizes[Math.floor(Math.random() * sizes.length)]
-    this.playExplosion(randomSize)
+  stopAll() {
+    this.stopAllMusic()
+    this.sounds.forEach((sound) => sound.stop())
+  }
+
+  setVolume(volume: number) {
+    this.setMasterVolume(volume)
+  }
+
+  getMasterVolume(): number {
+    return this.masterVolume
+  }
+
+  getMusicVolume(): number {
+    return this.musicVolume
+  }
+
+  getSFXVolume(): number {
+    return this.sfxVolume
+  }
+
+  isMutedState(): boolean {
+    return this.isMuted
   }
 }
 
-export const soundManager = new SoundManager()
+const init = new SoundManager()
+
+export default init
