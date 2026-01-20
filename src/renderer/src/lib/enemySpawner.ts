@@ -13,6 +13,7 @@ export class EnemySpawner {
   private spawnQueue: SpawnConfig[] = []
   private spawnTimeoutId: number | null = null
   private bounds: { width: number; height: number }
+  private isSpawning: boolean = false
 
   constructor(enemyController: EnemyController, bounds: { width: number; height: number }) {
     this.enemyController = enemyController
@@ -22,19 +23,29 @@ export class EnemySpawner {
   startWave(wave: WaveInstance): void {
     this.stop()
     this.spawnQueue = wave.enemies.map((e) => ({ ...e }))
+    this.isSpawning = true
     this.processQueue()
   }
 
   private processQueue(): void {
-    if (this.spawnQueue.length === 0) return
+    if (!this.isSpawning) return
+
+    if (this.spawnQueue.length === 0) {
+      this.isSpawning = false
+      return
+    }
 
     const config = this.spawnQueue[0]
     this.spawnEnemy(config)
 
     config.count--
-    if (config.count <= 0) this.spawnQueue.shift()
+    if (config.count <= 0) {
+      this.spawnQueue.shift()
+    }
 
-    this.spawnTimeoutId = window.setTimeout(() => this.processQueue(), config.spawnDelay)
+    this.spawnTimeoutId = window.setTimeout(() => {
+      this.processQueue()
+    }, config.spawnDelay)
   }
 
   private spawnEnemy(config: SpawnConfig): void {
@@ -45,6 +56,7 @@ export class EnemySpawner {
   }
 
   stop(): void {
+    this.isSpawning = false
     if (this.spawnTimeoutId) {
       clearTimeout(this.spawnTimeoutId)
       this.spawnTimeoutId = null

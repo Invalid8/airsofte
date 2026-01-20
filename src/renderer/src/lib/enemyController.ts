@@ -111,8 +111,8 @@ export class EnemyController {
   ): Bullet[] {
     const newBullets: Bullet[] = []
 
-    this.enemies = this.enemies.filter((enemy) => {
-      if (!enemy.active) return false
+    this.enemies.forEach((enemy) => {
+      if (!enemy.active) return
 
       this.updateEnemyPosition(enemy, deltaTime, playerX, playerY, bounds)
 
@@ -120,6 +120,10 @@ export class EnemyController {
         const bullet = this.shootBullet(enemy)
         if (bullet) newBullets.push(bullet)
       }
+    })
+
+    this.enemies = this.enemies.filter((enemy) => {
+      if (!enemy.active) return false
 
       if (enemy.type !== 'BOSS' && enemy.y > bounds.height + 100) {
         enemy.active = false
@@ -148,18 +152,18 @@ export class EnemyController {
 
       case 'WAVE':
         enemy.y += enemy.speed
-        if (enemy.patternData) {
+        if (enemy.patternData && enemy.patternData.startY !== undefined) {
+          const progress = enemy.y - enemy.patternData.startY
           const offset =
-            Math.sin((enemy.y - enemy.patternData.startY!) * enemy.patternData.frequency!) *
-            enemy.patternData.amplitude!
+            Math.sin(progress * enemy.patternData.frequency!) * enemy.patternData.amplitude!
           enemy.x = enemy.patternData.startX! + offset
         }
         break
 
       case 'ZIGZAG':
         enemy.y += enemy.speed
-        if (enemy.patternData) {
-          const progress = enemy.y - enemy.patternData.startY!
+        if (enemy.patternData && enemy.patternData.startY !== undefined) {
+          const progress = enemy.y - enemy.patternData.startY
           const zigzag = Math.floor(progress / 50) % 2 === 0 ? 1 : -1
           enemy.x = enemy.patternData.startX! + zigzag * enemy.patternData.amplitude!
         }
@@ -169,18 +173,21 @@ export class EnemyController {
         if (enemy.patternData) {
           enemy.patternData.angle = (enemy.patternData.angle || 0) + 0.02
 
-          if (isBoss) {
-            const centerX = bounds ? bounds.width / 2 - enemy.width / 2 : 400
+          if (isBoss && bounds) {
+            const centerX = bounds.width / 2 - enemy.width / 2
             const centerY = 150
             const radius = enemy.patternData.radius || 100
 
             enemy.x = centerX + Math.cos(enemy.patternData.angle) * radius
             enemy.y = centerY + Math.sin(enemy.patternData.angle) * 50
           } else {
-            enemy.x = enemy.patternData.startX! + Math.cos(enemy.patternData.angle) * 100
-            enemy.y =
-              enemy.patternData.startY! + Math.sin(enemy.patternData.angle) * 100 + enemy.speed
-            enemy.patternData.startY! += enemy.speed * 0.5
+            const centerX = enemy.patternData.startX || 0
+            enemy.x = centerX + Math.cos(enemy.patternData.angle) * 100
+
+            if (enemy.patternData.startY !== undefined) {
+              enemy.patternData.startY += enemy.speed
+              enemy.y = enemy.patternData.startY + Math.sin(enemy.patternData.angle) * 30
+            }
           }
         }
         break
@@ -202,11 +209,18 @@ export class EnemyController {
     }
 
     if (bounds) {
-      const margin = 50
-      enemy.x = Math.max(margin, Math.min(enemy.x, bounds.width - enemy.width - margin))
+      const margin = 10
+      const maxX = bounds.width - enemy.width - margin
+      const minX = margin
+
+      if (enemy.x < minX) enemy.x = minX
+      if (enemy.x > maxX) enemy.x = maxX
 
       if (isBoss) {
-        enemy.y = Math.max(50, Math.min(enemy.y, 250))
+        const maxY = 250
+        const minY = 50
+        if (enemy.y < minY) enemy.y = minY
+        if (enemy.y > maxY) enemy.y = maxY
       }
     }
   }

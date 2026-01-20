@@ -9,8 +9,15 @@
   import ParallaxBackground from '../components/ParallaxBackground.svelte'
   import BossHealthBar from '../components/BossHealthBar.svelte'
   import VictoryScreen from '../components/VictoryScreen.svelte'
-  import { startQuickPlay, gameState, togglePause, syncGameState } from '../stores/gameStore'
+  import {
+    startQuickPlay,
+    gameState,
+    togglePause,
+    syncGameState,
+    navigateTo
+  } from '../stores/gameStore'
   import { gameEvents } from '../lib/eventBus'
+  import { gameManager } from '../lib/gameManager'
   import type { Bullet } from '../types/gameTypes'
 
   let game_pad: HTMLDivElement = $state()
@@ -28,13 +35,18 @@
       showVictory = true
     } else {
       showVictory = false
+      setTimeout(() => {
+        navigateTo('GAME_OVER')
+      }, 500)
     }
   }
 
   function handleKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault()
-      togglePause()
+      if (!gameEnded) {
+        togglePause()
+      }
     }
   }
 
@@ -46,7 +58,9 @@
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
 
     const syncInterval = setInterval(() => {
-      syncGameState()
+      if (!gameEnded) {
+        syncGameState()
+      }
     }, 100)
 
     return () => {
@@ -58,6 +72,9 @@
 
   onDestroy(() => {
     window.removeEventListener('keydown', handleKeyDown)
+    if (gameManager.isPlaying) {
+      gameManager.endGame(false)
+    }
     gameEnded = false
     showVictory = false
   })

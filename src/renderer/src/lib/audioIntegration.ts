@@ -54,12 +54,10 @@ export class AudioEventHandler {
     })
 
     gameEvents.on('WAVE_COMPLETE', () => {
-      if (soundManager['currentMusic'] === soundManager['musicTracks'].get('boss')) {
-        soundManager.stopMusic(true)
-        setTimeout(() => {
-          soundManager.playMusic('background')
-        }, 1000)
-      }
+      soundManager.stopMusic(true)
+      setTimeout(() => {
+        soundManager.playMusic('background')
+      }, 1000)
     })
 
     gameEvents.on('GAME_START', () => {

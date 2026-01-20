@@ -31,6 +31,7 @@
   let enemies = $state<Enemy[]>([])
   let enemyBullets = $state<Bullet[]>([])
   let animationFrameId: number
+  let updateCounter = $state(0)
 
   const enemySprites = {
     BASIC: EnemyBasic,
@@ -51,7 +52,12 @@
   }
 
   function updateGame(): void {
-    if (!gameManager.isPlaying || gameManager.isPaused) {
+    if (!gameManager.isPlaying) {
+      animationFrameId = requestAnimationFrame(updateGame)
+      return
+    }
+
+    if (gameManager.isPaused) {
       animationFrameId = requestAnimationFrame(updateGame)
       return
     }
@@ -76,7 +82,13 @@
 
     checkCollisions()
 
-    enemies = enemyController.getActiveEnemies()
+    const activeEnemies = enemyController.getActiveEnemies()
+    enemies = activeEnemies.map((e) => ({
+      ...e,
+      patternData: e.patternData ? { ...e.patternData } : undefined
+    }))
+
+    updateCounter++
 
     animationFrameId = requestAnimationFrame(updateGame)
   }
@@ -148,7 +160,10 @@
 
   function handleWaveStart(): void {
     if (!gameManager.currentWave) return
-    enemySpawner.startWave(gameManager.currentWave)
+
+    if (enemySpawner) {
+      enemySpawner.startWave(gameManager.currentWave)
+    }
   }
 
   function handleGameStart(): void {
@@ -157,14 +172,17 @@
     enemyBullets = []
 
     setTimeout(() => {
-      if (gameManager.currentWave) {
+      if (gameManager.currentWave && enemySpawner) {
         enemySpawner.startWave(gameManager.currentWave)
       }
     }, 1000)
   }
 
+  let unsubWaveStart: (() => void) | null = null
+  let unsubGameStart: (() => void) | null = null
+
   onMount(() => {
-    if (!game_pad) return null
+    if (!game_pad) return
 
     const bounds = {
       width: game_pad.clientWidth,
@@ -176,34 +194,33 @@
     enemyController = new EnemyController()
     enemySpawner = new EnemySpawner(enemyController, bounds)
 
-    const unsubWaveStart = gameEvents.on('WAVE_START', handleWaveStart)
-    const unsubGameStart = gameEvents.on('GAME_START', handleGameStart)
+    unsubWaveStart = gameEvents.on('WAVE_START', handleWaveStart)
+    unsubGameStart = gameEvents.on('GAME_START', handleGameStart)
 
     animationFrameId = requestAnimationFrame(updateGame)
 
     if (gameManager.isPlaying && gameManager.currentWave) {
       setTimeout(() => {
-        enemySpawner.startWave(gameManager.currentWave!)
+        if (enemySpawner && gameManager.currentWave) {
+          enemySpawner.startWave(gameManager.currentWave)
+        }
       }, 1000)
-    }
-
-    return () => {
-      cancelAnimationFrame(animationFrameId)
-      // enemySpawner.stop()
-      unsubWaveStart()
-      unsubGameStart()
     }
   })
 
   onDestroy(() => {
-    cancelAnimationFrame(animationFrameId)
-    if (enemySpawner) {
-      // enemySpawner.stop()
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId)
     }
+    if (enemySpawner) {
+      enemySpawner.stop()
+    }
+    if (unsubWaveStart) unsubWaveStart()
+    if (unsubGameStart) unsubGameStart()
   })
 </script>
 
-{#each enemies as enemy (enemy.id)}
+{#each enemies as enemy (enemy.id + '_' + updateCounter)}
   <img
     class="enemy absolute pointer-events-none {getEnemyClass(enemy)}"
     src={getEnemySprite(enemy.type)}

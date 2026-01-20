@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
-  import { fly, fade } from 'svelte/transition'
+  import { onMount, onDestroy } from 'svelte'
+  import { fly } from 'svelte/transition'
   import { gameEvents } from '../lib/eventBus'
 
   let showTransition = $state(false)
@@ -14,7 +14,7 @@
 
     setTimeout(() => {
       showTransition = false
-    }, 2000)
+    }, 3000)
   }
 
   function handleWaveComplete(event): void {
@@ -27,40 +27,47 @@
     }, 2500)
   }
 
-  onMount(() => {
-    const unsubStart = gameEvents.on('WAVE_START', handleWaveStart)
-    const unsubComplete = gameEvents.on('WAVE_COMPLETE', handleWaveComplete)
+  let unsubStart: (() => void) | null = null
+  let unsubComplete: (() => void) | null = null
 
-    return () => {
-      unsubStart()
-      unsubComplete()
-    }
+  onMount(() => {
+    unsubStart = gameEvents.on('WAVE_START', handleWaveStart)
+    unsubComplete = gameEvents.on('WAVE_COMPLETE', handleWaveComplete)
+  })
+
+  onDestroy(() => {
+    if (unsubStart) unsubStart()
+    if (unsubComplete) unsubComplete()
   })
 </script>
 
 {#if showTransition}
   <div
-    class="wave-transition fixed inset-0 z-[100] pointer-events-none flex items-center justify-center"
-    in:fade={{ duration: 300 }}
-    out:fade={{ duration: 300 }}
+    class="wave-notification fixed right-8 bottom-24 z-[60] pointer-events-none"
+    in:fly={{ x: 300, duration: 400 }}
+    out:fly={{ x: 300, duration: 300 }}
   >
-    <div class="overlay absolute inset-0 bg-black/60"></div>
-
-    <div class="content relative z-10" in:fly={{ y: -50, duration: 500 }}>
+    <div
+      class="notification-card bg-black/90 border-2 rounded-lg p-6 shadow-2xl backdrop-blur-sm min-w-[280px]"
+      class:border-cyan-500={transitionType === 'start'}
+      class:border-green-500={transitionType === 'complete'}
+    >
       {#if transitionType === 'start'}
-        <div class="text-center">
-          <div class="title text-6xl uppercase glow-text mb-4">Wave {waveNumber}</div>
-          <div class="subtitle text-2xl opacity-80">Prepare for Battle!</div>
+        <div class="flex flex-col gap-2">
+          <div class="text-sm opacity-70 uppercase tracking-wider">Incoming</div>
+          <div class="text-4xl font-bold glow-text title">Wave {waveNumber}</div>
+          <div class="text-sm opacity-80 mt-1">Prepare for battle!</div>
         </div>
       {:else}
-        <div class="text-center">
+        <div class="flex flex-col gap-2">
+          <div class="text-sm opacity-70 uppercase tracking-wider text-green-400">Complete</div>
           <div
-            class="title text-5xl uppercase text-green-400 mb-4"
-            style="text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);"
+            class="text-3xl font-bold title"
+            style="color: #00ff88; text-shadow: 0 0 20px rgba(0, 255, 136, 0.8);"
           >
-            Wave {waveNumber} Complete!
+            Wave {waveNumber}
           </div>
-          <div class="subtitle text-2xl opacity-80">Get Ready...</div>
+          <div class="text-sm opacity-80 mt-1">Well done!</div>
         </div>
       {/if}
     </div>
@@ -68,27 +75,37 @@
 {/if}
 
 <style>
-  .wave-transition {
-    animation: pulse 2s ease-in-out;
+  .notification-card {
+    animation: pulse-border 2s ease-in-out infinite;
   }
 
-  @keyframes pulse {
+  @keyframes pulse-border {
     0%,
     100% {
-      opacity: 1;
+      box-shadow: 0 0 20px rgba(0, 170, 255, 0.5);
     }
     50% {
-      opacity: 0.9;
+      box-shadow: 0 0 30px rgba(0, 170, 255, 0.8);
+    }
+  }
+
+  .border-green-500 {
+    animation: pulse-border-green 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border-green {
+    0%,
+    100% {
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.8);
     }
   }
 
   .title {
-    word-spacing: -20px;
+    word-spacing: -10px;
     line-height: 110%;
     font-family: 'Press Start 2P', cursive;
-  }
-
-  .subtitle {
-    font-family: 'Orbitron', sans-serif;
   }
 </style>

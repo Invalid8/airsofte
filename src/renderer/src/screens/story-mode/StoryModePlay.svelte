@@ -14,6 +14,7 @@
   import ParallaxBackground from '../../components/ParallaxBackground.svelte'
   import BossHealthBar from '../../components/BossHealthBar.svelte'
   import VictoryScreen from '../../components/VictoryScreen.svelte'
+  import WaveTransition from '../../components/WaveTransition.svelte'
   import type { Bullet, StoryMission } from '../../types/gameTypes'
 
   let { missionId = 1 }: { missionId?: number } = $props()
@@ -29,7 +30,7 @@
   let gameEnded = $state(false)
 
   function handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && missionStarted) {
+    if (event.key === 'Escape' && missionStarted && !gameEnded) {
       event.preventDefault()
       togglePause()
     }
@@ -62,6 +63,11 @@
 
     if (event.data?.victory === true) {
       handleMissionComplete()
+    } else {
+      showVictory = false
+      setTimeout(() => {
+        navigateTo('GAME_OVER')
+      }, 500)
     }
   }
 
@@ -78,7 +84,7 @@
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
 
     const syncInterval = setInterval(() => {
-      if (missionStarted) {
+      if (missionStarted && !gameEnded) {
         syncGameState()
       }
     }, 100)
@@ -109,6 +115,7 @@
   <GameHUD />
   <DialogueSystem mission={currentMission} />
   <BossHealthBar />
+  <WaveTransition />
   <div class="p-8 h-svh">
     <div
       class="border-2 border-white/50 w-full h-full rounded-lg bg-white/4 overflow-hidden relative min-w-3xl"

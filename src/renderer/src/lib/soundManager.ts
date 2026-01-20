@@ -13,7 +13,6 @@ import victoryMp3 from '../assets/sounds/victory.mp3'
 import gameOverMp3 from '../assets/sounds/game-over.mp3'
 import flyMp3 from '../assets/sounds/fly.mp3'
 
-// Music
 import backgroundMusicMp3 from '../assets/sounds/bg1.mp3'
 import bossMusicMp3 from '../assets/sounds/boss-battle.mp3'
 
@@ -27,6 +26,7 @@ interface SoundConfig {
 class SoundManager {
   private sounds: Map<string, Howl> = new Map()
   private music: Map<string, Howl> = new Map()
+  private currentlyPlayingMusic: string | null = null
   private masterVolume = 1.0
   private musicVolume = 0.6
   private sfxVolume = 0.8
@@ -120,6 +120,8 @@ class SoundManager {
   playMusic(musicName: string, loop = true, volumeOverride?: number) {
     if (this.isMuted) return
 
+    this.stopAllMusic()
+
     const music = this.music.get(musicName)
     if (music) {
       music.loop(loop)
@@ -127,6 +129,7 @@ class SoundManager {
         music.volume(volumeOverride * this.musicVolume * this.masterVolume)
       }
       music.play()
+      this.currentlyPlayingMusic = musicName
     }
   }
 
@@ -141,10 +144,12 @@ class SoundManager {
     } else {
       this.stopAllMusic()
     }
+    this.currentlyPlayingMusic = null
   }
 
   stopAllMusic() {
     this.music.forEach((music) => music.stop())
+    this.currentlyPlayingMusic = null
   }
 
   pauseMusic() {
@@ -156,11 +161,12 @@ class SoundManager {
   }
 
   resumeMusic() {
-    this.music.forEach((music) => {
-      if (!music.playing()) {
+    if (this.currentlyPlayingMusic) {
+      const music = this.music.get(this.currentlyPlayingMusic)
+      if (music) {
         music.play()
       }
-    })
+    }
   }
 
   fadeOutMusic(musicName: string, duration = 1000) {
@@ -177,6 +183,7 @@ class SoundManager {
       music.volume(0)
       music.play()
       music.fade(0, targetVolume * this.musicVolume * this.masterVolume, duration)
+      this.currentlyPlayingMusic = musicName
     }
   }
 
@@ -249,6 +256,10 @@ class SoundManager {
 
   isMutedState(): boolean {
     return this.isMuted
+  }
+
+  getCurrentlyPlayingMusic(): string | null {
+    return this.currentlyPlayingMusic
   }
 }
 

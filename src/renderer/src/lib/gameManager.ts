@@ -69,6 +69,24 @@ export class GameManager {
     this.difficulty = settings.difficulty
   }
 
+  private initializeWaveEnemyCount(): void {
+    if (!this.currentWave) {
+      this.enemiesRemaining = 0
+      return
+    }
+
+    this.enemiesRemaining = this.currentWave.enemies.reduce(
+      (total, enemyGroup) => total + enemyGroup.count,
+      0
+    )
+
+    console.log('Wave enemy count initialized:', {
+      wave: this.session.currentWave,
+      enemiesRemaining: this.enemiesRemaining,
+      waveConfig: this.currentWave.enemies
+    })
+  }
+
   startGame(mode: GameMode, difficulty?: GameDifficulty, missionId?: number): void {
     this.mode = mode
     if (difficulty) this.difficulty = difficulty
@@ -88,9 +106,18 @@ export class GameManager {
     this.startTime = performance.now()
     this.lastFrameTime = this.startTime
 
+    this.initializeWaveEnemyCount()
+
     this.startGameLoop()
 
     gameEvents.emit('GAME_START', { mode, difficulty: this.difficulty, missionId })
+
+    setTimeout(() => {
+      gameEvents.emit('WAVE_START', {
+        wave: this.session.currentWave,
+        hasBoss: this.currentWave?.enemies.some((e) => e.type === 'BOSS')
+      })
+    }, 1500)
   }
 
   private startGameLoop(): void {
@@ -158,8 +185,10 @@ export class GameManager {
     this.isPaused = false
     this.session.playing = false
 
-    if (this.gameLoopId) cancelAnimationFrame(this.gameLoopId)
-    this.gameLoopId = null
+    if (this.gameLoopId) {
+      cancelAnimationFrame(this.gameLoopId)
+      this.gameLoopId = null
+    }
 
     const finalScore = this.session.score
     const finalWave = this.session.currentWave
@@ -168,12 +197,14 @@ export class GameManager {
       gameEvents.emit('NEW_HIGH_SCORE', { score: finalScore, wave: finalWave })
     }
 
-    gameEvents.emit('GAME_OVER', {
-      victory,
-      score: finalScore,
-      wave: finalWave,
-      stats: { ...this.session }
-    })
+    setTimeout(() => {
+      gameEvents.emit('GAME_OVER', {
+        victory,
+        score: finalScore,
+        wave: finalWave,
+        stats: { ...this.session }
+      })
+    }, 500)
   }
 
   private updateTime(deltaTime: number): void {
@@ -232,7 +263,7 @@ export class GameManager {
 
     gameEvents.emit('ENEMY_DESTROYED', { enemy })
 
-    if (this.enemiesRemaining === 0) {
+    if (this.enemiesRemaining <= 0) {
       this.completeWave()
     }
   }
@@ -306,7 +337,9 @@ export class GameManager {
     gameEvents.emit('PLAYER_DEATH', { lives: this.player.lives })
 
     if (this.player.lives <= 0) {
-      this.endGame(false)
+      setTimeout(() => {
+        this.endGame(false)
+      }, 1500)
     } else {
       setTimeout(() => {
         this.respawnPlayer()
@@ -379,7 +412,9 @@ export class GameManager {
       bonus: noDamageTaken
     })
 
-    this.nextWave()
+    setTimeout(() => {
+      this.nextWave()
+    }, 2500)
   }
 
   private nextWave(): void {
@@ -393,9 +428,14 @@ export class GameManager {
     this.currentWave = this.waves[this.currentWaveIndex]
     this.session.currentWave = this.currentWaveIndex + 1
 
-    gameEvents.emit('WAVE_START', {
-      wave: this.session.currentWave
-    })
+    this.initializeWaveEnemyCount()
+
+    setTimeout(() => {
+      gameEvents.emit('WAVE_START', {
+        wave: this.session.currentWave,
+        hasBoss: this.currentWave?.enemies.some((e) => e.type === 'BOSS')
+      })
+    }, 100)
   }
 
   saveHighScore(playerName: string = 'Player'): void {

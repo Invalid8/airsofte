@@ -5,7 +5,12 @@ export class ObjectPool<T> {
   private reset: (obj: T) => void
   private maxSize: number
 
-  constructor(factory: () => T, reset: (obj: T) => void, initialSize: number = 10, maxSize: number = 100) {
+  constructor(
+    factory: () => T,
+    reset: (obj: T) => void,
+    initialSize: number = 10,
+    maxSize: number = 100
+  ) {
     this.factory = factory
     this.reset = reset
     this.maxSize = maxSize
@@ -23,9 +28,8 @@ export class ObjectPool<T> {
     } else if (this.inUse.size < this.maxSize) {
       obj = this.factory()
     } else {
-      const oldest = Array.from(this.inUse)[0]
-      this.release(oldest)
-      obj = this.available.pop()!
+      console.warn('Object pool exhausted, reusing available or creating new')
+      obj = this.factory()
     }
 
     this.inUse.add(obj)

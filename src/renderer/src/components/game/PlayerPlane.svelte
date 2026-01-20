@@ -26,7 +26,7 @@
   let idleTween: gsap.core.Tween | null = null
   let animationFrameId: number
   let isFlashing = false
-  let keysPressed = $state<Set<string>>(new Set()) // Track held keys
+  let keysPressed = $state<Set<string>>(new Set())
 
   const keys = {
     ArrowUp: () =>
@@ -75,7 +75,7 @@
     if (starting || !gameManager.isPlaying || gameManager.isPaused) return
 
     keysPressed.add(event.key)
-    keysPressed = new Set(keysPressed) // trigger reactivity
+    keysPressed = new Set(keysPressed)
 
     if (event.key in keys) {
       event.preventDefault()
@@ -96,7 +96,7 @@
 
   function handleKeyUp(event: KeyboardEvent): void {
     keysPressed.delete(event.key)
-    keysPressed = new Set(keysPressed) // trigger reactivity
+    keysPressed = new Set(keysPressed)
   }
 
   function updateShipPosition(): void {
@@ -134,7 +134,12 @@
   }
 
   function updateGame(): void {
-    if (!gameManager.isPlaying || gameManager.isPaused) {
+    if (!gameManager.isPlaying) {
+      animationFrameId = requestAnimationFrame(updateGame)
+      return
+    }
+
+    if (gameManager.isPaused) {
       animationFrameId = requestAnimationFrame(updateGame)
       return
     }
@@ -160,19 +165,21 @@
       updateShipPosition()
     }
 
-    bullets = bullets.filter((bullet) => {
-      if (!bullet.active) return false
+    bullets = bullets
+      .filter((bullet) => {
+        if (!bullet.active) return false
 
-      bullet.x += bullet.vx || 0
-      bullet.y += bullet.vy || -bullet.speed
+        bullet.x += bullet.vx || 0
+        bullet.y += bullet.vy || -bullet.speed
 
-      if (bullet.y < -30) {
-        bullet.active = false
-        return false
-      }
+        if (bullet.y < -30) {
+          bullet.active = false
+          return false
+        }
 
-      return true
-    })
+        return true
+      })
+      .map((b) => ({ ...b }))
 
     animationFrameId = requestAnimationFrame(updateGame)
   }
@@ -227,8 +234,12 @@
     updateShipPosition()
   }
 
+  let unsubHit: (() => void) | null = null
+  let unsubDeath: (() => void) | null = null
+  let unsubRespawn: (() => void) | null = null
+
   onMount(() => {
-    if (!ship || !game_pad) return null
+    if (!ship || !game_pad) return
 
     const centerX = (game_pad.clientWidth - 150) / 2
     const startY = game_pad.clientHeight - 150
@@ -258,29 +269,24 @@
     })
 
     window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp) // Add keyup listener
-    animationFrameId = requestAnimationFrame(updateGame) // Use updateGame instead of updateBullets
+    window.addEventListener('keyup', handleKeyUp)
+    animationFrameId = requestAnimationFrame(updateGame)
 
-    const unsubHit = gameEvents.on('PLAYER_HIT', handlePlayerHit)
-    const unsubDeath = gameEvents.on('PLAYER_DEATH', handlePlayerDeath)
-    const unsubRespawn = gameEvents.on('PLAYER_RESPAWN', handlePlayerRespawn)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp) // Remove keyup listener
-      cancelAnimationFrame(animationFrameId)
-      if (idleTween) idleTween.kill()
-      unsubHit()
-      unsubDeath()
-      unsubRespawn()
-    }
+    unsubHit = gameEvents.on('PLAYER_HIT', handlePlayerHit)
+    unsubDeath = gameEvents.on('PLAYER_DEATH', handlePlayerDeath)
+    unsubRespawn = gameEvents.on('PLAYER_RESPAWN', handlePlayerRespawn)
   })
 
   onDestroy(() => {
     window.removeEventListener('keydown', handleKeyDown)
-    window.removeEventListener('keyup', handleKeyUp) // Remove keyup listener
-    cancelAnimationFrame(animationFrameId)
+    window.removeEventListener('keyup', handleKeyUp)
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId)
+    }
     if (idleTween) idleTween.kill()
+    if (unsubHit) unsubHit()
+    if (unsubDeath) unsubDeath()
+    if (unsubRespawn) unsubRespawn()
   })
 </script>
 
