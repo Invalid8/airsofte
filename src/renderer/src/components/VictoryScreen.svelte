@@ -4,11 +4,18 @@
   import Button from '../components/Button.svelte'
   import { navigateTo, gameState } from '../stores/gameStore'
   import { gameManager } from '../lib/gameManager'
+  import { StorageManager } from '../utils/storageManager'
 
   let showVictory = $state(false)
   let stats = $derived($gameState.session)
   let bonusScore = $state(0)
   let totalScore = $state(0)
+  let isHighScore = $state(false)
+  let showNameInput = $state(false)
+  let playerName = $state('')
+  let rank = $state(0)
+  let animationsDone = $state(false)
+  let container: HTMLDivElement = $state()
 
   onMount(() => {
     setTimeout(() => {
@@ -23,7 +30,31 @@
     totalScore = baseScore + bonusScore
 
     gameManager.session.score = totalScore
+
+    const mode = gameManager.mode
+    const scores = StorageManager.getHighScores()
+    const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
+
+    isHighScore = scoreList.length < 20 || totalScore > scoreList[scoreList.length - 1].score
+
+    if (isHighScore) {
+      const position = scoreList.filter((s) => s.score > totalScore).length
+      rank = position + 1
+      showNameInput = true
+    }
+
+    setTimeout(() => {
+      container?.scrollTo({ top: 0 })
+      animationsDone = true
+    }, 1600)
   })
+
+  function handleSaveScore(): void {
+    if (playerName.trim()) {
+      gameManager.saveHighScore(playerName.trim())
+      showNameInput = false
+    }
+  }
 
   function handleContinue(): void {
     if (gameManager.mode === 'STORY_MODE') {
@@ -40,66 +71,120 @@
 
 {#if showVictory}
   <div
-    class="victory-screen fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-8 pt-10"
+    class="victory-screen fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-4 sm:p-6 md:p-8"
   >
-    <div class="victory-container max-w-3xl w-full" in:scale={{ duration: 800, start: 0.8 }}>
+    <div
+      bind:this={container}
+      class="victory-container max-w-3xl w-full max-h-[90vh] custom-scrollbar px-5 scroll"
+      class:overflow-hidden={!animationsDone}
+      class:overflow-y-auto={animationsDone}
+      in:scale={{ duration: 800, start: 0.8 }}
+    >
       <div
-        class="victory-header text-center mb-10"
+        class="victory-header text-center mb-6 sm:mb-8 md:mb-10"
         in:fly={{ y: -50, duration: 600, delay: 200 }}
       >
-        <h1 class="victory-title text-6xl uppercase glow-text title mb-4">Victory!</h1>
-        <p class="victory-subtitle text-2xl opacity-80">Mission Accomplished</p>
+        <h1 class="victory-title text-4xl sm:text-5xl md:text-6xl uppercase glow-text title mb-4">
+          Victory!
+        </h1>
+        <p class="victory-subtitle text-xl sm:text-2xl opacity-80">Mission Accomplished</p>
       </div>
 
       <div
-        class="stats-grid grid grid-cols-2 gap-6 mb-8"
+        class="stats-grid grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8"
         in:fly={{ y: 50, duration: 600, delay: 400 }}
       >
         <div class="stat-card">
           <div class="stat-label text-nowrap">Base Score</div>
           <div class="stat-value">{$gameState.score.toLocaleString()}</div>
         </div>
-
         <div class="stat-card">
           <div class="stat-label text-nowrap">Waves Cleared</div>
           <div class="stat-value">{stats?.currentWave || 0}</div>
         </div>
-
         <div class="stat-card">
           <div class="stat-label text-nowrap">Enemies Defeated</div>
           <div class="stat-value">{stats?.enemiesDefeated || 0}</div>
         </div>
-
         <div class="stat-card">
           <div class="stat-label text-nowrap">Accuracy</div>
           <div class="stat-value">{stats?.accuracy.toFixed(1) || 0}%</div>
         </div>
       </div>
 
-      {#if bonusScore > 0}
-        <div
-          class="bonus-section p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg mb-4"
-          in:fly={{ y: 30, duration: 600, delay: 600 }}
-        >
-          <div class="text-2xl font-bold text-yellow-400 mb-3 text-center">
-            ⭐ Bonus Points ⭐
-          </div>
-          <div class="text-6xl text-center hud">{bonusScore.toLocaleString()} pts</div>
+      <div
+        class="bonus-section p-4 sm:p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg mb-4 transition-all overflow-hidden"
+        class:opacity-0={bonusScore <= 0}
+        class:pointer-events-none={bonusScore <= 0}
+        class:max-h-0={bonusScore <= 0}
+        class:max-h-[200px]={bonusScore > 0}
+        in:fly={{ y: 30, duration: 600, delay: 600 }}
+      >
+        <div class="text-xl sm:text-2xl font-bold text-yellow-400 mb-3 text-center">
+          ⭐ Bonus Points ⭐
         </div>
-      {/if}
+        <div class="text-4xl sm:text-5xl md:text-6xl text-center">
+          {bonusScore.toLocaleString()} pts
+        </div>
+      </div>
 
       <div
-        class="total-score-section p-8 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500 rounded-lg mb-5"
+        class="total-score-section p-6 sm:p-8 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500 rounded-lg mb-4 sm:mb-5"
         in:fly={{ y: 30, duration: 600, delay: 800 }}
       >
-        <div class="text-3xl font-bold text-center mb-2">TOTAL SCORE</div>
-        <div class="text-6xl font-bold text-center glow-text hud">
+        <div class="text-2xl sm:text-3xl font-bold text-center mb-2">TOTAL SCORE</div>
+        <div class="text-5xl sm:text-6xl font-bold text-center glow-text">
           {totalScore.toLocaleString()}
         </div>
       </div>
 
-      <div class="actions flex gap-4 justify-center" in:fly={{ y: 30, duration: 600, delay: 1000 }}>
-        <Button label="Continue" onClick={handleContinue} isFirst={true} />
+      <div
+        class="high-score-banner p-4 sm:p-6 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-500 rounded-lg mb-4 transition-all overflow-hidden"
+        class:opacity-0={!isHighScore}
+        class:pointer-events-none={!isHighScore}
+        class:max-h-0={!isHighScore}
+        class:max-h-[200px]={isHighScore}
+        in:fly={{ y: 30, duration: 600, delay: 1000 }}
+      >
+        <div class="text-2xl sm:text-3xl font-bold text-center mb-2 text-purple-400 animate-pulse">
+          🏆 NEW HIGH SCORE! 🏆
+        </div>
+        <div class="text-lg sm:text-xl text-center opacity-80">
+          Rank #{rank} on the leaderboard!
+        </div>
+      </div>
+
+      <div
+        class="name-input-panel p-4 sm:p-6 bg-black/70 border-2 border-cyan-500 rounded-xl mb-4 transition-all overflow-hidden"
+        class:opacity-0={!showNameInput}
+        class:pointer-events-none={!showNameInput}
+        class:max-h-0={!showNameInput}
+        class:max-h-[300px]={showNameInput}
+        in:fly={{ y: 30, duration: 600, delay: 1200 }}
+      >
+        <label class="block mb-4">
+          <span class="text-base sm:text-lg mb-2 block text-center">
+            Enter Your Name for the Leaderboard:
+          </span>
+          <input
+            type="text"
+            bind:value={playerName}
+            maxlength="20"
+            class="w-full px-3 sm:px-4 py-2 sm:py-3 bg-black/50 border-2 border-cyan-500 rounded text-white text-center text-lg sm:text-xl focus:outline-none focus:border-cyan-300"
+            placeholder="Your Name"
+            onkeydown={(e) => e.key === 'Enter' && handleSaveScore()}
+          />
+        </label>
+        <div class="text-center">
+          <Button label="Save Score" onClick={handleSaveScore} isFirst={true} />
+        </div>
+      </div>
+
+      <div
+        class="actions flex gap-3 sm:gap-4 flex-wrap justify-center"
+        in:fly={{ y: 30, duration: 600, delay: 1400 }}
+      >
+        <Button label="Continue" onClick={handleContinue} isFirst={!showNameInput} />
         <Button label="Play Again" onClick={handleReplay} />
       </div>
     </div>
@@ -154,15 +239,11 @@
     }
   }
 
-  .victory-badge {
-    filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.8));
-  }
-
   .stat-card {
     background: rgba(0, 0, 0, 0.6);
     border: 2px solid rgba(0, 170, 255, 0.4);
     border-radius: 0.75rem;
-    padding: 1.5rem;
+    padding: 1rem;
     text-align: center;
     transition: all 0.3s;
   }
@@ -174,30 +255,19 @@
   }
 
   .stat-label {
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     opacity: 0.7;
     margin-bottom: 0.5rem;
     font-family: 'Orbitron', sans-serif;
   }
 
   .stat-value {
-    font-size: 3rem;
+    font-size: 2rem;
     font-weight: bold;
-    /* font-family: 'VT323', monospace; */
     color: #00aaff;
   }
 
-  .bonus-section {
-    animation: bonus-flash 1s ease-in-out;
-  }
-
-  @keyframes bonus-flash {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
+  .glow-text {
+    text-shadow: 0 0 20px rgba(0, 170, 255, 0.8);
   }
 </style>

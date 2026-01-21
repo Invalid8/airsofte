@@ -29,7 +29,7 @@
   }
 </script>
 
-<div class="flex size-full h-svh flex-col gap-4 text-center p-6 items-center pt-10">
+<div class="flex size-full h-screen flex-col gap-4 text-center p-6 items-center pt-10">
   <h1 class="title text-4xl uppercase glow-text pb-4">Story Mode</h1>
 
   <div

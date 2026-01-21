@@ -36,7 +36,7 @@
 </script>
 
 <div
-  class="flex flex-col gap-6 text-center p-6 items-center h-svh justify-center"
+  class="flex flex-col gap-6 text-center p-6 items-center h-screen justify-center"
   in:fly={{ y: 200, duration: 500 }}
 >
   <div class="flex flex-col items-center justify-center gap-6 max-w-2xl w-full">

@@ -42,9 +42,6 @@
   }
 
   function handleMissionComplete(): void {
-    if (gameEnded) return
-    gameEnded = true
-
     if (currentMission) {
       storyMissionManager.completeMission(currentMission.id)
 
@@ -60,6 +57,8 @@
   function handleGameOver(event): void {
     if (gameEnded) return
     gameEnded = true
+
+    console.log('Story Mode Game Over:', event.data)
 
     if (event.data?.victory === true) {
       handleMissionComplete()
@@ -78,7 +77,6 @@
       return null
     }
 
-    const unsubMissionComplete = gameEvents.on('MISSION_COMPLETE', handleMissionComplete)
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
 
     const syncInterval = setInterval(() => {
@@ -88,7 +86,6 @@
     }, 100)
 
     return () => {
-      unsubMissionComplete()
       unsubGameOver()
       clearInterval(syncInterval)
     }
@@ -112,9 +109,9 @@
   <DialogueSystem mission={currentMission} />
   <BossHealthBar />
   <WaveTransition />
-  <div class="p-8 h-svh">
+  <div class="p-8 h-screen">
     <div
-      class="border-2 border-white/50 w-full h-full rounded-lg bg-white/4 overflow-hidden relative min-w-3xl"
+      class="w-full h-full rounded-lg overflow-hidden relative min-w-3xl"
       style="max-width: 900px; margin: 0 auto;"
       bind:this={game_pad}
     >

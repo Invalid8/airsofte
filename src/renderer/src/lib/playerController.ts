@@ -115,6 +115,26 @@ export class PlayerController {
       bullet.active = true
       bullet.damage = config.damage
       bullets.push(bullet)
+    } else if (config.bulletCount === 2) {
+      const offset = config.spread / 2
+
+      const leftBullet = this.bulletPool!.acquire()
+      leftBullet.x = centerX - offset - leftBullet.width / 2
+      leftBullet.y = this.y
+      leftBullet.vx = 0
+      leftBullet.vy = -leftBullet.speed
+      leftBullet.active = true
+      leftBullet.damage = config.damage
+      bullets.push(leftBullet)
+
+      const rightBullet = this.bulletPool!.acquire()
+      rightBullet.x = centerX + offset - rightBullet.width / 2
+      rightBullet.y = this.y
+      rightBullet.vx = 0
+      rightBullet.vy = -rightBullet.speed
+      rightBullet.active = true
+      rightBullet.damage = config.damage
+      bullets.push(rightBullet)
     } else {
       const angleStep = config.spread / (config.bulletCount - 1)
       const startAngle = -config.spread / 2

@@ -68,9 +68,9 @@
   <WaveTransition />
   <BossHealthBar />
 
-  <div class="p-8 h-svh">
+  <div class="p-8 h-screen">
     <div
-      class="border-p border-white/50 w-full h-full rounded-lg bg-white/4 overflow-hidden relative min-w-3xl"
+      class="w-full h-full rounded-lg overflow-hidden relative min-w-3xl"
       style="max-width: 900px; margin: 0 auto;"
       bind:this={game_pad}
     >

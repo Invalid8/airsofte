@@ -33,7 +33,7 @@ export const GAME_CONFIG = {
       WIDTH: 10,
       HEIGHT: 30,
       SPEED: 10,
-      DAMAGE: 10
+      DAMAGE: 15
     },
     ENEMY: {
       WIDTH: 8,
@@ -98,7 +98,7 @@ export const ENEMY_CONFIG: Record<
   BOSS: {
     width: 250,
     height: 250,
-    health: 2500,
+    health: 3000,
     speed: 1.5,
     scoreValue: 5000,
     shootInterval: 800,
@@ -153,39 +153,39 @@ export const POWERUP_CONFIG: Record<
   }
 > = {
   HEALTH: {
-    width: 70,
-    height: 70,
+    width: 40,
+    height: 40,
     speed: 2,
     value: 30,
     sprite: 'assets/sprites/powerup-health.png'
   },
   WEAPON: {
-    width: 70,
-    height: 70,
+    width: 40,
+    height: 40,
     speed: 2,
     value: 0,
     duration: 15000,
     sprite: 'assets/sprites/powerup-weapon.png'
   },
   SHIELD: {
-    width: 70,
-    height: 70,
+    width: 40,
+    height: 40,
     speed: 2,
     value: 0,
     duration: 10000,
     sprite: 'assets/sprites/powerup-shield.png'
   },
   SPEED: {
-    width: 70,
-    height: 70,
+    width: 40,
+    height: 40,
     speed: 2,
     value: 1.5,
     duration: 8000,
     sprite: 'assets/sprites/powerup-speed.png'
   },
   SCORE: {
-    width: 70,
-    height: 70,
+    width: 40,
+    height: 40,
     speed: 2,
     value: 500,
     sprite: 'assets/sprites/powerup-score.png'

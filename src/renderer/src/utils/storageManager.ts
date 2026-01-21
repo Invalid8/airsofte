@@ -1,4 +1,10 @@
-import type { SaveGame, HighScore, GameSettings, StoryMission, WeaponType } from '../types/gameTypes'
+import type {
+  SaveGame,
+  HighScore,
+  GameSettings,
+  StoryMission,
+  WeaponType
+} from '../types/gameTypes'
 import { DEFAULT_KEY_BINDINGS } from '../config/gameConstants'
 
 const STORAGE_KEYS = {
@@ -80,7 +86,17 @@ export class StorageManager {
     const scores = this.getHighScores()
     const list = score.mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-    list.push(score)
+    const timestamp = Date.now()
+    const uniqueId = `${score.name}_${timestamp}`
+
+    const scoreWithId = {
+      ...score,
+      name: score.name,
+      id: uniqueId,
+      date: timestamp
+    }
+
+    list.push(scoreWithId as any)
     list.sort((a, b) => b.score - a.score)
 
     if (list.length > 20) {
