@@ -3,8 +3,9 @@
   import { onMount } from 'svelte'
   import Button from '../components/Button.svelte'
   import { navigateTo, gameState } from '../stores/gameStore'
-  import { gameManager } from '../lib/gameManager'
+  import { gameManager } from '../utils/gameManager'
   import { StorageManager } from '../utils/storageManager'
+  import { currentUser } from '../utils/userManager'
 
   let showVictory = $state(false)
   let stats = $derived($gameState.session)
@@ -32,7 +33,7 @@
     gameManager.session.score = totalScore
 
     const mode = gameManager.mode
-    const scores = StorageManager.getHighScores()
+    const scores = StorageManager.getHighScores($currentUser?.id)
     const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
     isHighScore = scoreList.length < 20 || totalScore > scoreList[scoreList.length - 1].score
@@ -51,11 +52,16 @@
 
   function handleSaveScore(): void {
     if (playerName.trim()) {
-      gameManager.saveHighScore(playerName.trim())
+      gameManager.saveHighScore(playerName.trim(), $currentUser?.id)
       showNameInput = false
     }
   }
 
+  /**
+   * ✅ FIX: Navigate based on current game mode
+   * - Quick Play → back to MAIN_MENU
+   * - Story Mode → back to STORY_MODE_MENU
+   */
   function handleContinue(): void {
     if (gameManager.mode === 'STORY_MODE') {
       navigateTo('STORY_MODE_MENU')
@@ -64,10 +70,17 @@
     }
   }
 
+  /**
+   * ✅ FIX: Replay based on current game mode
+   * - Quick Play → restart QUICK_PLAY
+   * - Story Mode → restart same mission in STORY_MODE_PLAY
+   */
   function handleReplay(): void {
     if (gameManager.mode === 'STORY_MODE') {
+      // Restart the same story mission
       navigateTo('STORY_MODE_PLAY')
     } else {
+      // Restart quick play with same difficulty
       navigateTo('QUICK_PLAY')
     }
   }
@@ -84,6 +97,7 @@
       class:overflow-y-auto={animationsDone}
       in:scale={{ duration: 800, start: 0.8 }}
     >
+      <!-- Victory Header -->
       <div
         class="victory-header text-center mb-6 sm:mb-8 md:mb-10"
         in:fly={{ y: -50, duration: 600, delay: 200 }}
@@ -94,6 +108,7 @@
         <p class="victory-subtitle text-xl sm:text-2xl opacity-80">Mission Accomplished</p>
       </div>
 
+      <!-- Stats Grid -->
       <div
         class="stats-grid grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8"
         in:fly={{ y: 50, duration: 600, delay: 400 }}
@@ -116,6 +131,7 @@
         </div>
       </div>
 
+      <!-- Bonus Section -->
       <div
         class="bonus-section p-4 sm:p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg mb-4 transition-all overflow-hidden"
         class:opacity-0={bonusScore <= 0}
@@ -132,6 +148,7 @@
         </div>
       </div>
 
+      <!-- Total Score -->
       <div
         class="total-score-section p-6 sm:p-8 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500 rounded-lg mb-4 sm:mb-5"
         in:fly={{ y: 30, duration: 600, delay: 800 }}
@@ -142,6 +159,7 @@
         </div>
       </div>
 
+      <!-- High Score Banner -->
       <div
         class="high-score-banner p-4 sm:p-6 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-500 rounded-lg mb-4 transition-all overflow-hidden"
         class:opacity-0={!isHighScore}
@@ -158,6 +176,7 @@
         </div>
       </div>
 
+      <!-- Name Input (if high score) -->
       <div
         class="name-input-panel p-4 sm:p-6 bg-black/70 border-2 border-cyan-500 rounded-xl mb-4 transition-all overflow-hidden"
         class:opacity-0={!showNameInput}
@@ -184,6 +203,7 @@
         </div>
       </div>
 
+      <!-- Action Buttons -->
       <div
         class="actions flex gap-3 sm:gap-4 flex-wrap justify-center"
         in:fly={{ y: 30, duration: 600, delay: 1400 }}

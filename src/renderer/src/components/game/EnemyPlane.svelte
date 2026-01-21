@@ -4,7 +4,7 @@
   import type { Enemy, Bullet } from '../../types/gameTypes'
   import { EnemyController } from '../../lib/enemyController'
   import { EnemySpawner } from '../../lib/enemySpawner'
-  import { gameManager } from '../../lib/gameManager'
+  import { gameManager } from '../../utils/gameManager'
   import { gameEvents } from '../../lib/eventBus'
   import { combatSystem } from '../../lib/combatSystem'
   import { particleSystem } from '../../lib/particleSystem'

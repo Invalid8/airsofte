@@ -1,6 +1,6 @@
 import type { Bullet, BoundingBox } from '../types/gameTypes'
 import { GAME_CONFIG, WEAPON_CONFIG } from '../config/gameConstants'
-import { gameManager } from '../lib/gameManager'
+import { gameManager } from '../utils/gameManager'
 import { clampToBox, getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 import { audioManager } from '../utils/AudioManager'

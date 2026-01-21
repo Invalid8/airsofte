@@ -4,7 +4,7 @@ import type { GameSessionState, PlayerStats } from '../types/gameTypes'
 import { audioManager } from '../utils/AudioManager'
 import { modalManager } from '../utils/ModalManager'
 import { inputManager } from '../utils/InputManager'
-import { gameManager } from '../lib/gameManager'
+import { gameManager } from '../utils/gameManager'
 import { StorageManager } from '../utils/storageManager'
 
 export type ExtendedGameState = GameState & {

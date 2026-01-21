@@ -1,5 +1,5 @@
 import { modalManager } from './ModalManager'
-import { gameManager } from '../lib/gameManager'
+import { gameManager } from './gameManager'
 import { gameState } from '../stores/gameStore'
 import type { GameRoute } from '../routes/gameRoutes'
 

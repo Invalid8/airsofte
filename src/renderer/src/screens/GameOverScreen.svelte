@@ -2,7 +2,7 @@
   import { fly } from 'svelte/transition'
   import { onMount } from 'svelte'
   import Button from '../components/Button.svelte'
-  import { gameManager } from '../lib/gameManager'
+  import { gameManager } from '../utils/gameManager'
   import { navigateTo, gameState } from '../stores/gameStore'
   import { StorageManager } from '../utils/storageManager'
 

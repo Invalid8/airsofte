@@ -3,7 +3,7 @@
   import { gsap } from 'gsap'
   import PlayerShip from '../../assets/sprites/player-ship-i.png'
   import { PlayerController } from '../../lib/playerController'
-  import { gameManager } from '../../lib/gameManager'
+  import { gameManager } from '../../utils/gameManager'
   import { gameEvents } from '../../lib/eventBus'
   import { getBoundingBox } from '../../utils/collisionSystem'
   import type { Bullet } from '../../types/gameTypes'

@@ -1,6 +1,6 @@
 import type { PowerUp, PowerUpType, BoundingBox } from '../types/gameTypes'
 import { POWERUP_CONFIG, DIFFICULTY_MODIFIERS } from '../config/gameConstants'
-import { gameManager } from '../lib/gameManager'
+import { gameManager } from '../utils/gameManager'
 import { gameEvents } from '../lib/eventBus'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'

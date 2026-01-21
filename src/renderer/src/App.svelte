@@ -1,7 +1,9 @@
 <script lang="ts">
   import { gameState, toggleSound } from './stores/gameStore'
+  import { currentUser } from './utils/userManager'
   import { audioManager } from './utils/AudioManager'
   import StartupScreen from './screens/StartupScreen.svelte'
+  import UserSelectionScreen from './screens/UserSelectionScreen.svelte'
   import MainMenu from './screens/MainMenu.svelte'
   import GameScreen from './screens/GameScreen.svelte'
   import GameOverScreen from './screens/GameOverScreen.svelte'
@@ -11,8 +13,10 @@
   import StoryModePlay from './screens/story-mode/StoryModePlay.svelte'
   import ModalWrapper from './components/ModalWrapper.svelte'
   import { onDestroy, onMount } from 'svelte'
+  import GamePadIndicator from './components/GamePadIndicator.svelte'
 
   let audioInitialized = false
+  let showUserSelection = $derived(!$currentUser && $gameState.route !== 'STARTUP')
 
   function initializeAudio(): void {
     if (!audioInitialized) {
@@ -34,7 +38,9 @@
 </script>
 
 <main class={$gameState.theme === 'Dark' ? 'dark-theme' : 'light-theme'}>
-  {#if $gameState.route === 'STARTUP'}
+  {#if showUserSelection}
+    <UserSelectionScreen />
+  {:else if $gameState.route === 'STARTUP'}
     <StartupScreen />
   {:else if $gameState.route === 'MAIN_MENU'}
     <MainMenu />
@@ -53,6 +59,7 @@
   {/if}
 
   <ModalWrapper />
+  <GamePadIndicator />
 
   <div class="sound">
     <button class="sound-toggle" onclick={toggleSound}>

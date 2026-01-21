@@ -26,7 +26,7 @@ export class StorageManager {
     }
   }
 
-  private static get<T>(key: string, defaultValue: T): T {
+  static get<T>(key: string, defaultValue: T): T {
     if (!this.isLocalStorageAvailable()) return defaultValue
 
     try {
@@ -37,7 +37,7 @@ export class StorageManager {
     }
   }
 
-  private static set<T>(key: string, value: T): boolean {
+  static set<T>(key: string, value: T): boolean {
     if (!this.isLocalStorageAvailable()) return false
 
     try {
@@ -75,15 +75,26 @@ export class StorageManager {
     return this.set(STORAGE_KEYS.SETTINGS, settings)
   }
 
-  static getHighScores(): { quickPlay: HighScore[]; storyMode: HighScore[] } {
-    return this.get(STORAGE_KEYS.HIGH_SCORES, {
+  static getUserHighScoresKey(userId: string): string {
+    return `${STORAGE_KEYS.HIGH_SCORES}_${userId}`
+  }
+
+  static getHighScores(userId?: string): { quickPlay: HighScore[]; storyMode: HighScore[] } {
+    const key = userId ? this.getUserHighScoresKey(userId) : STORAGE_KEYS.HIGH_SCORES
+
+    return this.get(key, {
       quickPlay: [],
       storyMode: []
     })
   }
 
-  static addHighScore(score: HighScore): boolean {
-    const scores = this.getHighScores()
+  static addHighScore(score: HighScore, userId?: string): boolean {
+    const key = userId ? this.getUserHighScoresKey(userId) : STORAGE_KEYS.HIGH_SCORES
+    const scores = this.get<{ quickPlay: HighScore[]; storyMode: HighScore[] }>(key, {
+      quickPlay: [],
+      storyMode: []
+    })
+
     const list = score.mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
     const timestamp = Date.now()
@@ -103,11 +114,15 @@ export class StorageManager {
       list.length = 20
     }
 
-    return this.set(STORAGE_KEYS.HIGH_SCORES, scores)
+    return this.set(key, scores)
   }
 
-  static clearHighScores(mode?: 'QUICK_PLAY' | 'STORY_MODE'): boolean {
-    const scores = this.getHighScores()
+  static clearHighScores(mode?: 'QUICK_PLAY' | 'STORY_MODE', userId?: string): boolean {
+    const key = userId ? this.getUserHighScoresKey(userId) : STORAGE_KEYS.HIGH_SCORES
+    const scores = this.get<{ quickPlay: HighScore[]; storyMode: HighScore[] }>(key, {
+      quickPlay: [],
+      storyMode: []
+    })
 
     if (mode) {
       if (mode === 'QUICK_PLAY') {
@@ -120,11 +135,11 @@ export class StorageManager {
       scores.storyMode = []
     }
 
-    return this.set(STORAGE_KEYS.HIGH_SCORES, scores)
+    return this.set(key, scores)
   }
 
-  static isHighScore(score: number, mode: 'QUICK_PLAY' | 'STORY_MODE'): boolean {
-    const scores = this.getHighScores()
+  static isHighScore(score: number, mode: 'QUICK_PLAY' | 'STORY_MODE', userId?: string): boolean {
+    const scores = this.getHighScores(userId)
     const list = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
     if (list.length < 20) return true
