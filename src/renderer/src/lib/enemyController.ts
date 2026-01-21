@@ -1,6 +1,6 @@
 import type { Enemy, EnemyType, MovementPattern, Bullet, BoundingBox } from '../types/gameTypes'
 import { ENEMY_CONFIG, GAME_CONFIG, DIFFICULTY_MODIFIERS } from '../config/gameConstants'
-import { gameManager } from '../utils/gameManager'
+import { gameManager } from './gameManager'
 import { audioManager } from '../utils/AudioManager'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'

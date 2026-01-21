@@ -3,6 +3,7 @@
   import Button from '../../components/Button.svelte'
   import { modalManager } from '../../utils/ModalManager'
   import { StorageManager } from '../../utils/storageManager'
+  import { currentUser } from '../../utils/userManager'
   import { cn } from '../../lib/utils'
   import type { HighScore } from '../../types/gameTypes'
 
@@ -45,12 +46,16 @@
     return date.toLocaleDateString()
   }
 
+  function isCurrentUserScore(scoreName: string): boolean {
+    return $currentUser?.username === scoreName
+  }
+
   let currentScores = $derived(tab === 'quick_play' ? quickPlayScores : storyModeScores)
 </script>
 
 <div class="high-score-modal w-full min-w-2xl max-w-2xl rounded-xl modal-bg p-6 pt-8">
   <div class="content flex flex-col items-center justify-center gap-4">
-    <h2 class="title text-2xl uppercase glow-text-2">High Scores</h2>
+    <h2 class="title text-2xl uppercase glow-text-2">Global Leaderboard</h2>
 
     <div class="grid w-full gap-4">
       <div class="tab grid grid-cols-2 w-full gap-4">
@@ -91,7 +96,7 @@
               class="table-header grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 pb-3 border-b-2 border-cyan-500/30 mb-4 font-bold text-sm"
             >
               <div class="text-center">Rank</div>
-              <div>Name</div>
+              <div>Player</div>
               <div class="text-center">Score</div>
               <div class="text-center">Wave</div>
               <div class="text-center">Date</div>
@@ -102,6 +107,7 @@
                 class="score-row grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 py-3 border-b border-cyan-500/10 hover:bg-white/5 transition-colors"
                 class:top-score={i === 0}
                 class:top-three={i < 3}
+                class:current-user={isCurrentUserScore(score.name)}
               >
                 <div class="rank text-center">
                   {#if i === 0}
@@ -118,7 +124,12 @@
                     </span>
                   {/if}
                 </div>
-                <div class="name hud text-xl truncate">{score.name}</div>
+                <div class="name hud text-xl truncate flex items-center gap-2">
+                  {score.name}
+                  {#if isCurrentUserScore(score.name)}
+                    <span class="text-xs bg-cyan-500/30 px-2 py-1 rounded">YOU</span>
+                  {/if}
+                </div>
                 <div class="score text-center hud text-xl font-bold text-cyan-400">
                   {score.score.toLocaleString()}
                 </div>
@@ -175,6 +186,11 @@
 
   .top-three {
     font-weight: 600;
+  }
+
+  .current-user {
+    background: linear-gradient(90deg, rgba(0, 170, 255, 0.15) 0%, transparent 100%);
+    border-left: 3px solid rgba(0, 170, 255, 0.8);
   }
 
   .score-row:hover {

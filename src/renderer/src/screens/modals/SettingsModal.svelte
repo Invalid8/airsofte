@@ -3,6 +3,7 @@
   import Button from '../../components/Button.svelte'
   import { modalManager } from '../../utils/ModalManager'
   import { audioManager } from '../../utils/AudioManager'
+  import { gamepadManager } from '../../utils/gamepadManager'
   import { setDifficulty } from '../../stores/gameStore'
   import { StorageManager } from '../../utils/storageManager'
   import type { GameSettings } from '../../types/gameTypes'
@@ -30,14 +31,25 @@
     }
   })
 
-  let activeTab: 'audio' | 'gameplay' | 'controls' | 'graphics' = $state('audio')
+  let activeTab: 'audio' | 'gameplay' | 'controls' | 'graphics' | 'gamepad' = $state('audio')
   let hasChanges = $state(false)
+  let gamepadConnected = $state(false)
+  let gamepadDeadzone = $state(0.15)
 
   onMount(() => {
     settings = StorageManager.getSettings()
     settings.volume.master = audioManager.getMasterVolume()
     settings.volume.music = audioManager.getMusicVolume()
     settings.volume.sfx = audioManager.getSFXVolume()
+
+    gamepadConnected = gamepadManager.isConnected()
+    gamepadDeadzone = gamepadManager.getDeadzone()
+
+    const gamepadCheck = setInterval(() => {
+      gamepadConnected = gamepadManager.isConnected()
+    }, 1000)
+
+    return () => clearInterval(gamepadCheck)
   })
 
   function handleVolumeChange(type: 'master' | 'music' | 'sfx', value: number): void {
@@ -61,6 +73,12 @@
 
   function toggleGraphicsSetting(setting: keyof GameSettings['graphics']): void {
     settings.graphics[setting] = !settings.graphics[setting]
+    hasChanges = true
+  }
+
+  function handleDeadzoneChange(value: number): void {
+    gamepadDeadzone = value
+    gamepadManager.setDeadzone(value)
     hasChanges = true
   }
 
@@ -94,6 +112,8 @@
     audioManager.setMasterVolume(1.0)
     audioManager.setMusicVolume(0.8)
     audioManager.setSFXVolume(0.5)
+    gamepadDeadzone = 0.15
+    gamepadManager.setDeadzone(0.15)
     hasChanges = true
   }
 
@@ -111,7 +131,7 @@
   <div class="content flex flex-col gap-6">
     <h2 class="title text-3xl uppercase glow-text-2 text-center">Settings</h2>
 
-    <div class="tabs grid grid-cols-4 gap-2 border-b-2 border-cyan-500/30 pb-2">
+    <div class="tabs grid grid-cols-5 gap-2 border-b-2 border-cyan-500/30 pb-2">
       <button
         class="tab-btn"
         class:active={activeTab === 'audio'}
@@ -139,6 +159,13 @@
         onclick={() => (activeTab = 'graphics')}
       >
         Graphics
+      </button>
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'gamepad'}
+        onclick={() => (activeTab = 'gamepad')}
+      >
+        Gamepad
       </button>
     </div>
 
@@ -285,6 +312,60 @@
           </div>
         </div>
       {/if}
+
+      {#if activeTab === 'gamepad'}
+        <div class="flex flex-col gap-4">
+          <div
+            class="gamepad-status mb-4 p-4 rounded-lg {gamepadConnected
+              ? 'bg-green-500/20 border-2 border-green-500'
+              : 'bg-red-500/20 border-2 border-red-500'}"
+          >
+            <div class="flex items-center gap-3 mb-2">
+              <div class="text-3xl">{gamepadConnected ? '🎮' : '❌'}</div>
+              <div>
+                <div class="text-lg font-bold">
+                  {gamepadConnected ? 'Gamepad Connected' : 'No Gamepad Detected'}
+                </div>
+                {#if gamepadConnected}
+                  <div class="text-sm opacity-80">{gamepadManager.getGamepadInfo()}</div>
+                {/if}
+              </div>
+            </div>
+            {#if !gamepadConnected}
+              <p class="text-sm opacity-70">
+                Connect an Xbox or PlayStation controller to use gamepad controls
+              </p>
+            {/if}
+          </div>
+
+          <div class="setting-item">
+            <label class="flex justify-between items-center mb-2">
+              <span class="text-lg">Analog Stick Deadzone</span>
+              <span class="text-cyan-400 hud">{(gamepadDeadzone * 100).toFixed(0)}%</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="0.5"
+              step="0.01"
+              value={gamepadDeadzone}
+              oninput={(e) => handleDeadzoneChange(parseFloat(e.currentTarget.value))}
+              class="volume-slider"
+            />
+            <p class="text-sm opacity-70 mt-2">Adjust sensitivity of analog stick movement</p>
+          </div>
+
+          <div class="controls-info bg-black/30 border border-cyan-500/30 rounded p-4">
+            <h4 class="font-bold mb-3">Button Mapping</h4>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div><strong>A Button (Xbox) / X (PS):</strong> Shoot</div>
+              <div><strong>Start:</strong> Pause</div>
+              <div><strong>D-Pad / Left Stick:</strong> Move</div>
+              <div><strong>Right Trigger:</strong> Shoot (Alternative)</div>
+            </div>
+          </div>
+        </div>
+      {/if}
     </div>
 
     <div class="actions flex gap-3 justify-center flex-wrap">
@@ -415,7 +496,6 @@
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid #00aaff;
     border-radius: 0.25rem;
-    /* font-family: 'VT323', monospace; */
     font-size: 1.1rem;
     color: #00aaff;
     min-width: 60px;

@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte'
   import type { PowerUp } from '../../types/gameTypes'
   import { powerUpSystem } from '../../lib/powerUpSystem'
-  import { gameManager } from '../../utils/gameManager'
+  import { gameManager } from '../../lib/gameManager'
   import { gameEvents } from '../../lib/eventBus'
   import { particleSystem } from '../../lib/particleSystem'
   import { getBoundingBox } from '../../utils/collisionSystem'

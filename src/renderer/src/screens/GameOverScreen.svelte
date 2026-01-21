@@ -2,12 +2,11 @@
   import { fly } from 'svelte/transition'
   import { onMount } from 'svelte'
   import Button from '../components/Button.svelte'
-  import { gameManager } from '../utils/gameManager'
+  import { gameManager } from '../lib/gameManager'
   import { navigateTo, gameState } from '../stores/gameStore'
   import { StorageManager } from '../utils/storageManager'
+  import { currentUser } from '../utils/userManager'
 
-  let playerName = $state('Player')
-  let showNameInput = $state(false)
   let isHighScore = $state(false)
   let stats = $derived($gameState.session)
 
@@ -16,22 +15,27 @@
     const mode = gameManager.mode
 
     isHighScore = StorageManager.isHighScore(finalScore, mode)
-    showNameInput = isHighScore
+
+    if (isHighScore) {
+      const playerName = $currentUser?.username || 'Guest'
+      gameManager.saveHighScore(playerName)
+    }
   })
 
-  function saveScore(): void {
-    if (playerName.trim()) {
-      gameManager.saveHighScore(playerName.trim())
-      showNameInput = false
+  function handleRestart(): void {
+    if (gameManager.mode === 'STORY_MODE') {
+      navigateTo('STORY_MODE_PLAY')
+    } else {
+      navigateTo('QUICK_PLAY')
     }
   }
 
-  function handleRestart(): void {
-    navigateTo('GAME_SCREEN')
-  }
-
   function handleMainMenu(): void {
-    navigateTo('MAIN_MENU')
+    if (gameManager.mode === 'STORY_MODE') {
+      navigateTo('STORY_MODE_MENU')
+    } else {
+      navigateTo('MAIN_MENU')
+    }
   }
 </script>
 
@@ -85,25 +89,8 @@
       {/if}
     </div>
 
-    {#if showNameInput}
-      <div class="name-input-panel bg-black/70 border-2 border-cyan-500 rounded-xl p-6 w-full">
-        <label class="block mb-4">
-          <span class="text-lg mb-2 block">Enter Your Name:</span>
-          <input
-            type="text"
-            bind:value={playerName}
-            maxlength="20"
-            class="w-full px-4 py-3 bg-black/50 border-2 border-cyan-500 rounded text-white text-center text-xl hud focus:outline-none focus:border-cyan-300"
-            placeholder="Player"
-            onkeydown={(e) => e.key === 'Enter' && saveScore()}
-          />
-        </label>
-        <Button label="Save Score" onClick={saveScore} />
-      </div>
-    {/if}
-
     <div class="options flex gap-4 flex-wrap justify-center">
-      <Button label="Play Again" onClick={handleRestart} isFirst={!showNameInput} />
+      <Button label="Play Again" onClick={handleRestart} isFirst={true} />
       <Button label="Main Menu" onClick={handleMainMenu} />
     </div>
   </div>
@@ -121,9 +108,5 @@
 
   .label {
     font-family: 'Orbitron', sans-serif;
-  }
-
-  .value {
-    /* font-family: 'VT323', monospace; */
   }
 </style>

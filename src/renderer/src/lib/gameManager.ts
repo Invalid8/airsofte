@@ -5,9 +5,9 @@ import {
   SCORE_VALUES,
   WAVE_TEMPLATES
 } from '../config/gameConstants'
-import { StorageManager } from './storageManager'
-import { gameEvents } from '../lib/eventBus'
-import { storyMissionManager } from '../lib/storyMissionData'
+import { StorageManager } from '../utils/storageManager'
+import { gameEvents } from './eventBus'
+import { storyMissionManager } from './storyMissionData'
 
 type GameMode = 'QUICK_PLAY' | 'STORY_MODE'
 

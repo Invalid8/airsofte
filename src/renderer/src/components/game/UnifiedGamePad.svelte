@@ -12,7 +12,7 @@
   import ScorePopup from '../ScorePopup.svelte'
   import DialogueSystem from '../DialogueSystem.svelte'
   import MissionBriefing from '../MissionBriefing.svelte'
-  import { gameManager } from '../../utils/gameManager'
+  import { gameManager } from '../../lib/gameManager'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import { gameEvents } from '../../lib/eventBus'
   import { syncGameState, navigateTo, gameState } from '../../stores/gameStore'

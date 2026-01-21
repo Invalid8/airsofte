@@ -126,14 +126,18 @@
     <h1 class="title text-5xl uppercase glow-text text-center mb-8">Select Player</h1>
 
     {#if !showCreateUser && !showPasswordPrompt}
-      <div class="users-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div
+        class="users-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
+        class:flex={users.length === 0}
+        class:grid={users.length !== 0}
+      >
         {#each users as user (user.id)}
           <button
             class="user-card p-6 rounded-lg border-2 border-cyan-500/50 bg-black/70 hover:bg-cyan-500/20 hover:border-cyan-500 transition-all"
             onclick={() => handleUserSelect(user)}
             disabled={isProcessing}
           >
-            <div class="flex items-center gap-3 mb-3">
+            <div class="flex items-center gap-3 mb-4">
               <div
                 class="avatar size-12 rounded-full bg-cyan-500/30 border-2 border-cyan-500 flex items-center justify-center text-2xl"
               >
@@ -145,10 +149,8 @@
                   {formatLastPlayed(user.lastPlayedAt)}
                 </div>
               </div>
-              {#if user.passwordHash}
-                <div class="lock-icon text-yellow-400">🔒</div>
-              {/if}
             </div>
+
             <div class="stats grid grid-cols-2 gap-2 text-sm">
               <div>
                 <div class="opacity-70">Games</div>
@@ -163,7 +165,10 @@
         {/each}
 
         <button
-          class="user-card p-6 rounded-lg border-2 border-dashed border-cyan-500/50 bg-black/50 hover:bg-cyan-500/10 hover:border-cyan-500 transition-all flex items-center justify-center"
+          class="user-card rounded-lg border-2 border-dashed border-cyan-500/50 bg-black/50 hover:bg-cyan-500/10 hover:border-cyan-500 transition-all flex items-center justify-center"
+          class:w-full={users.length === 0}
+          class:p-14={users.length === 0}
+          class:p-6={users.length !== 0}
           onclick={() => {
             showCreateUser = true
             errorMessage = ''
@@ -178,7 +183,7 @@
       </div>
 
       {#if users.length === 0}
-        <div class="text-center opacity-70 mb-6">
+        <div class="text-center opacity-90 mb-6 text-xl">
           <p>No users found. Create your first player profile!</p>
         </div>
       {/if}
@@ -186,7 +191,7 @@
 
     {#if showCreateUser}
       <div
-        class="create-user-form max-w-md mx-auto bg-black/80 border-2 border-cyan-500 rounded-xl p-8"
+        class="create-user-form max-w-lg mx-auto bg-black/80 border-2 border-cyan-500 rounded-xl p-8 md:p-10"
         in:fly={{ y: 50, duration: 300 }}
       >
         <h2 class="text-2xl font-bold mb-6 text-center">Create New User</h2>
