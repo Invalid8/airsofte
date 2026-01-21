@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import { navigateTo, syncGameState } from '../../stores/gameStore'
+  import { navigateTo, syncGameState, gameState } from '../../stores/gameStore'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import { gameManager } from '../../lib/gameManager'
   import { gameEvents } from '../../lib/eventBus'
@@ -18,8 +18,7 @@
   import WaveTransition from '../../components/WaveTransition.svelte'
   import type { Bullet, StoryMission } from '../../types/gameTypes'
 
-  let { missionId = 1 }: { missionId?: number } = $props()
-
+  // Game state variables
   let game_pad: HTMLDivElement = $state()
   let playerBullets = $state<Bullet[]>([])
   let playerX = $state(0)
@@ -30,10 +29,17 @@
   let showVictory = $state(false)
   let gameEnded = $state(false)
 
+  /**
+   * ✅ FIX: Start mission after briefing
+   * Properly initializes game manager with mission data
+   */
   function startMission(): void {
     if (!currentMission) return
+
     showBriefing = false
     missionStarted = true
+
+    // Start the game with the current mission
     gameManager.startGame('STORY_MODE', undefined, currentMission.id)
   }
 
@@ -71,14 +77,22 @@
   }
 
   onMount(() => {
+    const missionId = $gameState.currentMissionId || 1
+
+    console.log('Loading Story Mission:', missionId)
+
     currentMission = storyMissionManager.getMissionById(missionId)
+
     if (!currentMission) {
+      console.error('Mission not found:', missionId)
       navigateTo('STORY_MODE_MENU')
       return null
     }
 
+    // Subscribe to game over event
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
 
+    // Sync game state periodically
     const syncInterval = setInterval(() => {
       if (missionStarted && !gameEnded) {
         syncGameState()
@@ -91,6 +105,9 @@
     }
   })
 
+  /**
+   * Cleanup on component destroy
+   */
   onDestroy(() => {
     if (gameManager.isPlaying) {
       gameManager.endGame(false)
@@ -109,6 +126,7 @@
   <DialogueSystem mission={currentMission} />
   <BossHealthBar />
   <WaveTransition />
+
   <div class="p-8 h-screen">
     <div
       class="w-full h-full rounded-lg overflow-hidden relative min-w-3xl"

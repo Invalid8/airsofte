@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { navigateTo } from '../../stores/gameStore'
+  import { navigateTo, gameState } from '../../stores/gameStore'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import type { StoryMission } from '../../types/gameTypes'
 
@@ -12,6 +12,11 @@
 
   function startMission(mission: StoryMission): void {
     if (!mission.unlocked) return
+
+    gameState.update((state) => ({
+      ...state,
+      currentMissionId: mission.id
+    }))
 
     navigateTo('STORY_MODE_PLAY')
   }

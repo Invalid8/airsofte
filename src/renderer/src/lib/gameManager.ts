@@ -53,6 +53,8 @@ export class GameManager {
   private startTime: number = 0
   private comboTimeoutId: number | null = null
 
+  private waveCompleting = false
+
   private constructor() {
     this.loadSettings()
   }
@@ -261,9 +263,16 @@ export class GameManager {
 
     this.enemiesRemaining--
 
+    console.log('Enemy destroyed:', {
+      enemyType: enemy.type,
+      remainingEnemies: this.enemiesRemaining,
+      currentWave: this.session.currentWave
+    })
+
     gameEvents.emit('ENEMY_DESTROYED', { enemy })
 
-    if (this.enemiesRemaining <= 0) {
+    if (this.enemiesRemaining <= 0 && !this.waveCompleting) {
+      console.log('All enemies in wave defeated, completing wave...')
       this.completeWave()
     }
   }
@@ -397,7 +406,13 @@ export class GameManager {
   }
 
   completeWave(): void {
-    if (!this.currentWave) return
+    if (!this.currentWave || this.waveCompleting) {
+      console.log('Wave completion blocked (already completing)')
+      return
+    }
+
+    this.waveCompleting = true
+    console.log('Completing wave:', this.currentWaveIndex + 1)
 
     this.currentWave.completed = true
     this.addScore(SCORE_VALUES.WAVE_COMPLETE)
@@ -413,6 +428,7 @@ export class GameManager {
     })
 
     setTimeout(() => {
+      this.waveCompleting = false
       this.nextWave()
     }, 2500)
   }
@@ -420,7 +436,10 @@ export class GameManager {
   private nextWave(): void {
     this.currentWaveIndex++
 
+    console.log('Advancing to wave:', this.currentWaveIndex + 1, '/', this.waves.length)
+
     if (this.currentWaveIndex >= this.waves.length) {
+      console.log('All waves completed - Victory!')
       this.endGame(true)
       return
     }

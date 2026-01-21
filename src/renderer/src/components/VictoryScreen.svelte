@@ -65,7 +65,11 @@
   }
 
   function handleReplay(): void {
-    navigateTo('GAME_SCREEN')
+    if (gameManager.mode === 'STORY_MODE') {
+      navigateTo('STORY_MODE_PLAY')
+    } else {
+      navigateTo('QUICK_PLAY')
+    }
   }
 </script>
 

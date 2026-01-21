@@ -12,7 +12,7 @@ export type GameRoute =
   | 'STORY_MODE_PLAY'
   | 'DEBUG'
 
-  export type GameDifficulty = 'Easy' | 'Normal' | 'Hard'
+export type GameDifficulty = 'Easy' | 'Normal' | 'Hard'
 
 export type GameState = {
   route: GameRoute
@@ -26,9 +26,9 @@ export type GameState = {
   showSettings?: boolean
   showHelp?: boolean
   showExit?: boolean
+  currentMissionId?: number
 }
 
-// Initial state
 export const initialGameState: GameState = {
   route: 'STARTUP',
   score: 0,
@@ -40,5 +40,6 @@ export const initialGameState: GameState = {
   showHighScore: false,
   showSettings: false,
   showHelp: false,
-  showExit: false
+  showExit: false,
+  currentMissionId: undefined
 }
