@@ -9,13 +9,7 @@
   import ParallaxBackground from '../components/ParallaxBackground.svelte'
   import BossHealthBar from '../components/BossHealthBar.svelte'
   import VictoryScreen from '../components/VictoryScreen.svelte'
-  import {
-    startQuickPlay,
-    gameState,
-    togglePause,
-    syncGameState,
-    navigateTo
-  } from '../stores/gameStore'
+  import { startQuickPlay, gameState, syncGameState, navigateTo } from '../stores/gameStore'
   import { gameEvents } from '../lib/eventBus'
   import { gameManager } from '../lib/gameManager'
   import type { Bullet } from '../types/gameTypes'
@@ -41,19 +35,8 @@
     }
   }
 
-  function handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      if (!gameEnded) {
-        togglePause()
-      }
-    }
-  }
-
   onMount(() => {
     startQuickPlay($gameState.difficulty)
-
-    window.addEventListener('keydown', handleKeyDown)
 
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
 
@@ -64,14 +47,12 @@
     }, 100)
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
       unsubGameOver()
       clearInterval(syncInterval)
     }
   })
 
   onDestroy(() => {
-    window.removeEventListener('keydown', handleKeyDown)
     if (gameManager.isPlaying) {
       gameManager.endGame(false)
     }
@@ -89,7 +70,7 @@
 
   <div class="p-8 h-svh">
     <div
-      class="border-2 border-white/50 w-full h-full rounded-lg bg-white/4 overflow-hidden relative min-w-3xl"
+      class="border-p border-white/50 w-full h-full rounded-lg bg-white/4 overflow-hidden relative min-w-3xl"
       style="max-width: 900px; margin: 0 auto;"
       bind:this={game_pad}
     >

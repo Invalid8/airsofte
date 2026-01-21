@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import { navigateTo, togglePause, syncGameState } from '../../stores/gameStore'
+  import { navigateTo, syncGameState } from '../../stores/gameStore'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import { gameManager } from '../../lib/gameManager'
   import { gameEvents } from '../../lib/eventBus'
@@ -9,6 +9,7 @@
   import GameHUD from '../../components/game/GameHUD.svelte'
   import Particles from '../../components/game/Particles.svelte'
   import PowerUps from '../../components/game/PowerUps.svelte'
+  import ScorePopup from '../../components/ScorePopup.svelte'
   import DialogueSystem from '../../components/DialogueSystem.svelte'
   import MissionBriefing from '../../components/MissionBriefing.svelte'
   import ParallaxBackground from '../../components/ParallaxBackground.svelte'
@@ -29,13 +30,6 @@
   let showVictory = $state(false)
   let gameEnded = $state(false)
 
-  function handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && missionStarted && !gameEnded) {
-      event.preventDefault()
-      togglePause()
-    }
-  }
-
   function startMission(): void {
     if (!currentMission) return
     showBriefing = false
@@ -53,6 +47,12 @@
 
     if (currentMission) {
       storyMissionManager.completeMission(currentMission.id)
+
+      const nextMission = storyMissionManager.getMissionById(currentMission.id + 1)
+      if (nextMission) {
+        storyMissionManager.unlockMission(nextMission.id)
+      }
+
       showVictory = true
     }
   }
@@ -78,8 +78,6 @@
       return null
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-
     const unsubMissionComplete = gameEvents.on('MISSION_COMPLETE', handleMissionComplete)
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
 
@@ -90,7 +88,6 @@
     }, 100)
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
       unsubMissionComplete()
       unsubGameOver()
       clearInterval(syncInterval)
@@ -98,7 +95,6 @@
   })
 
   onDestroy(() => {
-    window.removeEventListener('keydown', handleKeyDown)
     if (gameManager.isPlaying) {
       gameManager.endGame(false)
     }
@@ -126,6 +122,7 @@
         <ParallaxBackground />
         <Particles />
         <PowerUps {game_pad} {playerX} {playerY} />
+        <ScorePopup />
         <PlayerPlane {game_pad} bind:bullets={playerBullets} bind:x={playerX} bind:y={playerY} />
         <EnemyPlane {game_pad} bind:playerBullets {playerX} {playerY} />
       {/if}

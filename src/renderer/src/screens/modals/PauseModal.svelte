@@ -1,32 +1,49 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import Button from '../../components/Button.svelte'
   import { togglePause, navigateTo } from '../../stores/gameStore'
+  import { modalManager } from '../../utils/ModalManager'
+
+  function handleResume(): void {
+    togglePause()
+  }
+
+  function handleHelp(): void {
+    modalManager.open('HELP')
+  }
+
+  function handleSettings(): void {
+    modalManager.open('SETTINGS')
+  }
 
   function handleMainMenu(): void {
-    togglePause()
+    modalManager.close()
     navigateTo('MAIN_MENU')
   }
 </script>
 
-<div class="overlay fixed size-full top-0 left-0 right-0 bottom-0 bg-black/70 z-[999]"></div>
-
-<div
-  class="pause-menu--modal fixed w-full max-w-md rounded-xl modal-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-  in:fly={{ y: 200, duration: 500 }}
->
+<div class="pause-menu-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8 min-w-md">
   <div class="content flex flex-col items-center justify-center gap-4">
     <h2 class="title text-2xl uppercase glow-text-2">Paused</h2>
 
     <div class="options">
-      <ul class="grid">
-        <li>
-          <Button label="Resume" onClick={togglePause} isFirst={true} />
+      <ul class="grid gap-3 justify-center items-center">
+        <li class="mx-auto">
+          <Button label="Resume" onClick={handleResume} isFirst={true} />
         </li>
-        <li>
+        <li class="mx-auto">
+          <Button label="Settings" onClick={handleSettings} />
+        </li>
+        <li class="mx-auto">
+          <Button label="Help" onClick={handleHelp} />
+        </li>
+        <li class="mx-auto">
           <Button label="Main Menu" onClick={handleMainMenu} />
         </li>
       </ul>
+    </div>
+
+    <div class="pause-info text-center text-sm opacity-70 mt-4">
+      <p><span class="mr-2">Press </span><kbd class="key">ESC</kbd> <span class="ml-2">to resume</span></p>
     </div>
   </div>
 </div>
@@ -38,9 +55,26 @@
   }
 
   .modal-bg {
-    background: linear-gradient(135deg, rgba(0, 10, 30, 0.95) 0%, rgba(0, 30, 60, 0.95) 100%);
-    border: 2px solid rgba(0, 170, 255, 0.5);
-    box-shadow: 0 0 40px rgba(0, 170, 255, 0.3);
-    backdrop-filter: blur(10px);
+    background: linear-gradient(
+      135deg,
+      rgba(5, 15, 40, 0.98) 0%,
+      rgba(10, 25, 65, 0.98) 50%,
+      rgba(5, 15, 40, 0.98) 100%
+    );
+    border: 2px solid rgba(0, 170, 255, 0.6);
+    box-shadow:
+      0 0 40px rgba(0, 170, 255, 0.4),
+      inset 0 0 60px rgba(0, 100, 200, 0.1);
+  }
+
+  .key {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #00aaff;
+    border-radius: 0.25rem;
+    /* font-family: 'VT323', monospace; */
+    font-size: 1rem;
+    color: #00aaff;
   }
 </style>

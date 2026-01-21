@@ -1,4 +1,5 @@
 import { particleSystem, type Particle } from './particleSystem'
+import { audioManager } from '../utils/AudioManager'
 
 export class EnhancedParticleEffects {
   static createPlayerTrail(x: number, y: number): void {
@@ -112,24 +113,41 @@ export class EnhancedParticleEffects {
   }
 
   static createBossDeathExplosion(x: number, y: number): void {
-    for (let wave = 0; wave < 5; wave++) {
+    for (let wave = 0; wave < 8; wave++) {
       setTimeout(() => {
-        const radius = wave * 30
-        const particleCount = 15 + wave * 5
+        const radius = wave * 40
+        const particleCount = 20 + wave * 5
+        const colors = ['#ff0000', '#ff6600', '#ffaa00', '#ffffff']
+        const color = colors[wave % colors.length]
 
         for (let i = 0; i < particleCount; i++) {
           const angle = (Math.PI * 2 * i) / particleCount
           const px = x + Math.cos(angle) * radius
           const py = y + Math.sin(angle) * radius
 
-          particleSystem.createExplosion(px, py, 15, wave % 2 === 0 ? '#ff0000' : '#ffaa00')
+          particleSystem.createExplosion(px, py, 15, color)
         }
-      }, wave * 150)
+
+        audioManager.playExplosion('large')
+      }, wave * 200)
     }
 
     setTimeout(() => {
-      particleSystem.createExplosion(x, y, 80, '#ffffff')
-    }, 750)
+      particleSystem.createExplosion(x, y, 100, '#ffffff')
+
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+          const angle = Math.random() * Math.PI * 2
+          const distance = Math.random() * 200
+          particleSystem.createExplosion(
+            x + Math.cos(angle) * distance,
+            y + Math.sin(angle) * distance,
+            10,
+            '#ffaa00'
+          )
+        }, i * 20)
+      }
+    }, 1600)
   }
 
   static createBulletTrail(x: number, y: number, color: string = '#ffaa00'): void {

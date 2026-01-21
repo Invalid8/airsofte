@@ -124,6 +124,6 @@
   }
 
   .value {
-    font-family: 'VT323', monospace;
+    /* font-family: 'VT323', monospace; */
   }
 </style>

@@ -54,7 +54,7 @@
 <style>
   .parallax-container {
     z-index: 0;
-    background: linear-gradient(180deg, #00042849 0%, #001a3d59 100%);
+    /* background: linear-gradient(180deg, #00042849 0%, #001a3d59 100%); */
   }
 
   .parallax-layer {

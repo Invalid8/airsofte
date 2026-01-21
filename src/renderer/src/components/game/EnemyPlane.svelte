@@ -13,6 +13,7 @@
   import EnemyBasic from '../../assets/sprites/enemy-basic.png'
   import EnemyScout from '../../assets/sprites/enemy-scout.png'
   import EnemyBomber from '../../assets/sprites/enemy-bomber.png'
+  import { enhancedParticles } from '../../lib/enhancedParticles'
 
   let {
     game_pad,
@@ -94,7 +95,8 @@
   }
 
   function checkCollisions(): void {
-    const playerBulletHits = combatSystem.checkPlayerBulletCollisions(playerBullets, enemies)
+    const visibleEnemies = enemies.filter((e) => e.y >= -100 && e.y <= game_pad.clientHeight + 100)
+    const playerBulletHits = combatSystem.checkPlayerBulletCollisions(playerBullets, visibleEnemies)
 
     playerBulletHits.forEach(({ bulletId, enemyId, damage }) => {
       const bullet = playerBullets.find((b) => b.id === bulletId)
@@ -110,13 +112,20 @@
       bullet.active = false
 
       if (killed) {
-        particleSystem.createExplosion(
-          enemy.x + enemy.width / 2,
-          enemy.y + enemy.height / 2,
-          25,
-          '#ff6600'
-        )
-        ScreenEffects.shake(5, 0.2)
+        if (enemy.type === 'BOSS') {
+          enhancedParticles.createBossDeathExplosion(
+            enemy.x + enemy.width / 2,
+            enemy.y + enemy.height / 2
+          )
+        } else {
+          particleSystem.createExplosion(
+            enemy.x + enemy.width / 2,
+            enemy.y + enemy.height / 2,
+            25,
+            '#ff6600'
+          )
+        }
+        ScreenEffects.shake(enemy.type === 'BOSS' ? 15 : 5, enemy.type === 'BOSS' ? 0.5 : 0.2)
       }
     })
 

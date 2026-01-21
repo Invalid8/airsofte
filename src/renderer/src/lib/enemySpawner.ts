@@ -49,10 +49,32 @@ export class EnemySpawner {
   }
 
   private spawnEnemy(config: SpawnConfig): void {
-    const x = Math.random() * (this.bounds.width - 100) + 50
-    const y = -100
+    const enemyWidth = this.getEnemyWidth(config.type)
+    const margin = 50
+
+    const minX = margin
+    const maxX = this.bounds.width - enemyWidth - margin
+
+    const x = Math.random() * (maxX - minX) + minX
+
+    const y = -150
 
     this.enemyController.spawnEnemy(config.type, x, y, config.pattern)
+  }
+
+  private getEnemyWidth(type: EnemyType): number {
+    switch (type) {
+      case 'BASIC':
+        return 80
+      case 'SCOUT':
+        return 60
+      case 'BOMBER':
+        return 120
+      case 'BOSS':
+        return 250
+      default:
+        return 80
+    }
   }
 
   stop(): void {

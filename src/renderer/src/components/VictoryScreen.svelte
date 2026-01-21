@@ -183,7 +183,7 @@
   .stat-value {
     font-size: 3rem;
     font-weight: bold;
-    font-family: 'VT323', monospace;
+    /* font-family: 'VT323', monospace; */
     color: #00aaff;
   }
 

@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { onMount } from 'svelte'
   import Button from '../../components/Button.svelte'
-  import { toggleHighScore } from '../../stores/gameStore'
+  import { modalManager } from '../../utils/ModalManager'
   import { StorageManager } from '../../utils/storageManager'
   import { cn } from '../../lib/utils'
   import type { HighScore } from '../../types/gameTypes'
@@ -49,12 +48,7 @@
   let currentScores = $derived(tab === 'quick_play' ? quickPlayScores : storyModeScores)
 </script>
 
-<div class="overlay fixed size-full top-0 left-0 right-0 bottom-0 bg-black/70 z-[999]"></div>
-
-<div
-  class="high-score-modal fixed w-full min-w-xl max-w-2xl rounded-xl modal-gradient-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-  in:fly={{ y: 200, duration: 500 }}
->
+<div class="high-score-modal w-full min-w-xl max-w-2xl rounded-xl modal-bg p-6 pt-8">
   <div class="content flex flex-col items-center justify-center gap-4">
     <h2 class="title text-2xl uppercase glow-text-2">High Scores</h2>
 
@@ -148,7 +142,7 @@
           </li>
         {/if}
         <li>
-          <Button label="Close" onClick={toggleHighScore} isFirst={true} />
+          <Button label="Close" onClick={() => modalManager.close()} isFirst={true} />
         </li>
       </ul>
     </div>
@@ -161,21 +155,17 @@
     line-height: 115%;
   }
 
-  .modal-gradient-bg {
+  .modal-bg {
     background: linear-gradient(
       135deg,
-      rgba(0, 10, 40, 0.98) 0%,
-      rgba(10, 20, 60, 0.98) 25%,
-      rgba(20, 10, 50, 0.98) 50%,
-      rgba(10, 5, 40, 0.98) 75%,
-      rgba(0, 10, 40, 0.98) 100%
+      rgba(5, 15, 40, 0.98) 0%,
+      rgba(10, 25, 65, 0.98) 50%,
+      rgba(5, 15, 40, 0.98) 100%
     );
-    border: 2px solid rgba(100, 150, 255, 0.4);
+    border: 2px solid rgba(0, 170, 255, 0.6);
     box-shadow:
-      0 0 40px rgba(100, 150, 255, 0.2),
-      inset 0 0 60px rgba(100, 150, 255, 0.05);
-    backdrop-filter: blur(12px);
-    position: relative;
+      0 0 40px rgba(0, 170, 255, 0.4),
+      inset 0 0 60px rgba(0, 100, 200, 0.1);
   }
 
   .top-score {

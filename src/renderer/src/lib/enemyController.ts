@@ -1,7 +1,7 @@
 import type { Enemy, EnemyType, MovementPattern, Bullet, BoundingBox } from '../types/gameTypes'
 import { ENEMY_CONFIG, GAME_CONFIG, DIFFICULTY_MODIFIERS } from '../config/gameConstants'
 import { gameManager } from '../lib/gameManager'
-import soundManager from '../lib/soundManager'
+import { audioManager } from '../utils/AudioManager'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 
@@ -44,6 +44,10 @@ export class EnemyController {
     const config = ENEMY_CONFIG[type]
     const modifier = DIFFICULTY_MODIFIERS[gameManager.difficulty]
 
+    const baseSpeed = config.speed
+    const adjustedSpeed =
+      type === 'BOSS' ? baseSpeed * 0.7 : baseSpeed * modifier.enemySpeedMultiplier * 0.6
+
     const enemy: Enemy = {
       id: `enemy_${this.enemyIdCounter++}`,
       type,
@@ -53,7 +57,7 @@ export class EnemyController {
       height: config.height,
       health: config.health * modifier.enemyHealthMultiplier,
       maxHealth: config.health * modifier.enemyHealthMultiplier,
-      speed: config.speed * modifier.enemySpeedMultiplier,
+      speed: adjustedSpeed,
       pattern,
       active: true,
       shootInterval: config.shootInterval,
@@ -116,7 +120,7 @@ export class EnemyController {
 
       this.updateEnemyPosition(enemy, deltaTime, playerX, playerY, bounds)
 
-      if (this.shouldShoot(enemy)) {
+      if (this.shouldShoot(enemy) && enemy.y > 0) {
         const bullet = this.shootBullet(enemy)
         if (bullet) newBullets.push(bullet)
       }
@@ -242,7 +246,7 @@ export class EnemyController {
 
     enemy.lastShot = Date.now()
 
-    soundManager.playSound('enemyShoot')
+    audioManager.playSound('enemyShoot')
 
     return bullet
   }

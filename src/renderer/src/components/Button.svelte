@@ -1,7 +1,7 @@
 <script lang="ts">
   import { gsap } from 'gsap'
-  import soundManager from '../lib/soundManager'
   import { onMount } from 'svelte'
+  import { audioManager } from '../utils/AudioManager'
   export let label: string | HTMLElement = 'START'
   export let onClick: () => void
   export let isFirst: boolean = false
@@ -49,7 +49,7 @@
       }
     })
     gsap.to(button, { y: 3, duration: 0.1, yoyo: true, repeat: 1 })
-    soundManager.playSound('menuClick')
+    audioManager.playSound('menuClick')
     onClick?.()
   }
 

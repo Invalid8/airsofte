@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import { onMount } from 'svelte'
   import Button from '../../components/Button.svelte'
-  import { toggleSettings, setDifficulty } from '../../stores/gameStore'
+  import { modalManager } from '../../utils/ModalManager'
+  import { audioManager } from '../../utils/AudioManager'
+  import { setDifficulty } from '../../stores/gameStore'
   import { StorageManager } from '../../utils/storageManager'
-  import soundManager from '../../lib/soundManager'
   import type { GameSettings } from '../../types/gameTypes'
 
   let settings = $state<GameSettings>({
@@ -35,9 +35,9 @@
 
   onMount(() => {
     settings = StorageManager.getSettings()
-    settings.volume.master = soundManager.getMasterVolume()
-    settings.volume.music = soundManager.getMusicVolume()
-    settings.volume.sfx = soundManager.getSFXVolume()
+    settings.volume.master = audioManager.getMasterVolume()
+    settings.volume.music = audioManager.getMusicVolume()
+    settings.volume.sfx = audioManager.getSFXVolume()
   })
 
   function handleVolumeChange(type: 'master' | 'music' | 'sfx', value: number): void {
@@ -45,11 +45,11 @@
     hasChanges = true
 
     if (type === 'master') {
-      soundManager.setMasterVolume(value)
+      audioManager.setMasterVolume(value)
     } else if (type === 'music') {
-      soundManager.setMusicVolume(value)
+      audioManager.setMusicVolume(value)
     } else if (type === 'sfx') {
-      soundManager.setSFXVolume(value)
+      audioManager.setSFXVolume(value)
     }
   }
 
@@ -66,9 +66,9 @@
 
   function saveSettings(): void {
     StorageManager.saveSettings(settings)
-    soundManager.setMasterVolume(settings.volume.master)
-    soundManager.setMusicVolume(settings.volume.music)
-    soundManager.setSFXVolume(settings.volume.sfx)
+    audioManager.setMasterVolume(settings.volume.master)
+    audioManager.setMusicVolume(settings.volume.music)
+    audioManager.setSFXVolume(settings.volume.sfx)
     hasChanges = false
   }
 
@@ -91,9 +91,9 @@
         showFPS: false
       }
     }
-    soundManager.setMasterVolume(1.0)
-    soundManager.setMusicVolume(0.8)
-    soundManager.setSFXVolume(0.5)
+    audioManager.setMasterVolume(1.0)
+    audioManager.setMusicVolume(0.8)
+    audioManager.setSFXVolume(0.5)
     hasChanges = true
   }
 
@@ -101,15 +101,12 @@
     if (hasChanges) {
       saveSettings()
     }
-    toggleSettings()
+    modalManager.close()
   }
 </script>
 
-<div class="overlay fixed size-full top-0 left-0 right-0 bottom-0 bg-black/70 z-[999]"></div>
-
 <div
-  class="settings-modal fixed w-full max-w-2xl rounded-xl bg-white/10 space-1-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-auto scroll"
-  in:fly={{ y: 200, duration: 500 }}
+  class="settings-modal w-full max-w-2xl rounded-xl modal-bg p-6 pt-8 max-h-[90vh] overflow-auto scroll"
 >
   <div class="content flex flex-col gap-6">
     <h2 class="title text-3xl uppercase glow-text-2 text-center">Settings</h2>
@@ -307,6 +304,19 @@
     line-height: 115%;
   }
 
+  .modal-bg {
+    background: linear-gradient(
+      135deg,
+      rgba(5, 15, 40, 0.98) 0%,
+      rgba(10, 25, 65, 0.98) 50%,
+      rgba(5, 15, 40, 0.98) 100%
+    );
+    border: 2px solid rgba(0, 170, 255, 0.6);
+    box-shadow:
+      0 0 40px rgba(0, 170, 255, 0.4),
+      inset 0 0 60px rgba(0, 100, 200, 0.1);
+  }
+
   .tab-btn {
     padding: 0.75rem 1rem;
     background: rgba(0, 0, 0, 0.5);
@@ -405,7 +415,7 @@
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid #00aaff;
     border-radius: 0.25rem;
-    font-family: 'VT323', monospace;
+    /* font-family: 'VT323', monospace; */
     font-size: 1.1rem;
     color: #00aaff;
     min-width: 60px;

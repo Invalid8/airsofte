@@ -2,7 +2,6 @@
   import { onMount } from 'svelte'
   import { gsap } from 'gsap'
   import PlayerShip from '../assets/sprites/player-ship-i.png'
-
   export let opp: boolean = false
 
   let ship: HTMLImageElement
@@ -12,7 +11,6 @@
     const endX = opp ? -window.innerWidth : window.innerWidth
     const currentRotation: number = opp ? 270 : 90
 
-    // Animate the ship to move left/right and perform a U-turn
     gsap.fromTo(
       ship,
       { x: startX, rotate: currentRotation },

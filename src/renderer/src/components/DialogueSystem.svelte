@@ -127,7 +127,7 @@
     border: none;
     color: #00aaff;
     cursor: pointer;
-    font-family: 'VT323', monospace;
+    /* font-family: 'VT323', monospace; */
   }
 
   .dialogue-text {

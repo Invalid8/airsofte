@@ -1,31 +1,19 @@
-<script>
-  import { fly } from 'svelte/transition'
+<script lang="ts">
   import Button from '../../components/Button.svelte'
-  import { exitGame, toggleExit } from '../../stores/gameStore'
+  import { modalManager } from '../../utils/ModalManager'
+  import { exitGame } from '../../stores/gameStore'
 </script>
 
-<div class="overlay fixed size-full top-0 left-0 right-0 bottom-0 bg-black/70 z-[999]"></div>
-
-<div
-  class="exit--modal fixed w-full max-w-md rounded-xl bg-white/10 space-1-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-1/2"
-  in:fly={{ y: 200, duration: 500 }}
->
+<div class="exit-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8">
   <div class="content flex flex-col items-center justify-center gap-4">
-    <h2 class="title text-2xl uppercase glow-text-2">Exit</h2>
-    <p class="message text-center">Are you sure you want to exit?</p>
+    <h2 class="title text-2xl uppercase glow-text-2">Exit Game</h2>
+    <p class="message text-center text-lg">Are you sure you want to exit?</p>
 
-    <div class="options flex gap-4">
-      <Button
-        label="Cancel"
-        onClick={() => {
-          toggleExit()
-        }}
-      />
+    <div class="options flex gap-4 mt-2">
+      <Button label="Cancel" onClick={() => modalManager.close()} isFirst={true} />
       <Button
         label="Exit"
         onClick={() => {
-          // Add your exit logic here
-          console.log('Exiting...')
           exitGame()
         }}
       />
@@ -38,8 +26,22 @@
     word-spacing: -10px;
     line-height: 115%;
   }
+
+  .modal-bg {
+    background: linear-gradient(
+      135deg,
+      rgba(5, 15, 40, 0.98) 0%,
+      rgba(10, 25, 65, 0.98) 50%,
+      rgba(5, 15, 40, 0.98) 100%
+    );
+    border: 2px solid rgba(0, 170, 255, 0.6);
+    box-shadow:
+      0 0 40px rgba(0, 170, 255, 0.4),
+      inset 0 0 60px rgba(0, 100, 200, 0.1);
+  }
+
   .message {
-    font-size: 1.2rem;
     color: #fff;
+    opacity: 0.9;
   }
 </style>

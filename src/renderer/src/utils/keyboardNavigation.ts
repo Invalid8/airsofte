@@ -1,5 +1,5 @@
 import { onMount } from 'svelte'
-import soundManager from '../lib/soundManager'
+import { audioManager } from './AudioManager'
 
 export function createKeyboardNavigation<T extends HTMLElement>(
   getElements: () => T[],
@@ -27,7 +27,7 @@ export function createKeyboardNavigation<T extends HTMLElement>(
         event.preventDefault()
         nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % elements.length
         if (!loop && nextIndex < currentIndex) nextIndex = currentIndex
-        soundManager.playSound('sound1')
+        audioManager.playSound('sound1')
       } else if (event.key === 'ArrowUp') {
         event.preventDefault()
         nextIndex =
@@ -35,7 +35,7 @@ export function createKeyboardNavigation<T extends HTMLElement>(
             ? elements.length - 1
             : (currentIndex - 1 + elements.length) % elements.length
         if (!loop && nextIndex > currentIndex) nextIndex = currentIndex
-        soundManager.playSound('sound1')
+        audioManager.playSound('sound1')
       }
     }
 
@@ -44,7 +44,7 @@ export function createKeyboardNavigation<T extends HTMLElement>(
         event.preventDefault()
         nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % elements.length
         if (!loop && nextIndex < currentIndex) nextIndex = currentIndex
-        soundManager.playSound('sound1')
+        audioManager.playSound('sound1')
       } else if (event.key === 'ArrowLeft') {
         event.preventDefault()
         nextIndex =
@@ -52,7 +52,7 @@ export function createKeyboardNavigation<T extends HTMLElement>(
             ? elements.length - 1
             : (currentIndex - 1 + elements.length) % elements.length
         if (!loop && nextIndex > currentIndex) nextIndex = currentIndex
-        soundManager.playSound('sound1')
+        audioManager.playSound('sound1')
       }
     }
 

@@ -1,66 +1,35 @@
 <script lang="ts">
   import { gameState, toggleSound } from './stores/gameStore'
+  import { audioManager } from './utils/AudioManager'
   import StartupScreen from './screens/StartupScreen.svelte'
   import MainMenu from './screens/MainMenu.svelte'
   import GameScreen from './screens/GameScreen.svelte'
-  import PauseMenu from './screens/modals/PauseModal.svelte'
   import GameOverScreen from './screens/GameOverScreen.svelte'
-  import SettingsModal from './screens/modals/SettingsModal.svelte'
-  import HighScoreModal from './screens/modals/HighScoreModal.svelte'
   import DebugTools from './screens/DebugTools.svelte'
   import QuickPlay from './screens/QuickPlay.svelte'
-  import HelpModal from './screens/modals/HelpModal.svelte'
   import StoryModeMenu from './screens/story-mode/StoryModeMenu.svelte'
   import StoryModePlay from './screens/story-mode/StoryModePlay.svelte'
-  import ExitModal from './screens/modals/ExitModal.svelte'
-  import soundManager from './lib/soundManager'
+  import ModalWrapper from './components/ModalWrapper.svelte'
   import { onDestroy, onMount } from 'svelte'
 
   let audioInitialized = false
 
   function initializeAudio(): void {
     if (!audioInitialized) {
-      soundManager.playMusic('background')
+      audioManager.playMusic('background')
       audioInitialized = true
-    }
-  }
-
-  function handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      const currentRoute = $gameState.route
-
-      if (currentRoute === 'QUICK_PLAY' || currentRoute === 'STORY_MODE_PLAY') {
-        if ($gameState.isPaused) {
-          return
-        }
-      } else if (currentRoute === 'MAIN_MENU' && $gameState.showExit) {
-        return
-      }
-
-      if ($gameState.showSettings) {
-        $gameState.showSettings = false
-      } else if ($gameState.showHighScore) {
-        $gameState.showHighScore = false
-      } else if ($gameState.showHelp) {
-        $gameState.showHelp = false
-      } else if ($gameState.showExit) {
-        $gameState.showExit = false
-      }
     }
   }
 
   onMount(() => {
     document.addEventListener('click', initializeAudio, { once: true })
     document.addEventListener('keydown', initializeAudio, { once: true })
-    window.addEventListener('keydown', handleKeyDown)
   })
 
   onDestroy(() => {
-    soundManager.stopAll()
+    audioManager.stopAll()
     document.removeEventListener('click', initializeAudio)
     document.removeEventListener('keydown', initializeAudio)
-    window.removeEventListener('keydown', handleKeyDown)
   })
 </script>
 
@@ -83,25 +52,7 @@
     <DebugTools />
   {/if}
 
-  {#if $gameState.isPaused}
-    <PauseMenu />
-  {/if}
-
-  {#if $gameState.showSettings}
-    <SettingsModal />
-  {/if}
-
-  {#if $gameState.showHighScore}
-    <HighScoreModal />
-  {/if}
-
-  {#if $gameState.showHelp}
-    <HelpModal />
-  {/if}
-
-  {#if $gameState.showExit}
-    <ExitModal />
-  {/if}
+  <ModalWrapper />
 
   <div class="sound">
     <button class="sound-toggle" onclick={toggleSound}>

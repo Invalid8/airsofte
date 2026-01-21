@@ -1,16 +1,12 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
   import Button from '../../components/Button.svelte'
-  import { toggleHelp } from '../../stores/gameStore'
+  import { modalManager } from '../../utils/ModalManager'
 
   let activeSection: 'controls' | 'mechanics' | 'enemies' | 'powerups' = $state('controls')
 </script>
 
-<div class="overlay fixed size-full top-0 left-0 right-0 bottom-0 bg-black/70 z-[999]"></div>
-
 <div
-  class="help-modal fixed w-full max-w-3xl rounded-xl bg-white/10 space-1-bg p-6 pt-8 z-[999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-h-[90vh] overflow-auto scroll"
-  in:fly={{ y: 200, duration: 500 }}
+  class="help-modal w-full max-w-3xl rounded-xl modal-bg p-6 pt-8 max-h-[90vh] overflow-auto scroll"
 >
   <div class="content flex flex-col gap-6">
     <h2 class="title text-3xl uppercase glow-text-2 text-center">Help & Guide</h2>
@@ -221,7 +217,7 @@
     </div>
 
     <div class="text-center">
-      <Button label="Close" onClick={toggleHelp} />
+      <Button label="Close" onClick={() => modalManager.close()} />
     </div>
   </div>
 </div>
@@ -230,6 +226,19 @@
   h2 {
     word-spacing: -10px;
     line-height: 115%;
+  }
+
+  .modal-bg {
+    background: linear-gradient(
+      135deg,
+      rgba(5, 15, 40, 0.98) 0%,
+      rgba(10, 25, 65, 0.98) 50%,
+      rgba(5, 15, 40, 0.98) 100%
+    );
+    border: 2px solid rgba(0, 170, 255, 0.6);
+    box-shadow:
+      0 0 40px rgba(0, 170, 255, 0.4),
+      inset 0 0 60px rgba(0, 100, 200, 0.1);
   }
 
   .tab-btn {
@@ -265,7 +274,7 @@
 
   .control-item strong {
     color: #00aaff;
-    font-family: 'VT323', monospace;
+    /* font-family: 'VT323', monospace; */
     font-size: 1.2rem;
   }
 
@@ -283,7 +292,7 @@
     gap: 1rem;
     font-size: 0.9rem;
     color: #00aaff;
-    font-family: 'VT323', monospace;
+    /* font-family: 'VT323', monospace; */
   }
 
   .tip-box {

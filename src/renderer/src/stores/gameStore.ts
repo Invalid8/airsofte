@@ -1,10 +1,11 @@
 import { writable, derived, get } from 'svelte/store'
 import type { GameState, GameRoute, GameDifficulty } from '../routes/gameRoutes'
 import type { GameSessionState, PlayerStats } from '../types/gameTypes'
-import soundManager from '../lib/soundManager'
+import { audioManager } from '../utils/AudioManager'
+import { modalManager } from '../utils/ModalManager'
+import { inputManager } from '../utils/InputManager'
 import { gameManager } from '../lib/gameManager'
 import { StorageManager } from '../utils/storageManager'
-import { AudioEventHandler } from '../lib/audioIntegration'
 
 export type ExtendedGameState = GameState & {
   session: GameSessionState | null
@@ -30,7 +31,8 @@ const initialState: ExtendedGameState = {
 function createGameStore() {
   const { subscribe, set, update } = writable<ExtendedGameState>(initialState)
 
-  AudioEventHandler.initialize()
+  audioManager.initialize()
+  inputManager.initialize()
 
   return {
     subscribe,
@@ -38,16 +40,20 @@ function createGameStore() {
     update,
 
     navigateTo: (route: GameRoute) => {
-      update((state) => ({
-        ...state,
-        previousRoute: state.route,
-        route
-      }))
+      update((state) => {
+        inputManager.setRoute(route)
+        return {
+          ...state,
+          previousRoute: state.route,
+          route
+        }
+      })
     },
 
     goBack: () => {
       update((state) => {
         if (state.previousRoute) {
+          inputManager.setRoute(state.previousRoute)
           return {
             ...state,
             route: state.previousRoute,
@@ -80,8 +86,10 @@ function createGameStore() {
 
         if (newPauseState) {
           gameManager.pauseGame()
+          modalManager.open('PAUSE')
         } else {
           gameManager.resumeGame()
+          modalManager.close()
         }
 
         return { ...state, isPaused: newPauseState }
@@ -89,33 +97,31 @@ function createGameStore() {
     },
 
     toggleSettings: () => {
-      update((state) => ({ ...state, showSettings: !state.showSettings }))
+      modalManager.toggle('SETTINGS')
     },
 
     toggleHighScore: () => {
-      update((state) => ({ ...state, showHighScore: !state.showHighScore }))
+      modalManager.toggle('HIGH_SCORE')
     },
 
     toggleHelp: () => {
-      update((state) => ({ ...state, showHelp: !state.showHelp }))
+      modalManager.toggle('HELP')
     },
 
     toggleExit: () => {
-      update((state) => ({ ...state, showExit: !state.showExit }))
+      modalManager.toggle('EXIT')
     },
 
     toggleSound: () => {
-      update((state) => {
-        soundManager.toggleMute()
-        return {
-          ...state,
-          sound: !soundManager.isMutedState()
-        }
-      })
+      audioManager.toggleMute()
+      update((state) => ({
+        ...state,
+        sound: !audioManager.isMutedState()
+      }))
     },
 
     adjustVolume: (value: number) => {
-      soundManager.setMasterVolume(value)
+      audioManager.setMasterVolume(value)
     },
 
     startQuickPlay: (difficulty?: GameDifficulty) => {
@@ -129,20 +135,6 @@ function createGameStore() {
         player: gameManager.player,
         difficulty: diff
       }))
-
-      const syncInterval = setInterval(() => {
-        if (!gameManager.isPlaying) {
-          clearInterval(syncInterval)
-          return
-        }
-
-        update((state) => ({
-          ...state,
-          session: { ...gameManager.session },
-          player: { ...gameManager.player },
-          score: gameManager.session.score
-        }))
-      }, 100)
     },
 
     startStoryMode: (missionId: number) => {
@@ -154,20 +146,6 @@ function createGameStore() {
         session: gameManager.session,
         player: gameManager.player
       }))
-
-      const syncInterval = setInterval(() => {
-        if (!gameManager.isPlaying) {
-          clearInterval(syncInterval)
-          return
-        }
-
-        update((state) => ({
-          ...state,
-          session: { ...gameManager.session },
-          player: { ...gameManager.player },
-          score: gameManager.session.score
-        }))
-      }, 100)
     },
 
     syncGameState: () => {
@@ -196,6 +174,7 @@ function createGameStore() {
 
     resetGame: () => {
       set(initialState)
+      modalManager.closeAll()
     },
 
     exitGame: () => {
@@ -208,9 +187,9 @@ function createGameStore() {
       const state = get({ subscribe })
       StorageManager.saveSettings({
         volume: {
-          master: soundManager.getMasterVolume(),
-          music: soundManager.getMusicVolume(),
-          sfx: soundManager.getSFXVolume()
+          master: audioManager.getMasterVolume(),
+          music: audioManager.getMusicVolume(),
+          sfx: audioManager.getSFXVolume()
         },
         difficulty: state.difficulty,
         keyBindings: {
@@ -238,9 +217,9 @@ function createGameStore() {
         difficulty: settings.difficulty
       }))
 
-      soundManager.setMasterVolume(settings.volume.master)
-      soundManager.setMusicVolume(settings.volume.music)
-      soundManager.setSFXVolume(settings.volume.sfx)
+      audioManager.setMasterVolume(settings.volume.master)
+      audioManager.setMusicVolume(settings.volume.music)
+      audioManager.setSFXVolume(settings.volume.sfx)
     }
   }
 }
