@@ -48,7 +48,7 @@
   let currentScores = $derived(tab === 'quick_play' ? quickPlayScores : storyModeScores)
 </script>
 
-<div class="high-score-modal w-full min-w-xl max-w-2xl rounded-xl modal-bg p-6 pt-8">
+<div class="high-score-modal w-full min-w-2xl max-w-2xl rounded-xl modal-bg p-6 pt-8">
   <div class="content flex flex-col items-center justify-center gap-4">
     <h2 class="title text-2xl uppercase glow-text-2">High Scores</h2>
 

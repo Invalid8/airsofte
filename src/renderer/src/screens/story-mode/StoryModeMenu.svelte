@@ -33,7 +33,7 @@
   <h1 class="title text-4xl uppercase glow-text pb-4">Story Mode</h1>
 
   <div
-    class="scroll size-full overflow-auto max-h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 place-content-start place-items-center w-full gap-6 px-5 pb-10 max-w-7xl"
+    class="scroll size-full overflow-auto pt-4 max-h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 place-content-start place-items-center w-full gap-6 px-5 pb-10 max-w-7xl"
   >
     {#each missions as mission (mission.id)}
       <button
