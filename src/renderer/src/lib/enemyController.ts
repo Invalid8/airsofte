@@ -4,6 +4,7 @@ import { gameManager } from './gameManager'
 import { audioManager } from '../utils/AudioManager'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
+import { MovementPatterns } from './movementPatterns'
 
 export class EnemyController {
   public enemies: Enemy[] = []
@@ -66,6 +67,10 @@ export class EnemyController {
       patternData: this.initializePatternData(pattern, x, y)
     }
 
+    if (pattern === 'TELEPORT') {
+      MovementPatterns.initializeTeleport(enemy)
+    }
+
     this.enemies.push(enemy)
     return enemy
   }
@@ -102,6 +107,20 @@ export class EnemyController {
           startX: x,
           startY: y
         }
+      case 'TELEPORT':
+        return {
+          startX: x,
+          startY: y,
+          opacity: 1,
+          scale: 1
+        }
+      case 'SPIRAL':
+        return {
+          angle: 0,
+          radius: 150,
+          startX: x,
+          startY: y
+        }
       default:
         return {}
     }
@@ -120,7 +139,7 @@ export class EnemyController {
 
       this.updateEnemyPosition(enemy, deltaTime, playerX, playerY, bounds)
 
-      if (this.shouldShoot(enemy) && enemy.y > 0) {
+      if (this.shouldShoot(enemy) && enemy.y > 0 && !this.isEnemyTeleporting(enemy)) {
         const bullet = this.shootBullet(enemy)
         if (bullet) newBullets.push(bullet)
       }
@@ -140,6 +159,11 @@ export class EnemyController {
     return newBullets
   }
 
+  private isEnemyTeleporting(enemy: Enemy): boolean {
+    if (enemy.pattern !== 'TELEPORT') return false
+    return enemy.patternData?.teleportState?.isTeleporting || false
+  }
+
   private updateEnemyPosition(
     enemy: Enemy,
     deltaTime: number,
@@ -151,64 +175,35 @@ export class EnemyController {
 
     switch (enemy.pattern) {
       case 'STRAIGHT':
-        enemy.y += enemy.speed
+        MovementPatterns.updateStraight(enemy, deltaTime)
         break
 
       case 'WAVE':
-        enemy.y += enemy.speed
-        if (enemy.patternData && enemy.patternData.startY !== undefined) {
-          const progress = enemy.y - enemy.patternData.startY
-          const offset =
-            Math.sin(progress * enemy.patternData.frequency!) * enemy.patternData.amplitude!
-          enemy.x = enemy.patternData.startX! + offset
-        }
+        MovementPatterns.updateWave(enemy, deltaTime)
         break
 
       case 'ZIGZAG':
-        enemy.y += enemy.speed
-        if (enemy.patternData && enemy.patternData.startY !== undefined) {
-          const progress = enemy.y - enemy.patternData.startY
-          const zigzag = Math.floor(progress / 50) % 2 === 0 ? 1 : -1
-          enemy.x = enemy.patternData.startX! + zigzag * enemy.patternData.amplitude!
-        }
+        MovementPatterns.updateZigzag(enemy, deltaTime)
         break
 
       case 'CIRCLE':
-        if (enemy.patternData) {
-          enemy.patternData.angle = (enemy.patternData.angle || 0) + 0.02
-
-          if (isBoss && bounds) {
-            const centerX = bounds.width / 2 - enemy.width / 2
-            const centerY = 150
-            const radius = enemy.patternData.radius || 100
-
-            enemy.x = centerX + Math.cos(enemy.patternData.angle) * radius
-            enemy.y = centerY + Math.sin(enemy.patternData.angle) * 50
-          } else {
-            const centerX = enemy.patternData.startX || 0
-            enemy.x = centerX + Math.cos(enemy.patternData.angle) * 100
-
-            if (enemy.patternData.startY !== undefined) {
-              enemy.patternData.startY += enemy.speed
-              enemy.y = enemy.patternData.startY + Math.sin(enemy.patternData.angle) * 30
-            }
-          }
-        }
+        MovementPatterns.updateCircle(enemy, deltaTime, bounds, isBoss)
         break
 
       case 'CHASE':
-        if (playerX !== undefined && playerY !== undefined) {
-          const dx = playerX - enemy.x
-          const dy = playerY - enemy.y
-          const distance = Math.sqrt(dx * dx + dy * dy)
+        MovementPatterns.updateChase(enemy, deltaTime, playerX, playerY)
+        break
 
-          if (distance > 0) {
-            enemy.x += (dx / distance) * enemy.speed * 0.7
-            enemy.y += (dy / distance) * enemy.speed * 0.7
-          }
-        } else {
-          enemy.y += enemy.speed
-        }
+      case 'TELEPORT':
+        MovementPatterns.updateTeleport(enemy, deltaTime, bounds)
+        break
+
+      case 'SPIRAL':
+        MovementPatterns.updateSpiral(enemy, deltaTime)
+        break
+
+      default:
+        MovementPatterns.updateStraight(enemy, deltaTime)
         break
     }
 

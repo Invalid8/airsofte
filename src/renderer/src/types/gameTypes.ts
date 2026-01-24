@@ -16,7 +16,15 @@ export type EnemyType = 'BASIC' | 'SCOUT' | 'BOMBER' | 'BOSS'
 
 export type PowerUpType = 'HEALTH' | 'WEAPON' | 'SHIELD' | 'SPEED' | 'SCORE'
 
-export type MovementPattern = 'STRAIGHT' | 'WAVE' | 'ZIGZAG' | 'CIRCLE' | 'CHASE'
+export type MovementPattern =
+  | 'STRAIGHT'
+  | 'WAVE'
+  | 'ZIGZAG'
+  | 'CIRCLE'
+  | 'CHASE'
+  | 'TELEPORT'
+  | 'SPIRAL'
+  | 'DIAGONAL'
 
 export type GameDifficulty = 'Easy' | 'Normal' | 'Hard'
 
@@ -57,6 +65,17 @@ export type Enemy = {
     startY?: number
     angle?: number
     radius?: number
+    opacity?: number
+    scale?: number
+    teleportState?: {
+      isTeleporting: boolean
+      teleportProgress: number
+      targetX: number
+      targetY: number
+      portalEffect: boolean
+      lastTeleport: number
+      teleportCooldown: number
+    }
   }
 }
 
@@ -124,7 +143,7 @@ export type StoryMission = {
   unlocked: boolean
   completed: boolean
   objectives: Array<{
-    type: 'DESTROY' | 'SURVIVE' | 'PROTECT' | 'COLLECT'
+    type: 'DESTROY' | 'SURVIVE' | 'PROTECT' | 'COLLECT' | 'NO_DAMAGE' | 'COMBO'
     target: number
     current: number
     description: string

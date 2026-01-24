@@ -129,12 +129,8 @@
     <DialogueSystem mission={currentMission} />
   {/if}
 
-  <div class="h-screen max-w-dvw">
-    <div
-      class="w-full h-full rounded-lg overflow-hidden relative min-w-3xl"
-      style="max-width: 900px; margin: 0 auto;"
-      bind:this={game_pad}
-    >
+  <div class="game-wrapper">
+    <div class="game-container" bind:this={game_pad}>
       {#if game_pad}
         <ParallaxBackground />
         <Particles />
@@ -146,3 +142,29 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .game-wrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  @media (min-width: 1400px) {
+    .game-container {
+      max-width: 1200px;
+      max-height: 100vh;
+      border-radius: 0.5rem;
+    }
+  }
+</style>

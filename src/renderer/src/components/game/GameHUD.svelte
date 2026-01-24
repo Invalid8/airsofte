@@ -133,7 +133,7 @@
           </div>
         </div>
         <div class="health-value text-base tracking-wider pt-1 hud">
-          {$playerHealth} / {maxHealth}
+          {Math.max(0, $playerHealth)} / {maxHealth}
         </div>
       </div>
 

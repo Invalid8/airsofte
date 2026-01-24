@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fly } from 'svelte/transition'
+  import { fly, fade } from 'svelte/transition'
   import Button from '../components/Button.svelte'
   import type { StoryMission } from '../types/gameTypes'
 
@@ -14,78 +14,81 @@
   } = $props()
 </script>
 
-<div class="briefing-screen fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-8">
-  <div
-    class="briefing-container max-w-3xl w-full bg-black/80 border-2 border-cyan-500 rounded-xl p-8"
-    in:fly={{ y: -50, duration: 500 }}
-  >
-    <div class="header text-center mb-8">
-      <div class="mission-number text-sm opacity-70 mb-2">MISSION {mission.id}</div>
-      <h1 class="mission-title text-5xl uppercase glow-text title mb-4">{mission.title}</h1>
-      <p class="mission-description text-lg opacity-80">{mission.description}</p>
+<div class="briefing-overlay" in:fade={{ duration: 300 }}>
+  <div class="briefing-screen scroll" in:fly={{ y: -30, duration: 500, delay: 200 }}>
+    <div class="briefing-header">
+      <div class="mission-badge">Mission {mission.id}</div>
+      <h1 class="mission-title title">{mission.title}</h1>
+      <p class="mission-description">{mission.description}</p>
     </div>
 
-    <div class="objectives-section bg-black/50 border border-cyan-500/30 rounded-lg p-6 mb-6">
-      <h2 class="text-2xl font-bold mb-4 text-cyan-400">Mission Objectives</h2>
-      <div class="objectives-list flex flex-col gap-3">
-        {#each mission.objectives as objective, i (i)}
-          <div class="objective-item flex items-start gap-3">
-            <div
-              class="objective-number size-8 rounded-full bg-cyan-500/20 border border-cyan-500 flex items-center justify-center font-bold text-sm"
-            >
-              {i + 1}
+    <div class="briefing-content">
+      <div class="section objectives-section">
+        <h2 class="section-title">
+          <span class="title-icon">▸</span>
+          <span>Objectives</span>
+        </h2>
+        <div class="objectives-list">
+          {#each mission.objectives as objective, i (i)}
+            <div class="objective-item">
+              <div class="objective-number">{i + 1}</div>
+              <div class="objective-details">
+                <div class="objective-desc">{objective.description}</div>
+                <div class="objective-target">
+                  Target: <strong>{objective.target}</strong>
+                  {objective.type === 'SURVIVE' ? 'seconds' : ''}
+                </div>
+              </div>
             </div>
-            <div class="objective-details flex-1">
-              <div class="objective-desc text-lg">{objective.description}</div>
-              <div class="objective-target text-sm opacity-70 mt-1">
-                Target: {objective.target}
-                {objective.type === 'SURVIVE' ? 'seconds' : ''}
+          {/each}
+        </div>
+      </div>
+
+      <div class="section intel-section">
+        <h2 class="section-title">
+          <span class="title-icon">■</span>
+          <span>Intel Report</span>
+        </h2>
+        <div class="intel-grid">
+          <div class="intel-item">
+            <div class="intel-label">Waves</div>
+            <div class="intel-value hud">{mission.waves.length}</div>
+          </div>
+          <div class="intel-item">
+            <div class="intel-label">Enemy Types</div>
+            <div class="intel-value hud">
+              {new Set(mission.waves.flatMap((w) => w.enemies.map((e) => e.type))).size}
+            </div>
+          </div>
+          <div class="intel-item">
+            <div class="intel-label">Difficulty</div>
+            <div class="intel-value hud">
+              {mission.hasBoss ? 'EXTREME' : mission.waves.length > 3 ? 'HIGH' : 'MEDIUM'}
+            </div>
+          </div>
+          <div class="intel-item">
+            <div class="intel-label">Boss</div>
+            <div class="intel-value hud">
+              {mission.hasBoss ? 'YES' : 'NO'}
+            </div>
+          </div>
+        </div>
+
+        {#if mission.hasBoss}
+          <div class="boss-warning">
+            <div class="warning-indicator"></div>
+            <div class="warning-content">
+              <div class="warning-title">Boss Encounter Detected</div>
+              <div class="warning-text">
+                This mission contains a boss-class enemy. Ensure you are adequately prepared.
               </div>
             </div>
           </div>
-        {/each}
+        {/if}
       </div>
     </div>
 
-    <div class="intel-section bg-black/50 border border-cyan-500/30 rounded-lg p-6 mb-6">
-      <h2 class="text-2xl font-bold mb-4 text-cyan-400">Intel Report</h2>
-      <div class="intel-grid grid grid-cols-2 gap-4">
-        <div class="intel-item">
-          <div class="label text-sm opacity-70">Waves</div>
-          <div class="value text-xl font-bold hud">{mission.waves.length}</div>
-        </div>
-        <div class="intel-item">
-          <div class="label text-sm opacity-70">Enemy Types</div>
-          <div class="value text-xl font-bold hud">
-            {new Set(mission.waves.flatMap((w) => w.enemies.map((e) => e.type))).size}
-          </div>
-        </div>
-        <div class="intel-item">
-          <div class="label text-sm opacity-70">Difficulty</div>
-          <div class="value text-xl font-bold hud">
-            {mission.hasBoss ? 'EXTREME' : mission.waves.length > 3 ? 'HIGH' : 'MEDIUM'}
-          </div>
-        </div>
-        <div class="intel-item">
-          <div class="label text-sm opacity-70">Boss Encounter</div>
-          <div class="value text-xl font-bold hud">
-            {mission.hasBoss ? '⚔️ YES' : 'NO'}
-          </div>
-        </div>
-      </div>
-
-      {#if mission.hasBoss}
-        <div class="boss-warning mt-4 p-4 bg-red-500/20 border-2 border-red-500 rounded-lg">
-          <div class="text-lg font-bold text-red-400 mb-2">⚠️ WARNING: BOSS ENCOUNTER</div>
-          <div class="text-sm opacity-80">
-            This mission contains a boss-class enemy. Extreme caution advised. Ensure you are
-            adequately prepared before engaging.
-          </div>
-        </div>
-      {/if}
-    </div>
-
-    <div class="actions flex gap-4 justify-center">
+    <div class="briefing-actions">
       <Button label="Launch Mission" onClick={onStart} isFirst={true} />
       <Button label="Cancel" onClick={onCancel} />
     </div>
@@ -93,38 +96,268 @@
 </div>
 
 <style>
+  .briefing-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.623);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .briefing-screen {
+    max-width: 56rem;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, rgba(0, 15, 40, 0.95) 0%, rgba(0, 30, 60, 0.95) 100%);
+    border: 2px solid rgba(0, 170, 255, 0.5);
+    border-radius: 1rem;
+    box-shadow: 0 0 60px rgba(0, 170, 255, 0.4);
+  }
+
+  .briefing-header {
+    text-align: center;
+    padding: 2.5rem 2rem 2rem;
+    border-bottom: 1px solid rgba(0, 170, 255, 0.2);
+    background: linear-gradient(180deg, rgba(0, 170, 255, 0.05) 0%, transparent 100%);
+  }
+
+  .mission-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 170, 255, 0.2);
+    border: 1px solid rgba(0, 170, 255, 0.5);
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
   .mission-title {
-    word-spacing: -20px;
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    word-spacing: -10px;
     line-height: 110%;
+    color: #00aaff;
+    text-shadow: 0 0 20px rgba(0, 170, 255, 0.6);
   }
 
-  .briefing-container {
-    box-shadow: 0 0 40px rgba(0, 170, 255, 0.3);
-    animation: border-pulse 3s ease-in-out infinite;
+  .mission-description {
+    font-size: 1.125rem;
+    opacity: 0.9;
+    max-width: 40rem;
+    margin: 0 auto;
+    line-height: 1.6;
   }
 
-  @keyframes border-pulse {
-    0%,
-    100% {
-      border-color: rgba(0, 170, 255, 0.8);
-    }
-    50% {
-      border-color: rgba(0, 170, 255, 1);
-    }
+  .briefing-content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .section {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 170, 255, 0.2);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #00aaff;
+  }
+
+  .title-icon {
+    font-size: 1.25rem;
+    color: rgba(0, 170, 255, 0.8);
+  }
+
+  .objectives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .objective-item {
-    padding: 0.75rem;
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
     background: rgba(0, 0, 0, 0.3);
     border-left: 3px solid rgba(0, 170, 255, 0.5);
-    border-radius: 0.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+  }
+
+  .objective-item:hover {
+    background: rgba(0, 170, 255, 0.05);
+    border-left-color: rgba(0, 170, 255, 0.8);
+  }
+
+  .objective-number {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: rgba(0, 170, 255, 0.2);
+    border: 2px solid rgba(0, 170, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .objective-details {
+    flex: 1;
+  }
+
+  .objective-desc {
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .objective-target {
+    font-size: 0.875rem;
+    opacity: 0.7;
+  }
+
+  .intel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
   }
 
   .intel-item {
     text-align: center;
     padding: 1rem;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 0.5rem;
     border: 1px solid rgba(0, 170, 255, 0.2);
+    border-radius: 0.5rem;
+  }
+
+  .intel-label {
+    font-size: 0.875rem;
+    opacity: 0.7;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .intel-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #00aaff;
+  }
+
+  .boss-warning {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 0, 0, 0.1);
+    border: 2px solid rgba(255, 0, 0, 0.4);
+    border-radius: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .boss-warning::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 0, 0, 0.8) 0%,
+      rgba(255, 100, 0, 0.8) 50%,
+      rgba(255, 0, 0, 0.8) 100%
+    );
+    animation: warning-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes warning-pulse {
+    0%,
+    100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .warning-indicator {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: rgba(255, 0, 0, 0.2);
+    border: 3px solid rgba(255, 0, 0, 0.6);
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .warning-indicator::before {
+    content: '!';
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ff6666;
+  }
+
+  .warning-content {
+    flex: 1;
+  }
+
+  .warning-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: #ff6666;
+    margin-bottom: 0.25rem;
+  }
+
+  .warning-text {
+    font-size: 0.875rem;
+    opacity: 0.9;
+  }
+
+  .briefing-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    padding: 2rem;
+    border-top: 1px solid rgba(0, 170, 255, 0.2);
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 170, 255, 0.05) 100%);
+  }
+
+  @media (max-width: 640px) {
+    .briefing-header {
+      padding: 1.5rem 1rem;
+    }
+
+    .mission-title {
+      font-size: 2rem;
+    }
+
+    .briefing-content {
+      padding: 1.5rem 1rem;
+    }
+
+    .intel-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 </style>

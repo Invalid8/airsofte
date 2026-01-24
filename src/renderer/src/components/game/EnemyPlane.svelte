@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-
   import type { Enemy, Bullet } from '../../types/gameTypes'
   import { EnemyController } from '../../lib/enemyController'
   import { EnemySpawner } from '../../lib/enemySpawner'
@@ -10,10 +9,10 @@
   import { particleSystem } from '../../lib/particleSystem'
   import { ScreenEffects } from '../../lib/screenEffects'
   import { getBoundingBox } from '../../utils/collisionSystem'
+  import { enhancedParticles } from '../../lib/enhancedParticles'
   import EnemyBasic from '../../assets/sprites/enemy-basic.png'
   import EnemyScout from '../../assets/sprites/enemy-scout.png'
   import EnemyBomber from '../../assets/sprites/enemy-bomber.png'
-  import { enhancedParticles } from '../../lib/enhancedParticles'
 
   let {
     game_pad,
@@ -47,9 +46,35 @@
 
   function getEnemyClass(enemy: Enemy): string {
     const healthPercent = (enemy.health / enemy.maxHealth) * 100
-    if (healthPercent < 30) return 'damaged-critical'
-    if (healthPercent < 60) return 'damaged'
-    return ''
+    const classes = []
+
+    if (healthPercent < 30) classes.push('damaged-critical')
+    else if (healthPercent < 60) classes.push('damaged')
+
+    if (enemy.pattern === 'TELEPORT' && enemy.patternData?.teleportState?.isTeleporting) {
+      classes.push('teleporting')
+    }
+
+    return classes.join(' ')
+  }
+
+  function getEnemyStyle(enemy: Enemy): string {
+    const baseStyle = `left: ${enemy.x}px; top: ${enemy.y}px; width: ${enemy.width}px; height: ${enemy.height}px; transform: rotate(180deg)`
+
+    if (enemy.pattern === 'TELEPORT' && enemy.patternData) {
+      const opacity = enemy.patternData.opacity ?? 1
+      const scale = enemy.patternData.scale ?? 1
+      return `${baseStyle}; opacity: ${opacity}; transform: rotate(180deg) scale(${scale})`
+    }
+
+    return baseStyle
+  }
+
+  function shouldShowPortalEffect(enemy: Enemy): boolean {
+    if (enemy.pattern !== 'TELEPORT') return false
+    const state = enemy.patternData?.teleportState
+    if (!state) return false
+    return state.isTeleporting && (state.teleportProgress < 0.3 || state.teleportProgress > 0.7)
   }
 
   function updateGame(): void {
@@ -169,7 +194,6 @@
 
   function handleWaveStart(): void {
     if (!gameManager.currentWave) return
-
     if (enemySpawner) {
       enemySpawner.startWave(gameManager.currentWave)
     }
@@ -230,23 +254,35 @@
 </script>
 
 {#each enemies as enemy (enemy.id + '_' + updateCounter)}
-  <img
-    class="enemy absolute pointer-events-none {getEnemyClass(enemy)}"
-    src={getEnemySprite(enemy.type)}
-    alt="Enemy {enemy.type}"
-    style="left: {enemy.x}px; top: {enemy.y}px; width: {enemy.width}px; height: {enemy.height}px; transform: rotate(180deg);"
-  />
+  <div class="enemy-wrapper" style={getEnemyStyle(enemy)}>
+    {#if shouldShowPortalEffect(enemy)}
+      <div class="portal-effect"></div>
+    {/if}
+    <img
+      class="enemy {getEnemyClass(enemy)}"
+      src={getEnemySprite(enemy.type)}
+      alt="Enemy {enemy.type}"
+    />
+  </div>
 {/each}
 
 {#each enemyBullets as bullet (bullet.id)}
   <div
-    class="enemy-bullet absolute pointer-events-none"
+    class="enemy-bullet"
     style="left: {bullet.x}px; top: {bullet.y}px; width: {bullet.width}px; height: {bullet.height}px;"
   ></div>
 {/each}
 
 <style>
+  .enemy-wrapper {
+    position: absolute;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+  }
+
   .enemy {
+    width: 100%;
+    height: 100%;
     filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.5));
     transition: filter 0.2s;
   }
@@ -260,6 +296,35 @@
     animation: flash 0.2s infinite;
   }
 
+  .enemy.teleporting {
+    filter: drop-shadow(0 0 20px rgba(0, 170, 255, 1)) brightness(1.3);
+  }
+
+  .portal-effect {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 170, 255, 0.4) 0%, transparent 70%);
+    border: 2px solid rgba(0, 170, 255, 0.6);
+    animation: portal-pulse 0.6s ease-in-out;
+    pointer-events: none;
+  }
+
+  @keyframes portal-pulse {
+    0% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+  }
+
   @keyframes flash {
     0%,
     100% {
@@ -271,6 +336,8 @@
   }
 
   .enemy-bullet {
+    position: absolute;
+    pointer-events: none;
     background: linear-gradient(to bottom, #ff0000, #ff6600);
     border-radius: 0 0 50% 50%;
     box-shadow: 0 0 8px #ff3333;

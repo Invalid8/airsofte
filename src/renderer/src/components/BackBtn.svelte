@@ -30,71 +30,91 @@
 </script>
 
 <button
-  class="back-button fixed {positionClasses[position]} z-50"
-  onclick={handleClick}
+  class="back-button fixed z-50 {positionClasses[position]}"
+  on:click={handleClick}
   aria-label={label}
 >
-  <div class="button-content flex items-center gap-2">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-    <span class="label">{label}</span>
-  </div>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+
+  <span class="">{label}</span>
 </button>
 
 <style>
   .back-button {
-    background: linear-gradient(135deg, rgba(0, 102, 204, 0.9) 0%, rgba(0, 170, 255, 0.9) 100%);
-    border: 2px solid #00aaff;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    padding: 0.65rem 0.75rem;
+    padding-right: 1.15rem;
     border-radius: 8px;
-    color: white;
-    padding: 0.75rem 1.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    border: 2px solid #00aaff;
+
+    background: linear-gradient(
+      135deg,
+      rgba(2, 90, 179, 0.95),
+      rgba(3, 129, 175, 0.95)
+    );
+
+    color: #ffffff;
     font-family: 'Press Start 2P', monospace;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
+
+    cursor: pointer;
+    user-select: none;
+
     box-shadow:
-      0 0 10px rgba(0, 170, 255, 0.5),
-      inset 0 0 20px rgba(255, 255, 255, 0.1);
+      0 0 8px rgba(0, 170, 255, 0.6),
+      inset 0 0 14px rgba(255, 255, 255, 0.12);
+
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background 0.15s ease;
   }
 
   .back-button:hover {
-    background: linear-gradient(135deg, rgba(0, 120, 230, 0.95) 0%, rgba(0, 200, 255, 0.95) 100%);
+    transform: translateY(-1px);
     box-shadow:
-      0 0 20px rgba(0, 170, 255, 0.8),
-      inset 0 0 30px rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+      0 0 16px rgba(0, 170, 255, 0.85),
+      inset 0 0 20px rgba(255, 255, 255, 0.2);
   }
 
   .back-button:active {
     transform: translateY(0);
     box-shadow:
-      0 0 10px rgba(0, 170, 255, 0.5),
-      inset 0 0 20px rgba(255, 255, 255, 0.1);
+      0 0 8px rgba(0, 170, 255, 0.6),
+      inset 0 0 14px rgba(255, 255, 255, 0.12);
   }
 
-  .button-content {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  .back-button:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 3px rgba(0, 170, 255, 0.45),
+      0 0 16px rgba(0, 170, 255, 0.9);
   }
 
   .label {
     line-height: 1;
+    white-space: nowrap;
   }
 
   svg {
     flex-shrink: 0;
   }
 </style>
+

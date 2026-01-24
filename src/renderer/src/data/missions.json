@@ -1,0 +1,365 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-24",
+  "missions": [
+    {
+      "id": 1,
+      "title": "First Contact",
+      "description": "Learn the basics of combat and survive your first encounter.",
+      "unlocked": true,
+      "objectives": [
+        {
+          "type": "DESTROY",
+          "target": 10,
+          "description": "Destroy 10 enemy fighters"
+        },
+        {
+          "type": "SURVIVE",
+          "target": 60000,
+          "description": "Survive for 1 minute"
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "type": "BASIC",
+              "count": 5,
+              "pattern": "STRAIGHT",
+              "spawnDelay": 800
+            }
+          ],
+          "spawnInterval": 1000
+        },
+        {
+          "enemies": [
+            {
+              "type": "BASIC",
+              "count": 5,
+              "pattern": "WAVE",
+              "spawnDelay": 600
+            }
+          ],
+          "spawnInterval": 1000
+        }
+      ],
+      "dialogue": [
+        {
+          "character": "Commander",
+          "text": "Welcome, pilot. This is your first mission. Stay focused and follow your training.",
+          "timing": "START"
+        },
+        {
+          "character": "Commander",
+          "text": "Good work! You handled that wave well. Stay alert, more are coming.",
+          "timing": "MID"
+        },
+        {
+          "character": "Commander",
+          "text": "Excellent! Mission complete. You are ready for more challenging assignments.",
+          "timing": "END"
+        }
+      ],
+      "hasBoss": false,
+      "rewards": {
+        "scoreMultiplier": 1.0,
+        "bonusPoints": 500
+      }
+    },
+    {
+      "id": 2,
+      "title": "The Swarm",
+      "description": "Face increased enemy numbers and learn to manage multiple threats.",
+      "unlocked": false,
+      "objectives": [
+        {
+          "type": "DESTROY",
+          "target": 20,
+          "description": "Destroy 20 enemies"
+        },
+        {
+          "type": "COLLECT",
+          "target": 3,
+          "description": "Collect 3 power-ups"
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "type": "BASIC",
+              "count": 8,
+              "pattern": "STRAIGHT",
+              "spawnDelay": 500
+            },
+            {
+              "type": "SCOUT",
+              "count": 3,
+              "pattern": "ZIGZAG",
+              "spawnDelay": 700
+            }
+          ],
+          "spawnInterval": 1000
+        },
+        {
+          "enemies": [
+            {
+              "type": "SCOUT",
+              "count": 6,
+              "pattern": "WAVE",
+              "spawnDelay": 400
+            },
+            {
+              "type": "BASIC",
+              "count": 4,
+              "pattern": "STRAIGHT",
+              "spawnDelay": 600
+            }
+          ],
+          "spawnInterval": 1000
+        }
+      ],
+      "dialogue": [
+        {
+          "character": "Commander",
+          "text": "Intelligence reports heavy enemy activity in this sector. Expect resistance.",
+          "timing": "START"
+        },
+        {
+          "character": "Commander",
+          "text": "Do not forget to collect power-ups! They could save your life.",
+          "timing": "MID"
+        },
+        {
+          "character": "Commander",
+          "text": "Outstanding performance. The enemy swarm has been neutralized.",
+          "timing": "END"
+        }
+      ],
+      "hasBoss": false,
+      "rewards": {
+        "scoreMultiplier": 1.2,
+        "unlockWeapon": "DOUBLE",
+        "bonusPoints": 800
+      }
+    },
+    {
+      "id": 3,
+      "title": "Phantom Strike",
+      "description": "Face enemies with advanced teleportation technology. Stay alert!",
+      "unlocked": false,
+      "objectives": [
+        {
+          "type": "DESTROY",
+          "target": 15,
+          "description": "Destroy 15 teleporting enemies"
+        },
+        {
+          "type": "COMBO",
+          "target": 3,
+          "description": "Reach 3x combo multiplier"
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "type": "SCOUT",
+              "count": 5,
+              "pattern": "TELEPORT",
+              "spawnDelay": 800
+            },
+            {
+              "type": "BASIC",
+              "count": 3,
+              "pattern": "WAVE",
+              "spawnDelay": 600
+            }
+          ],
+          "spawnInterval": 1200
+        },
+        {
+          "enemies": [
+            {
+              "type": "SCOUT",
+              "count": 7,
+              "pattern": "TELEPORT",
+              "spawnDelay": 600
+            }
+          ],
+          "spawnInterval": 1000
+        }
+      ],
+      "dialogue": [
+        {
+          "character": "Commander",
+          "text": "Enemy has developed teleportation tech. Track their patterns carefully.",
+          "timing": "START"
+        },
+        {
+          "character": "Commander",
+          "text": "They are unpredictable but not invincible. Keep firing!",
+          "timing": "MID"
+        },
+        {
+          "character": "Commander",
+          "text": "Mission accomplished. Your adaptive tactics were impressive.",
+          "timing": "END"
+        }
+      ],
+      "hasBoss": false,
+      "rewards": {
+        "scoreMultiplier": 1.3,
+        "bonusPoints": 1000
+      }
+    },
+    {
+      "id": 4,
+      "title": "Heavy Artillery",
+      "description": "Encounter heavily armored bombers for the first time.",
+      "unlocked": false,
+      "objectives": [
+        {
+          "type": "DESTROY",
+          "target": 5,
+          "description": "Destroy 5 bomber units"
+        },
+        {
+          "type": "SURVIVE",
+          "target": 90000,
+          "description": "Survive for 1 minute 30 seconds"
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "type": "BOMBER",
+              "count": 2,
+              "pattern": "STRAIGHT",
+              "spawnDelay": 1200
+            },
+            {
+              "type": "SCOUT",
+              "count": 4,
+              "pattern": "CIRCLE",
+              "spawnDelay": 500
+            }
+          ],
+          "spawnInterval": 1500
+        },
+        {
+          "enemies": [
+            {
+              "type": "BOMBER",
+              "count": 3,
+              "pattern": "WAVE",
+              "spawnDelay": 1000
+            },
+            {
+              "type": "BASIC",
+              "count": 5,
+              "pattern": "STRAIGHT",
+              "spawnDelay": 600
+            }
+          ],
+          "spawnInterval": 1500
+        }
+      ],
+      "dialogue": [
+        {
+          "character": "Commander",
+          "text": "Radar shows heavy bomber units in your path. Focus fire and stay mobile.",
+          "timing": "START"
+        },
+        {
+          "character": "Commander",
+          "text": "These bombers are tough but slow. Use that to your advantage!",
+          "timing": "MID"
+        },
+        {
+          "character": "Commander",
+          "text": "Mission success! Enemy bombers eliminated. Well done, pilot.",
+          "timing": "END"
+        }
+      ],
+      "hasBoss": false,
+      "rewards": {
+        "scoreMultiplier": 1.4,
+        "unlockWeapon": "TRIPLE",
+        "bonusPoints": 1200
+      }
+    },
+    {
+      "id": 5,
+      "title": "The Guardian",
+      "description": "Face your first boss encounter. Victory requires skill and strategy.",
+      "unlocked": false,
+      "objectives": [
+        {
+          "type": "DESTROY",
+          "target": 1,
+          "description": "Defeat the Guardian Boss"
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "type": "BASIC",
+              "count": 5,
+              "pattern": "WAVE",
+              "spawnDelay": 500
+            },
+            {
+              "type": "SCOUT",
+              "count": 3,
+              "pattern": "CIRCLE",
+              "spawnDelay": 400
+            }
+          ],
+          "spawnInterval": 1000
+        },
+        {
+          "enemies": [
+            {
+              "type": "BOSS",
+              "count": 1,
+              "pattern": "CIRCLE",
+              "spawnDelay": 0
+            }
+          ],
+          "spawnInterval": 2000
+        }
+      ],
+      "dialogue": [
+        {
+          "character": "Commander",
+          "text": "Long-range scanners are detecting a massive energy signature. Prepare yourself!",
+          "timing": "START"
+        },
+        {
+          "character": "Commander",
+          "text": "That is their command ship! Take it down and this sector is ours!",
+          "timing": "MID"
+        },
+        {
+          "character": "Commander",
+          "text": "Incredible! The Guardian has been destroyed! You are a true ace, pilot!",
+          "timing": "END"
+        }
+      ],
+      "hasBoss": true,
+      "bossConfig": {
+        "health": 3000,
+        "pattern": "CIRCLE",
+        "scoreValue": 5000
+      },
+      "rewards": {
+        "scoreMultiplier": 2.0,
+        "unlockWeapon": "SPREAD",
+        "bonusPoints": 2500
+      }
+    }
+  ]
+}
