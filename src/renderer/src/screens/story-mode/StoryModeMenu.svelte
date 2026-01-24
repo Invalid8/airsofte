@@ -32,7 +32,11 @@
 </script>
 
 <div class="story-mode-screen">
-  <BackBtn />
+  <BackBtn
+    onClick={() => {
+      navigateTo('GAME_SCREEN')
+    }}
+  />
 
   <div class="story-header">
     <h1 class="title">Story Mode</h1>

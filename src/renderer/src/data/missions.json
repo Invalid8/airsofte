@@ -83,6 +83,17 @@
           "description": "Collect 3 power-ups"
         }
       ],
+      "events": [
+        {
+          "type": "SUPPLY_DROP",
+          "triggerCondition": "ENEMIES_REMAINING",
+          "conditionValue": 5,
+          "data": {
+            "powerUpType": "HEALTH",
+            "guaranteed": true
+          }
+        }
+      ],
       "waves": [
         {
           "enemies": [

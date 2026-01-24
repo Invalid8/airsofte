@@ -11,6 +11,7 @@
   import VictoryScreen from '../VictoryScreen.svelte'
   import ScorePopup from '../ScorePopup.svelte'
   import DialogueSystem from '../DialogueSystem.svelte'
+  import MissionHUDOverlay from '../MissionHUDOverlay.svelte'
   import MissionBriefing from '../MissionBriefing.svelte'
   import { gameManager } from '../../lib/gameManager'
   import { storyMissionManager } from '../../lib/storyMissionData'
@@ -129,6 +130,10 @@
     <DialogueSystem mission={currentMission} />
   {/if}
 
+  {#if mode === 'STORY_MODE' && currentMission && missionStarted}
+    <MissionHUDOverlay mission={currentMission} />
+  {/if}
+
   <div class="game-wrapper">
     <div class="game-container" bind:this={game_pad}>
       {#if game_pad}
@@ -164,7 +169,6 @@
     .game-container {
       max-width: 1200px;
       max-height: 100vh;
-      border-radius: 0.5rem;
     }
   }
 </style>

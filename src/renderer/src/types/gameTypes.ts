@@ -156,6 +156,9 @@ export type StoryMission = {
   }>
   hasBoss: boolean
   bossConfig?: BossConfig
+  rewards: {
+    unlockWeapon: WeaponType
+  }
 }
 
 export type BossConfig = {
