@@ -3,7 +3,7 @@
   import Button from '../components/Button.svelte'
   import Loader from '../components/Loader.svelte'
   import { replicateLoadFunctions } from '../lib/utils'
-  import { goBack, navigateTo, toggleHelp } from '../stores/gameStore'
+  import { navigateTo, toggleHelp } from '../stores/gameStore'
   import PlayerShip from '../assets/sprites/player-ship-i.png'
 
   let load: boolean = false
@@ -47,7 +47,12 @@
             />
           </li>
           <li>
-            <Button label="Back" onClick={goBack} />
+            <Button
+              label="Back"
+              onClick={() => {
+                navigateTo('MAIN_MENU')
+              }}
+            />
           </li>
         </ul>
       </div>
