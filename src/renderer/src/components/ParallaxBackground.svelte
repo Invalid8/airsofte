@@ -105,7 +105,7 @@
       radial-gradient(circle, rgba(150, 220, 255, 0.9) 3.5px, transparent 3.5px);
     background-size:
       600px 600px,
-      900px 900px;
+      100vw 100vw;
     background-position:
       150px 150px,
       350px 350px;

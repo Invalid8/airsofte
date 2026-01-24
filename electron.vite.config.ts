@@ -1,15 +1,39 @@
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
-import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    build: {
+      sourcemap: false,
+      minify: 'esbuild'
+    }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    build: {
+      sourcemap: false,
+      minify: 'esbuild'
+    }
   },
   renderer: {
-    plugins: [svelte(), tailwindcss()]
+    plugins: [svelte(), tailwindcss()],
+    build: {
+      sourcemap: false,
+      minify: 'esbuild',
+      rollupOptions: {
+        treeshake: true,
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              return 'vendor'
+            }
+
+            return undefined
+          }
+        }
+      }
+    }
   }
 })

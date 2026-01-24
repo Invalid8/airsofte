@@ -13,13 +13,11 @@
   let totalScore = $state(0)
   let isHighScore = $state(false)
   let rank = $state(0)
-  let animationsDone = $state(false)
-  let container: HTMLDivElement = $state()
 
   onMount(() => {
     setTimeout(() => {
       showVictory = true
-    }, 500)
+    }, 300)
 
     const baseScore = $gameState.score
     const noDamageBonus = gameManager.player.health === gameManager.player.maxHealth ? 1000 : 0
@@ -36,18 +34,13 @@
 
     isHighScore = scoreList.length < 20 || totalScore > scoreList[scoreList.length - 1].score
 
-    if (isHighScore) {
+    if (isHighScore && $currentUser) {
       const position = scoreList.filter((s) => s.score > totalScore).length
       rank = position + 1
 
-      const playerName = $currentUser?.username || 'Guest'
-      gameManager.saveHighScore(playerName)
+      const playerName = $currentUser.username
+      gameManager.saveHighScore(playerName, $currentUser.id)
     }
-
-    setTimeout(() => {
-      container?.scrollTo({ top: 0 })
-      animationsDone = true
-    }, 1600)
   })
 
   function handleContinue(): void {
@@ -68,94 +61,62 @@
 </script>
 
 {#if showVictory}
-  <div
-    class="victory-screen fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-4 sm:p-6 md:p-8"
-  >
-    <div
-      bind:this={container}
-      class="victory-container max-w-3xl w-full max-h-[90vh] custom-scrollbar px-5 scroll"
-      class:overflow-hidden={!animationsDone}
-      class:overflow-y-auto={animationsDone}
-      in:scale={{ duration: 800, start: 0.8 }}
-    >
-      <div
-        class="victory-header text-center mb-6 sm:mb-8 md:mb-10"
-        in:fly={{ y: -50, duration: 600, delay: 200 }}
-      >
-        <h1 class="victory-title text-4xl sm:text-5xl md:text-6xl uppercase glow-text title mb-4">
-          Victory!
-        </h1>
-        <p class="victory-subtitle text-xl sm:text-2xl opacity-80">Mission Accomplished</p>
+  <div class="victory-screen flex items-center justify-center p-6">
+    <div class="victory-container max-w-3xl w-full" in:scale={{ duration: 600, start: 0.9 }}>
+      <div class="victory-header text-center mb-8">
+        <h1 class="victory-title text-6xl uppercase glow-text title mb-4">Victory!</h1>
+        <p class="victory-subtitle text-xl opacity-80">Mission Accomplished</p>
       </div>
 
-      <div
-        class="stats-grid grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8"
-        in:fly={{ y: 50, duration: 600, delay: 400 }}
-      >
-        <div class="stat-card">
-          <div class="stat-label text-nowrap">Base Score</div>
-          <div class="stat-value">{$gameState.score.toLocaleString()}</div>
+      <div class="stats-panel">
+        <div class="main-score-section mb-6">
+          <div class="score-label">Total Score</div>
+          <div class="score-value glow-text-green">{totalScore.toLocaleString()}</div>
+          {#if bonusScore > 0}
+            <div class="bonus-breakdown">
+              <span class="base-score">{$gameState.score.toLocaleString()}</span>
+              <span class="plus">+</span>
+              <span class="bonus-score">{bonusScore.toLocaleString()}</span>
+              <span class="bonus-label">bonus</span>
+            </div>
+          {/if}
         </div>
-        <div class="stat-card">
-          <div class="stat-label text-nowrap">Waves Cleared</div>
-          <div class="stat-value">{stats?.currentWave || 0}</div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Waves <br /> Cleared</div>
+            <div class="stat-value hud">{stats?.currentWave || 0}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Enemies <br /> Defeated</div>
+            <div class="stat-value hud">{stats?.enemiesDefeated || 0}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Shot <br />Accuracy</div>
+            <div class="stat-value hud">{stats?.accuracy.toFixed(1) || 0}%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Time <br /> Spent</div>
+            <div class="stat-value hud">
+              {Math.floor((stats?.timeElapsed ?? 0) / 60000)}:{String(
+                Math.floor(((stats?.timeElapsed ?? 0) % 60000) / 1000)
+              ).padStart(2, '0')}
+            </div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label text-nowrap">Enemies Defeated</div>
-          <div class="stat-value">{stats?.enemiesDefeated || 0}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label text-nowrap">Accuracy</div>
-          <div class="stat-value">{stats?.accuracy.toFixed(1) || 0}%</div>
-        </div>
+
+        {#if isHighScore}
+          <div class="high-score-banner" in:fly={{ y: 30, duration: 400, delay: 400 }}>
+            <!-- <div class="banner-icon">🏆</div> -->
+            <div class="banner-content">
+              <div class="banner-title">New High Score!</div>
+              <div class="banner-subtitle">Rank #{rank} on the leaderboard</div>
+            </div>
+          </div>
+        {/if}
       </div>
 
-      <div
-        class="bonus-section p-4 sm:p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-lg mb-4 transition-all overflow-hidden"
-        class:opacity-0={bonusScore <= 0}
-        class:pointer-events-none={bonusScore <= 0}
-        class:max-h-0={bonusScore <= 0}
-        class:max-h-[200px]={bonusScore > 0}
-        in:fly={{ y: 30, duration: 600, delay: 600 }}
-      >
-        <div class="text-xl sm:text-2xl font-bold text-yellow-400 mb-3 text-center">
-          ⭐ Bonus Points ⭐
-        </div>
-        <div class="text-4xl sm:text-5xl md:text-6xl text-center">
-          {bonusScore.toLocaleString()} pts
-        </div>
-      </div>
-
-      <div
-        class="total-score-section p-6 sm:p-8 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-2 border-cyan-500 rounded-lg mb-4 sm:mb-5"
-        in:fly={{ y: 30, duration: 600, delay: 800 }}
-      >
-        <div class="text-2xl sm:text-3xl font-bold text-center mb-2">TOTAL SCORE</div>
-        <div class="text-5xl sm:text-6xl font-bold text-center glow-text">
-          {totalScore.toLocaleString()}
-        </div>
-      </div>
-
-      <div
-        class="high-score-banner p-4 sm:p-6 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-2 border-purple-500 rounded-lg mb-4 transition-all overflow-hidden"
-        class:opacity-0={!isHighScore}
-        class:pointer-events-none={!isHighScore}
-        class:max-h-0={!isHighScore}
-        class:max-h-[200px]={isHighScore}
-        in:fly={{ y: 30, duration: 600, delay: 1000 }}
-      >
-        <div class="text-2xl sm:text-3xl font-bold text-center mb-2 text-purple-400 animate-pulse">
-          🏆 NEW HIGH SCORE! 🏆
-        </div>
-        <div class="text-lg sm:text-xl text-center opacity-80">
-          Rank #{rank} on the leaderboard!
-        </div>
-      </div>
-
-      <div
-        class="actions flex gap-3 sm:gap-4 flex-wrap justify-center"
-        in:fly={{ y: 30, duration: 600, delay: 1200 }}
-      >
+      <div class="actions flex gap-4 justify-center mt-8">
         <Button label="Continue" onClick={handleContinue} isFirst={true} />
         <Button label="Play Again" onClick={handleReplay} />
       </div>
@@ -165,81 +126,149 @@
 
 <style>
   .victory-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
     background: radial-gradient(
       circle at center,
-      rgba(0, 170, 255, 0.1) 0%,
+      rgba(0, 255, 170, 0.08) 0%,
       rgba(0, 0, 0, 0.95) 100%
     );
-    animation: victory-glow 3s ease-in-out infinite;
-  }
-
-  @keyframes victory-glow {
-    0%,
-    100% {
-      background: radial-gradient(
-        circle at center,
-        rgba(0, 170, 255, 0.1) 0%,
-        rgba(0, 0, 0, 0.95) 100%
-      );
-    }
-    50% {
-      background: radial-gradient(
-        circle at center,
-        rgba(0, 170, 255, 0.2) 0%,
-        rgba(0, 0, 0, 0.95) 100%
-      );
-    }
   }
 
   .victory-title {
     word-spacing: -30px;
     line-height: 110%;
-    animation: title-pulse 2s ease-in-out infinite;
+    animation: title-glow 2s ease-in-out infinite;
   }
 
-  @keyframes title-pulse {
+  @keyframes title-glow {
     0%,
     100% {
       text-shadow:
-        0 0 20px #00aaff,
-        0 0 40px #00aaff;
+        0 0 20px #00ff88,
+        0 0 40px #00ff88;
     }
     50% {
       text-shadow:
-        0 0 30px #00aaff,
-        0 0 60px #00aaff;
+        0 0 30px #00ff88,
+        0 0 60px #00ff88;
     }
   }
 
-  .stat-card {
-    background: rgba(0, 0, 0, 0.6);
-    border: 2px solid rgba(0, 170, 255, 0.4);
-    border-radius: 0.75rem;
-    padding: 1rem;
-    text-align: center;
-    transition: all 0.3s;
+  .stats-panel {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid rgba(0, 255, 170, 0.4);
+    border-radius: 1rem;
+    padding: 2rem;
   }
 
-  .stat-card:hover {
-    border-color: rgba(0, 170, 255, 0.8);
-    box-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
-    transform: translateY(-4px);
+  .main-score-section {
+    text-align: center;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(0, 255, 170, 0.2);
+  }
+
+  .score-label {
+    font-size: 1.25rem;
+    opacity: 0.7;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .score-value {
+    font-size: 4rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 0.75rem;
+  }
+
+  .bonus-breakdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+    opacity: 0.8;
+  }
+
+  .base-score {
+    color: #ffffff;
+  }
+
+  .plus {
+    color: #00ff88;
+  }
+
+  .bonus-score {
+    color: #ffaa00;
+    font-weight: bold;
+  }
+
+  .bonus-label {
+    font-size: 0.875rem;
+    opacity: 0.7;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .stat-card {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 255, 170, 0.2);
+    border-radius: 0.5rem;
   }
 
   .stat-label {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     opacity: 0.7;
     margin-bottom: 0.5rem;
-    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
   }
 
   .stat-value {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: bold;
-    color: #00aaff;
+    color: #00ff88;
   }
 
-  .glow-text {
-    text-shadow: 0 0 20px rgba(0, 170, 255, 0.8);
+  .high-score-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, rgba(112, 218, 112, 0.2), rgba(143, 221, 98, 0.2));
+    border: 2px solid rgba(154, 221, 160, 0.6);
+    border-radius: 1rem;
+  }
+
+  .banner-icon {
+    font-size: 3rem;
+  }
+
+  .banner-content {
+    text-align: center;
+  }
+
+  .banner-title {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #00ff88;
+    font-family: 'Press Start 2P', cursive;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+  }
+
+  .banner-subtitle {
+    font-size: 1.125rem;
+    opacity: 0.9;
   }
 </style>

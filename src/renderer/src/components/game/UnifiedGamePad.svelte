@@ -129,7 +129,7 @@
     <DialogueSystem mission={currentMission} />
   {/if}
 
-  <div class="p-8 h-screen">
+  <div class="h-screen max-w-dvw">
     <div
       class="w-full h-full rounded-lg overflow-hidden relative min-w-3xl"
       style="max-width: 900px; margin: 0 auto;"

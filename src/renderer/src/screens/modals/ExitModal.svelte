@@ -4,10 +4,10 @@
   import { exitGame } from '../../stores/gameStore'
 </script>
 
-<div class="exit-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8">
-  <div class="content flex flex-col items-center justify-center gap-4">
+<div class="exit-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8 lg:px-16 lg:py-12">
+  <div class="content flex flex-col items-center justify-center gap-3">
     <h2 class="title text-2xl uppercase glow-text-2">Exit Game</h2>
-    <p class="message text-center text-lg">Are you sure you want to exit?</p>
+    <p class="message text-center text-lg mb-2">Are you sure you want to exit?</p>
 
     <div class="options flex gap-4 mt-2">
       <Button label="Cancel" onClick={() => modalManager.close()} isFirst={true} />

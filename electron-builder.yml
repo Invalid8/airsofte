@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: aerocraft
+appId: com.airsofte.app
+productName: airsofte
 directories:
   buildResources: build
 files:
@@ -13,7 +13,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: aerocraft
+  executableName: airsofte
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

@@ -18,6 +18,23 @@ body {
     0 0 14px #00aaff;
 }
 
+.glow-text-red {
+  color: white;
+  text-shadow: 0 0 2px #f5dddd, 0 0 4px #f5dddd, 0 0 6px #ff2600, 0 0 8px #ff2600,
+    0 0 10px #ff2600,
+    0 0 12px #ff2600,
+    0 0 14px #ff2600;
+    letter-spacing: 4px;
+}
+
+.glow-text-green {
+  color: white;
+  text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #00ff88, 0 0 8px #00ff88,
+    0 0 10px #00ff88,
+    0 0 12px #00ff88,
+    0 0 14px #00ff88;
+}
+
 .glow-text-2 {
   color: white;
   text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px white

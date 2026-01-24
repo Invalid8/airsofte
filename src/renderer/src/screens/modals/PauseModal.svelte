@@ -26,7 +26,7 @@
     <h2 class="title text-2xl uppercase glow-text-2">Paused</h2>
 
     <div class="options">
-      <ul class="grid gap-3 justify-center items-center">
+      <ul class="grid gap-1 justify-center items-center">
         <li class="mx-auto">
           <Button label="Resume" onClick={handleResume} isFirst={true} />
         </li>

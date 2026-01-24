@@ -1,7 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -11,7 +10,7 @@ function createWindow(): void {
     minHeight: 540,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform === 'linux' ? { icon: '../../resources/icons/256x256.png' } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -28,15 +27,15 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.on('before-input-event', (event, input) => {
-    // if (input.control && input.key.toLowerCase() === 'r') {
-    //   event.preventDefault()
-    // }
-    // if (input.meta && input.key.toLowerCase() === 'r') {
-    //   event.preventDefault()
-    // }
-    // if (input.key === 'F5') {
-    //   event.preventDefault()
-    // }
+    if (input.control && input.key.toLowerCase() === 'r') {
+      event.preventDefault()
+    }
+    if (input.meta && input.key.toLowerCase() === 'r') {
+      event.preventDefault()
+    }
+    if (input.key === 'F5') {
+      event.preventDefault()
+    }
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

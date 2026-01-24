@@ -1,6 +1,7 @@
 import { writable, derived } from 'svelte/store'
 import type { UserProfile, UserSession } from '../types/userTypes'
 import { StorageManager } from './storageManager'
+import { gameEvents } from '../lib/eventBus'
 
 const USERS_KEY = 'airsofte_users'
 const SESSION_KEY = 'airsofte_session'
@@ -12,10 +13,12 @@ class UserManager {
     currentUser: null,
     isLocked: false
   })
+  private gameStartTime: number = 0
 
   private constructor() {
     this.loadUsers()
     this.loadSession()
+    this.setupGameEventListeners()
   }
 
   static getInstance(): UserManager {
@@ -23,6 +26,39 @@ class UserManager {
       UserManager.instance = new UserManager()
     }
     return UserManager.instance
+  }
+
+  private setupGameEventListeners(): void {
+    gameEvents.on('GAME_START', () => {
+      this.gameStartTime = Date.now()
+    })
+
+    gameEvents.on('GAME_OVER', (event) => {
+      const currentSession = this.getSession()
+      if (!currentSession.currentUser) return
+
+      const gameEndTime = Date.now()
+      const playTime = gameEndTime - this.gameStartTime
+      const score = event.data?.score || 0
+
+      this.updateUserStats(currentSession.currentUser.id, {
+        gamesPlayed: currentSession.currentUser.stats.gamesPlayed + 1,
+        totalPlayTime: currentSession.currentUser.stats.totalPlayTime + playTime,
+        totalScore: currentSession.currentUser.stats.totalScore + score
+      })
+    })
+
+    gameEvents.on('COMBO_UPDATED', (event) => {
+      const currentSession = this.getSession()
+      if (!currentSession.currentUser) return
+
+      const combo = event.data?.multiplier || 1
+      if (combo > currentSession.currentUser.stats.highestCombo) {
+        this.updateUserStats(currentSession.currentUser.id, {
+          highestCombo: combo
+        })
+      }
+    })
   }
 
   private loadUsers(): void {
@@ -43,13 +79,13 @@ class UserManager {
   }
 
   async createUser(username: string, password?: string): Promise<UserProfile | null> {
-    if (!/^[a-zA-Z0-9 ]{3,20}$/.test(username)) {
+    if (!/^[a-zA-Z0-9_ ]{3,20}$/.test(username)) {
       return null
     }
 
     const users = this.getUsersFromStorage()
 
-    if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+    if (users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
       return null
     }
 
@@ -81,7 +117,7 @@ class UserManager {
     const data = encoder.encode(password)
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
   }
 
   async verifyPassword(user: UserProfile, password: string): Promise<boolean> {
@@ -92,7 +128,7 @@ class UserManager {
 
   async switchUser(userId: string, password?: string): Promise<boolean> {
     const users = this.getUsersFromStorage()
-    const user = users.find(u => u.id === userId)
+    const user = users.find((u) => u.id === userId)
 
     if (!user) return false
 
@@ -106,7 +142,7 @@ class UserManager {
     this.saveUsersToStorage(users)
     this.usersStore.set(users)
 
-    this.sessionStore.update(session => ({
+    this.sessionStore.update((session) => ({
       ...session,
       currentUser: user,
       isLocked: false
@@ -117,7 +153,7 @@ class UserManager {
   }
 
   lockSession(): void {
-    this.sessionStore.update(session => ({
+    this.sessionStore.update((session) => ({
       ...session,
       isLocked: true
     }))
@@ -133,7 +169,7 @@ class UserManager {
 
   deleteUser(userId: string): boolean {
     const users = this.getUsersFromStorage()
-    const filteredUsers = users.filter(u => u.id !== userId)
+    const filteredUsers = users.filter((u) => u.id !== userId)
 
     if (filteredUsers.length === users.length) return false
 
@@ -150,20 +186,21 @@ class UserManager {
 
   updateUserStats(userId: string, stats: Partial<UserProfile['stats']>): boolean {
     const users = this.getUsersFromStorage()
-    const user = users.find(u => u.id === userId)
+    const userIndex = users.findIndex((u) => u.id === userId)
 
-    if (!user) return false
+    if (userIndex === -1) return false
 
-    user.stats = { ...user.stats, ...stats }
+    users[userIndex].stats = { ...users[userIndex].stats, ...stats }
     this.saveUsersToStorage(users)
     this.usersStore.set(users)
 
     const currentSession = this.getSession()
     if (currentSession.currentUser?.id === userId) {
-      this.sessionStore.update(session => ({
+      this.sessionStore.update((session) => ({
         ...session,
-        currentUser: user
+        currentUser: users[userIndex]
       }))
+      this.saveSession({ currentUser: users[userIndex], isLocked: false })
     }
 
     return true
@@ -208,12 +245,6 @@ class UserManager {
 
 export const userManager = UserManager.getInstance()
 
-export const currentUser = derived(
-  userManager.session,
-  $session => $session.currentUser
-)
+export const currentUser = derived(userManager.session, ($session) => $session.currentUser)
 
-export const isSessionLocked = derived(
-  userManager.session,
-  $session => $session.isLocked
-)
+export const isSessionLocked = derived(userManager.session, ($session) => $session.isLocked)

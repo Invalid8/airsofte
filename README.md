@@ -1,11 +1,11 @@
-# Aerocraft - Retro Space Shooter Game
+# Airsofte - Retro Space Shooter Game
 ## Complete Development Summary
 
 ---
 
 ## 📋 Project Overview
 
-**Aerocraft** is a retro-style top-down space shooter game built with:
+**Airsofte** is a retro-style top-down space shooter game built with:
 - **Electron** - Desktop application framework
 - **Svelte 5** - Modern reactive UI framework (using runes)
 - **TypeScript** - Type-safe development
@@ -54,7 +54,7 @@
 ## 📁 Project Structure
 
 ```
-aerocraft/
+airsofte/
 ├── src/
 │   ├── main/                      # Electron main process
 │   │   ├── index.ts              # Main entry point
@@ -421,9 +421,9 @@ npm run build:linux  # Linux
 ```
 
 ### Output
-- Windows: `aerocraft-{version}-setup.exe`
-- macOS: `aerocraft-{version}.dmg`
-- Linux: `aerocraft-{version}.AppImage`
+- Windows: `airsofte-{version}-setup.exe`
+- macOS: `airsofte-{version}.dmg`
+- Linux: `airsofte-{version}.AppImage`
 
 ---
 
@@ -486,7 +486,7 @@ npm run build:linux  # Linux
 
 ## 📄 License & Credits
 
-**Aerocraft** - A retro space shooter game
+**Airsofte** - A retro space shooter game
 Built with Electron, Svelte 5, and TypeScript
 
 Development completed in stages:

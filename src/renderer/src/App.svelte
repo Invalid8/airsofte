@@ -14,6 +14,7 @@
   import ModalWrapper from './components/ModalWrapper.svelte'
   import { onDestroy, onMount } from 'svelte'
   import GamePadIndicator from './components/GamePadIndicator.svelte'
+  import UserPill from './components/UserPill.svelte'
 
   let audioInitialized = false
   let showUserSelection = $derived(!$currentUser && $gameState.route !== 'STARTUP')
@@ -43,8 +44,10 @@
   {:else if $gameState.route === 'STARTUP'}
     <StartupScreen />
   {:else if $gameState.route === 'MAIN_MENU'}
+    <UserPill />
     <MainMenu />
   {:else if $gameState.route === 'GAME_SCREEN'}
+    <UserPill />
     <GameScreen />
   {:else if $gameState.route === 'QUICK_PLAY'}
     <QuickPlay />
