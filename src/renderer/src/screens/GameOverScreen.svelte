@@ -13,23 +13,31 @@
     const finalScore = $gameState.score
     const mode = gameManager.mode
 
-    isHighScore = StorageManager.isHighScore(finalScore, mode)
+    if ($currentUser) {
+      const userId = $currentUser.id
+      const scores = StorageManager.getHighScores(userId)
+      const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-    if (isHighScore && $currentUser) {
-      const playerName = $currentUser.username
-      gameManager.saveHighScore(playerName, $currentUser.id)
+      if (scoreList.length < 20 || finalScore > scoreList[scoreList.length - 1].score) {
+        isHighScore = true
+        const playerName = $currentUser.username
+        gameManager.saveHighScore(playerName, userId)
+      }
     }
   })
 
   function handleRestart(): void {
+    gameManager.isPlaying = false
     if (gameManager.mode === 'STORY_MODE') {
-      navigateTo('STORY_MODE_PLAY')
+      const missionId = $gameState.currentMissionId || 1
+      gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
     } else {
-      navigateTo('QUICK_PLAY')
+      gameManager.startGame('QUICK_PLAY', gameManager.difficulty)
     }
   }
 
   function handleMainMenu(): void {
+    gameManager.isPlaying = false
     if (gameManager.mode === 'STORY_MODE') {
       navigateTo('STORY_MODE_MENU')
     } else {
@@ -78,12 +86,11 @@
         </div>
       </div>
 
-      <!-- {#if isHighScore}
+      {#if isHighScore}
         <div class="high-score-badge">
-          <div class="badge-icon">🏆</div>
           <div class="badge-text">New High Score!</div>
         </div>
-      {/if} -->
+      {/if}
     </div>
 
     <div class="actions flex gap-4 flex-wrap justify-center">
@@ -192,10 +199,6 @@
       transform: scale(1.05);
       box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
     }
-  }
-
-  .badge-icon {
-    font-size: 2rem;
   }
 
   .badge-text {

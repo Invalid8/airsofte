@@ -28,22 +28,25 @@
 
     gameManager.session.score = totalScore
 
-    const mode = gameManager.mode
-    const scores = StorageManager.getHighScores()
-    const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
+    if ($currentUser) {
+      const mode = gameManager.mode
+      const userId = $currentUser.id
+      const scores = StorageManager.getHighScores(userId)
+      const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-    isHighScore = scoreList.length < 20 || totalScore > scoreList[scoreList.length - 1].score
+      if (scoreList.length < 20 || totalScore > scoreList[scoreList.length - 1].score) {
+        isHighScore = true
+        const position = scoreList.filter((s) => s.score > totalScore).length
+        rank = position + 1
 
-    if (isHighScore && $currentUser) {
-      const position = scoreList.filter((s) => s.score > totalScore).length
-      rank = position + 1
-
-      const playerName = $currentUser.username
-      gameManager.saveHighScore(playerName, $currentUser.id)
+        const playerName = $currentUser.username
+        gameManager.saveHighScore(playerName, userId)
+      }
     }
   })
 
   function handleContinue(): void {
+    gameManager.isPlaying = false
     if (gameManager.mode === 'STORY_MODE') {
       navigateTo('STORY_MODE_MENU')
     } else {
@@ -52,10 +55,12 @@
   }
 
   function handleReplay(): void {
+    gameManager.isPlaying = false
     if (gameManager.mode === 'STORY_MODE') {
-      navigateTo('STORY_MODE_PLAY')
+      const missionId = $gameState.currentMissionId || 1
+      gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
     } else {
-      navigateTo('QUICK_PLAY')
+      gameManager.startGame('QUICK_PLAY', gameManager.difficulty)
     }
   }
 </script>
@@ -107,7 +112,6 @@
 
         {#if isHighScore}
           <div class="high-score-banner" in:fly={{ y: 30, duration: 400, delay: 400 }}>
-            <!-- <div class="banner-icon">🏆</div> -->
             <div class="banner-content">
               <div class="banner-title">New High Score!</div>
               <div class="banner-subtitle">Rank #{rank} on the leaderboard</div>
@@ -248,10 +252,6 @@
     background: linear-gradient(135deg, rgba(112, 218, 112, 0.2), rgba(143, 221, 98, 0.2));
     border: 2px solid rgba(154, 221, 160, 0.6);
     border-radius: 1rem;
-  }
-
-  .banner-icon {
-    font-size: 3rem;
   }
 
   .banner-content {

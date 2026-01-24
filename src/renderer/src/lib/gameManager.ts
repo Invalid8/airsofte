@@ -45,15 +45,14 @@ export class GameManager {
 
   public currentWave: Wave | null = null
   public waves: Wave[] = []
-  private enemiesRemaining = 0
+  private enemiesSpawned = 0
+  private enemiesDestroyedInWave = 0
   private currentWaveIndex: number = 0
 
   private gameLoopId: number | null = null
   private lastFrameTime: number = 0
   private startTime: number = 0
   private comboTimeoutId: number | null = null
-
-  // ✅ FIX: Prevent duplicate wave completion calls
   private waveCompleting = false
 
   private constructor() {
@@ -72,31 +71,24 @@ export class GameManager {
     this.difficulty = settings.difficulty
   }
 
-  /**
-   * Initialize enemy count for current wave
-   * Called when wave starts to track how many enemies need to be defeated
-   */
   private initializeWaveEnemyCount(): void {
     if (!this.currentWave) {
-      this.enemiesRemaining = 0
+      this.enemiesSpawned = 0
       return
     }
 
-    this.enemiesRemaining = this.currentWave.enemies.reduce(
+    this.enemiesSpawned = this.currentWave.enemies.reduce(
       (total, enemyGroup) => total + enemyGroup.count,
       0
     )
+    this.enemiesDestroyedInWave = 0
 
     console.log('Wave enemy count initialized:', {
       wave: this.session.currentWave,
-      enemiesRemaining: this.enemiesRemaining,
-      waveConfig: this.currentWave.enemies
+      enemiesSpawned: this.enemiesSpawned
     })
   }
 
-  /**
-   * Start game with specified mode and difficulty
-   */
   startGame(mode: GameMode, difficulty?: GameDifficulty, missionId?: number): void {
     this.mode = mode
     if (difficulty) this.difficulty = difficulty
@@ -104,7 +96,6 @@ export class GameManager {
     this.resetSession()
     this.resetPlayer()
 
-    // Initialize waves based on mode
     if (mode === 'STORY_MODE' && missionId) {
       this.initializeStoryMission(missionId)
     } else {
@@ -117,15 +108,12 @@ export class GameManager {
     this.startTime = performance.now()
     this.lastFrameTime = this.startTime
 
-    // Initialize enemy count for first wave
     this.initializeWaveEnemyCount()
 
     this.startGameLoop()
 
-    // Emit game start event
     gameEvents.emit('GAME_START', { mode, difficulty: this.difficulty, missionId })
 
-    // Start first wave after brief delay
     setTimeout(() => {
       gameEvents.emit('WAVE_START', {
         wave: this.session.currentWave,
@@ -163,6 +151,9 @@ export class GameManager {
       comboMultiplier: 1,
       comboTimer: 0
     }
+    this.enemiesSpawned = 0
+    this.enemiesDestroyedInWave = 0
+    this.waveCompleting = false
   }
 
   private resetPlayer(): void {
@@ -206,10 +197,6 @@ export class GameManager {
 
     const finalScore = this.session.score
     const finalWave = this.session.currentWave
-
-    if (StorageManager.isHighScore(finalScore, this.mode)) {
-      gameEvents.emit('NEW_HIGH_SCORE', { score: finalScore, wave: finalWave })
-    }
 
     setTimeout(() => {
       gameEvents.emit('GAME_OVER', {
@@ -268,30 +255,23 @@ export class GameManager {
     gameEvents.emit('SCORE_UPDATED', { points: finalScore, total: this.session.score })
   }
 
-  /**
-   * ✅ FIX: Enemy destroyed handler
-   * Properly decrements enemy count and checks wave completion
-   */
   onEnemyDestroyed(enemy: Enemy): void {
     this.session.enemiesDefeated++
+    this.enemiesDestroyedInWave++
     this.addScore(enemy.scoreValue)
     this.incrementCombo()
 
-    // Decrement remaining enemies
-    this.enemiesRemaining--
-
     console.log('Enemy destroyed:', {
       enemyType: enemy.type,
-      remainingEnemies: this.enemiesRemaining,
+      destroyedInWave: this.enemiesDestroyedInWave,
+      spawnedInWave: this.enemiesSpawned,
       currentWave: this.session.currentWave
     })
 
-    // Emit enemy destroyed event
     gameEvents.emit('ENEMY_DESTROYED', { enemy })
 
-    // ✅ Check if wave is complete (all enemies defeated)
-    if (this.enemiesRemaining <= 0 && !this.waveCompleting) {
-      console.log('All enemies in wave defeated, completing wave...')
+    if (this.enemiesDestroyedInWave >= this.enemiesSpawned && !this.waveCompleting) {
+      console.log('All spawned enemies in wave defeated, completing wave...')
       this.completeWave()
     }
   }
@@ -424,18 +404,12 @@ export class GameManager {
     }
   }
 
-  /**
-   * ✅ FIX: Complete wave with duplicate call prevention
-   * Uses flag to prevent multiple simultaneous completions
-   */
   completeWave(): void {
-    // Prevent duplicate calls
     if (!this.currentWave || this.waveCompleting) {
       console.log('Wave completion blocked (already completing)')
       return
     }
 
-    // Set flag to prevent duplicate calls
     this.waveCompleting = true
     console.log('Completing wave:', this.currentWaveIndex + 1)
 
@@ -447,43 +421,72 @@ export class GameManager {
       this.addScore(SCORE_VALUES.NO_DAMAGE_BONUS)
     }
 
-    // Emit wave complete event
     gameEvents.emit('WAVE_COMPLETE', {
       wave: this.currentWaveIndex + 1,
       bonus: noDamageTaken
     })
 
-    // Proceed to next wave after delay
     setTimeout(() => {
       this.waveCompleting = false
       this.nextWave()
     }, 2500)
   }
 
-  /**
-   * ✅ FIX: Advance to next wave
-   * Properly increments wave counter and initializes enemy count
-   */
   private nextWave(): void {
+    if (this.mode === 'QUICK_PLAY') {
+      this.nextQuickPlayWave()
+    } else {
+      this.nextStoryWave()
+    }
+  }
+
+  private nextQuickPlayWave(): void {
+    this.currentWaveIndex++
+
+    const templateIndex = this.currentWaveIndex % WAVE_TEMPLATES.length
+    const template = WAVE_TEMPLATES[templateIndex]
+    const modifier = DIFFICULTY_MODIFIERS[this.difficulty]
+
+    this.currentWave = {
+      id: this.currentWaveIndex + 1,
+      spawnInterval: template.spawnInterval,
+      completed: false,
+      enemies: template.enemies.map((e) => ({
+        type: e.type,
+        pattern: e.pattern,
+        spawnDelay: e.spawnDelay,
+        count: Math.ceil(e.count * modifier.enemyCountMultiplier)
+      }))
+    }
+
+    this.session.currentWave = this.currentWaveIndex + 1
+
+    this.initializeWaveEnemyCount()
+
+    setTimeout(() => {
+      gameEvents.emit('WAVE_START', {
+        wave: this.session.currentWave,
+        hasBoss: this.currentWave?.enemies.some((e) => e.type === 'BOSS')
+      })
+    }, 100)
+  }
+
+  private nextStoryWave(): void {
     this.currentWaveIndex++
 
     console.log('Advancing to wave:', this.currentWaveIndex + 1, '/', this.waves.length)
 
-    // Check if all waves completed
     if (this.currentWaveIndex >= this.waves.length) {
       console.log('All waves completed - Victory!')
       this.endGame(true)
       return
     }
 
-    // Set next wave
     this.currentWave = this.waves[this.currentWaveIndex]
     this.session.currentWave = this.currentWaveIndex + 1
 
-    // Initialize enemy count for new wave
     this.initializeWaveEnemyCount()
 
-    // Emit wave start event after brief delay
     setTimeout(() => {
       gameEvents.emit('WAVE_START', {
         wave: this.session.currentWave,

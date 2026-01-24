@@ -53,8 +53,11 @@ export class CombatSystem {
     return collisions
   }
 
-  checkPlayerEnemyCollisions(playerBox: BoundingBox, enemies: Enemy[]): Array<{ enemyId: string }> {
-    const collisions: Array<{ enemyId: string }> = []
+  checkPlayerEnemyCollisions(
+    playerBox: BoundingBox,
+    enemies: Enemy[]
+  ): Array<{ enemyId: string; isBoss: boolean }> {
+    const collisions: Array<{ enemyId: string; isBoss: boolean }> = []
 
     enemies.forEach((enemy) => {
       if (!enemy.active) return
@@ -62,7 +65,10 @@ export class CombatSystem {
       const enemyBox = getBoundingBox(enemy.x, enemy.y, enemy.width, enemy.height)
 
       if (checkCollision(playerBox, enemyBox)) {
-        collisions.push({ enemyId: enemy.id })
+        collisions.push({
+          enemyId: enemy.id,
+          isBoss: enemy.type === 'BOSS'
+        })
       }
     })
 

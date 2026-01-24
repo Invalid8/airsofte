@@ -1,1 +1,0 @@
-- update settings and highscore not snippet
