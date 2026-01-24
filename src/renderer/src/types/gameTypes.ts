@@ -136,12 +136,15 @@ export type HighScore = {
   mode: 'QUICK_PLAY' | 'STORY_MODE'
 }
 
+export type MissionStars = 0 | 1 | 2 | 3
+
 export type StoryMission = {
   id: number
   title: string
   description: string
   unlocked: boolean
   completed: boolean
+  stars?: MissionStars
   objectives: Array<{
     type: 'DESTROY' | 'SURVIVE' | 'PROTECT' | 'COLLECT' | 'NO_DAMAGE' | 'COMBO'
     target: number
@@ -156,8 +159,10 @@ export type StoryMission = {
   }>
   hasBoss: boolean
   bossConfig?: BossConfig
-  rewards: {
-    unlockWeapon: WeaponType
+  rewards?: {
+    unlockWeapon?: WeaponType
+    scoreMultiplier?: number
+    bonusPoints?: number
   }
 }
 
@@ -224,6 +229,7 @@ export type GameEvent = {
     | 'WAVE_COMPLETE'
     | 'BOSS_DEFEATED'
     | 'GAME_OVER'
+    | 'ENEMY_SPAWNED'
   data?: any
   timestamp: number
 }

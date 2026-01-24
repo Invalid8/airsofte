@@ -11,8 +11,8 @@
   import VictoryScreen from '../VictoryScreen.svelte'
   import ScorePopup from '../ScorePopup.svelte'
   import DialogueSystem from '../DialogueSystem.svelte'
-  import MissionHUDOverlay from '../MissionHUDOverlay.svelte'
   import MissionBriefing from '../MissionBriefing.svelte'
+  import ToastNotification from '../ToastNotification.svelte'
   import { gameManager } from '../../lib/gameManager'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import { gameEvents } from '../../lib/eventBus'
@@ -125,13 +125,10 @@
   <GameHUD />
   <WaveTransition />
   <BossHealthBar />
+  <ToastNotification />
 
   {#if mode === 'STORY_MODE' && currentMission}
     <DialogueSystem mission={currentMission} />
-  {/if}
-
-  {#if mode === 'STORY_MODE' && currentMission && missionStarted}
-    <MissionHUDOverlay mission={currentMission} />
   {/if}
 
   <div class="game-wrapper">

@@ -4,8 +4,10 @@
   import Button from '../components/Button.svelte'
   import { navigateTo, gameState } from '../stores/gameStore'
   import { gameManager } from '../lib/gameManager'
+  import { storyMissionManager } from '../lib/storyMissionData'
   import { StorageManager } from '../utils/storageManager'
   import { currentUser } from '../utils/userManager'
+  import type { MissionStars } from '../types/gameTypes'
 
   let showVictory = $state(false)
   let stats = $derived($gameState.session)
@@ -13,6 +15,8 @@
   let totalScore = $state(0)
   let isHighScore = $state(false)
   let rank = $state(0)
+  let missionStars = $state<MissionStars>(0)
+  let showStars = $state(false)
 
   onMount(() => {
     setTimeout(() => {
@@ -27,6 +31,26 @@
     totalScore = baseScore + bonusScore
 
     gameManager.session.score = totalScore
+
+    if (gameManager.mode === 'STORY_MODE') {
+      const missionId = $gameState.currentMissionId || 1
+      const mission = storyMissionManager.getMissionById(missionId)
+
+      if (mission) {
+        missionStars = storyMissionManager.calculateStars(mission, {
+          score: totalScore,
+          timeElapsed: stats?.timeElapsed || 0,
+          damageTaken: gameManager.player.maxHealth - gameManager.player.health,
+          accuracy: stats?.accuracy || 0
+        })
+
+        storyMissionManager.completeMission(missionId, missionStars)
+
+        setTimeout(() => {
+          showStars = true
+        }, 800)
+      }
+    }
 
     if ($currentUser) {
       const mode = gameManager.mode
@@ -67,16 +91,52 @@
 
 {#if showVictory}
   <div class="victory-screen flex items-center justify-center p-6">
-    <div class="victory-container max-w-3xl w-full" in:scale={{ duration: 600, start: 0.9 }}>
+    <div
+      class="victory-container flex flex-col items-center justify-center gap-6 max-w-3xl w-full"
+      in:scale={{ duration: 600, start: 0.9 }}
+    >
       <div class="victory-header text-center mb-8">
         <h1 class="victory-title text-6xl uppercase glow-text title mb-4">Victory!</h1>
         <p class="victory-subtitle text-xl opacity-80">Mission Accomplished</p>
       </div>
 
+      {#if gameManager.mode === 'STORY_MODE' && showStars}
+        <div class="stars-display mb-6" in:fly={{ y: -30, duration: 500 }}>
+          <div class="stars-container flex gap-4 justify-center">
+            {#each Array(3) as x, i (i)}
+              <svg
+                id={x}
+                class="star"
+                class:filled={i < missionStars}
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill={i < missionStars ? '#FFD700' : 'none'}
+                stroke={i < missionStars ? '#FFA500' : '#666'}
+                stroke-width="1.5"
+              >
+                <path
+                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                />
+              </svg>
+            {/each}
+          </div>
+          <div class="stars-text text-center mt-4 text-2xl font-bold hud">
+            {missionStars === 3
+              ? 'Perfect!'
+              : missionStars === 2
+                ? 'Great!'
+                : missionStars === 1
+                  ? 'Good!'
+                  : 'Try Again'}
+          </div>
+        </div>
+      {/if}
+
       <div class="stats-panel">
         <div class="main-score-section mb-6">
           <div class="score-label">Total Score</div>
-          <div class="score-value glow-text-green">{totalScore.toLocaleString()}</div>
+          <div class="score-value glow-text-green hud">{totalScore.toLocaleString()}</div>
           {#if bonusScore > 0}
             <div class="bonus-breakdown">
               <span class="base-score">{$gameState.score.toLocaleString()}</span>
@@ -157,6 +217,32 @@
       text-shadow:
         0 0 30px #00ff88,
         0 0 60px #00ff88;
+    }
+  }
+
+  .stars-display {
+    padding: 2rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    border-radius: 1rem;
+  }
+
+  .star {
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+  }
+
+  .star.filled {
+    animation: star-glow 1.5s ease-in-out infinite;
+  }
+
+  @keyframes star-glow {
+    0%,
+    100% {
+      filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+    }
+    50% {
+      filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1));
     }
   }
 

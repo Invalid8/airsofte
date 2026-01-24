@@ -78,14 +78,18 @@ class UserManager {
     }
   }
 
-  async createUser(username: string, password?: string): Promise<UserProfile | null> {
+  async createUser(
+    username: string,
+    password?: string,
+    isGuest: boolean = false
+  ): Promise<UserProfile | null> {
     if (!/^[a-zA-Z0-9_ ]{3,20}$/.test(username)) {
       return null
     }
 
     const users = this.getUsersFromStorage()
 
-    if (users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
+    if (!isGuest && users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
       return null
     }
 
@@ -93,6 +97,7 @@ class UserManager {
       id: crypto.randomUUID(),
       username,
       passwordHash: password ? await this.hashPassword(password) : undefined,
+      isGuest,
       createdAt: Date.now(),
       lastPlayedAt: Date.now(),
       settings: StorageManager.getSettings(),
@@ -105,11 +110,27 @@ class UserManager {
       achievements: []
     }
 
-    users.push(newUser)
-    this.saveUsersToStorage(users)
-    this.usersStore.set(users)
+    if (!isGuest) {
+      users.push(newUser)
+      this.saveUsersToStorage(users)
+      this.usersStore.set(users)
+    }
 
     return newUser
+  }
+
+  logout(): void {
+    const currentSession = this.getSession()
+
+    if (currentSession.currentUser?.isGuest) {
+      console.log('Guest session ended - temporary data discarded')
+    }
+
+    this.sessionStore.set({
+      currentUser: null,
+      isLocked: false
+    })
+    this.saveSession({ currentUser: null, isLocked: false })
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -157,14 +178,6 @@ class UserManager {
       ...session,
       isLocked: true
     }))
-  }
-
-  logout(): void {
-    this.sessionStore.set({
-      currentUser: null,
-      isLocked: false
-    })
-    this.saveSession({ currentUser: null, isLocked: false })
   }
 
   deleteUser(userId: string): boolean {

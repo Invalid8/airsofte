@@ -1,4 +1,4 @@
-import type { StoryMission } from '../types/gameTypes'
+import type { StoryMission, MissionStars } from '../types/gameTypes'
 import { missionLoader } from './missionLoader'
 
 export class StoryMissionManager {
@@ -36,6 +36,7 @@ export class StoryMissionManager {
         description: 'Learn the basics of combat.',
         unlocked: true,
         completed: false,
+        stars: 0,
         objectives: [
           {
             type: 'DESTROY',
@@ -77,16 +78,44 @@ export class StoryMissionManager {
     }
   }
 
-  completeMission(id: number): void {
+  completeMission(id: number, stars?: MissionStars): void {
     const mission = this.missions.find((m) => m.id === id)
     if (mission) {
       mission.completed = true
+
+      if (stars !== undefined && (mission.stars === undefined || stars > mission.stars)) {
+        mission.stars = stars
+      }
 
       const nextMission = this.missions.find((m) => m.id === id + 1)
       if (nextMission) {
         nextMission.unlocked = true
       }
     }
+  }
+
+  calculateStars(
+    mission: StoryMission,
+    stats: {
+      score: number
+      timeElapsed: number
+      damageTaken: number
+      accuracy: number
+    }
+  ): MissionStars {
+    let stars: MissionStars = 1
+
+    const baseScore = mission.waves.length * 1000
+    const allObjectivesComplete = mission.objectives.every((obj) => obj.current >= obj.target)
+
+    if (!allObjectivesComplete) return 0
+
+    if (stats.score >= baseScore * 1.5) stars = 2
+    if (stats.score >= baseScore * 2 && stats.accuracy >= 70) stars = 3
+
+    if (stats.damageTaken === 0 && stars < 3) stars = 3
+
+    return stars
   }
 
   updateObjective(missionId: number, objectiveIndex: number, progress: number): void {
@@ -118,6 +147,7 @@ export class StoryMissionManager {
     this.missions.forEach((mission, index) => {
       mission.completed = false
       mission.unlocked = index === 0
+      mission.stars = 0
       this.resetMission(mission.id)
     })
   }

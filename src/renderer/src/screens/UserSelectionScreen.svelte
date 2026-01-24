@@ -94,7 +94,7 @@
 
     isProcessing = true
     const guestName = `Guest_${Date.now().toString().slice(-6)}`
-    const user = await userManager.createUser(guestName, undefined)
+    const user = await userManager.createUser(guestName, undefined, true)
     isProcessing = false
 
     if (user) {

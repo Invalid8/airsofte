@@ -5,6 +5,7 @@ import { audioManager } from '../utils/AudioManager'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 import { MovementPatterns } from './movementPatterns'
+import { gameEvents } from './eventBus'
 
 export class EnemyController {
   public enemies: Enemy[] = []
@@ -72,6 +73,14 @@ export class EnemyController {
     }
 
     this.enemies.push(enemy)
+
+    if (type === 'BOSS') {
+      gameEvents.emit('ENEMY_SPAWNED', {
+        enemy,
+        isBoss: true
+      })
+    }
+
     return enemy
   }
 

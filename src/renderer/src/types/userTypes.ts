@@ -4,6 +4,7 @@ export type UserProfile = {
   id: string
   username: string
   passwordHash?: string
+  isGuest?: boolean
   createdAt: number
   lastPlayedAt: number
   settings: GameSettings
