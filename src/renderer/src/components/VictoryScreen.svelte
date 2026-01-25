@@ -90,48 +90,15 @@
 </script>
 
 {#if showVictory}
-  <div class="victory-screen flex items-center justify-center p-6">
+  <div class="victory-screen p-6 min-h-screen w-screen overflow-auto scroll">
     <div
-      class="victory-container flex flex-col items-center justify-center gap-6 max-w-3xl w-full"
+      class="victory-container flex flex-col items-center justify-center gap-6 w-full mx-auto"
       in:scale={{ duration: 600, start: 0.9 }}
     >
       <div class="victory-header text-center mb-8">
         <h1 class="victory-title text-6xl uppercase glow-text title mb-4">Victory!</h1>
         <p class="victory-subtitle text-xl opacity-80">Mission Accomplished</p>
       </div>
-
-      {#if gameManager.mode === 'STORY_MODE' && showStars}
-        <div class="stars-display mb-6" in:fly={{ y: -30, duration: 500 }}>
-          <div class="stars-container flex gap-4 justify-center">
-            {#each Array(3) as x, i (i)}
-              <svg
-                id={x}
-                class="star"
-                class:filled={i < missionStars}
-                width="64"
-                height="64"
-                viewBox="0 0 24 24"
-                fill={i < missionStars ? '#FFD700' : 'none'}
-                stroke={i < missionStars ? '#FFA500' : '#666'}
-                stroke-width="1.5"
-              >
-                <path
-                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                />
-              </svg>
-            {/each}
-          </div>
-          <div class="stars-text text-center mt-4 text-2xl font-bold hud">
-            {missionStars === 3
-              ? 'Perfect!'
-              : missionStars === 2
-                ? 'Great!'
-                : missionStars === 1
-                  ? 'Good!'
-                  : 'Try Again'}
-          </div>
-        </div>
-      {/if}
 
       <div class="stats-panel">
         <div class="main-score-section mb-6">
@@ -146,6 +113,39 @@
             </div>
           {/if}
         </div>
+
+        {#if gameManager.mode === 'STORY_MODE' && showStars}
+          <div class="stars-display mb-6" in:fly={{ y: -30, duration: 500 }}>
+            <div class="stars-container flex gap-4 justify-center">
+              {#each Array(3) as x, i (i)}
+                <svg
+                  id={x}
+                  class="star"
+                  class:filled={i < missionStars}
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill={i < missionStars ? '#FFD700' : 'none'}
+                  stroke={i < missionStars ? '#FFA500' : '#666'}
+                  stroke-width="1.5"
+                >
+                  <path
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                  />
+                </svg>
+              {/each}
+            </div>
+            <div class="stars-text text-center mt-4 text-2xl font-bold hud">
+              {missionStars === 3
+                ? 'Perfect!'
+                : missionStars === 2
+                  ? 'Great!'
+                  : missionStars === 1
+                    ? 'Good!'
+                    : 'Try Again'}
+            </div>
+          </div>
+        {/if}
 
         <div class="stats-grid">
           <div class="stat-card">
@@ -221,10 +221,8 @@
   }
 
   .stars-display {
-    padding: 2rem;
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid rgba(255, 215, 0, 0.4);
-    border-radius: 1rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(0, 255, 170, 0.2);
   }
 
   .star {
@@ -302,7 +300,7 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 1rem;
     margin-top: 2rem;
   }

@@ -7,13 +7,9 @@
   let showBossBar = $state(false)
   let bossEnemy = $state<Enemy | null>(null)
   let healthPercentage = $derived(bossEnemy ? (bossEnemy.health / bossEnemy.maxHealth) * 100 : 0)
-  let currentPhase = $derived(() => {
-    if (!bossEnemy) return 0
-    if (healthPercentage > 66) return 1
-    if (healthPercentage > 33) return 2
-    return 3
-  })
-
+  let currentPhase = $derived(
+    !bossEnemy ? 0 : healthPercentage > 66 ? 1 : healthPercentage > 33 ? 2 : 3
+  )
   function handleBossSpawn(event): void {
     const { enemy } = event.data
     if (enemy && enemy.type === 'BOSS') {
@@ -50,7 +46,7 @@
     class="boss-health-container fixed top-20 left-1/2 -translate-x-1/2 z-[55] w-full max-w-2xl px-8"
     in:fly={{ y: -50, duration: 500 }}
   >
-    <div class="boss-info mb-2 flex justify-between items-center">
+    <div class="boss-info mb-4 flex justify-between items-center">
       <div class="boss-name text-2xl font-bold text-red-500 title animate-pulse">
         ⚔️ THE GUARDIAN
       </div>
@@ -80,10 +76,6 @@
         <div class="phase-marker" style="left: 33.33%"></div>
         <div class="phase-marker" style="left: 66.66%"></div>
       </div>
-    </div>
-
-    <div class="warning-text text-center mt-2 text-sm text-red-400 animate-pulse">
-      ⚠️ EXTREME THREAT DETECTED ⚠️
     </div>
   </div>
 {/if}

@@ -109,7 +109,7 @@
   .sound-toggle {
     position: absolute;
     bottom: 30px;
-    right: 30px;
+    left: 30px;
     background: none;
     border: none;
     cursor: pointer;

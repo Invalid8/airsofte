@@ -171,28 +171,24 @@
 
     const playerEnemyCollisions = combatSystem.checkPlayerEnemyCollisions(playerBox, enemies)
 
-    playerEnemyCollisions.forEach(({ enemyId, isBoss }) => {
+    playerEnemyCollisions.forEach(({ enemyId }) => {
       const enemy = enemyController.getEnemyById(enemyId)
       if (!enemy) return
 
-      const damageToPlayer = isBoss ? 50 : 30
-
       if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
-        gameManager.damagePlayer(damageToPlayer)
+        gameManager.damagePlayer(30)
 
         particleSystem.createExplosion(
           enemy.x + enemy.width / 2,
           enemy.y + enemy.height / 2,
-          isBoss ? 30 : 20,
+          20,
           '#ff3300'
         )
-        ScreenEffects.shake(isBoss ? 15 : 12, isBoss ? 0.5 : 0.4)
-        ScreenEffects.flash('rgba(255, 0, 0, 0.5)', isBoss ? 0.3 : 0.2)
+        ScreenEffects.shake(12, 0.4)
+        ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
       }
 
-      if (!isBoss) {
-        enemyController.damageEnemy(enemyId, enemy.maxHealth)
-      }
+      enemyController.damageEnemy(enemyId, enemy.maxHealth)
     })
   }
 

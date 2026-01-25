@@ -5,9 +5,8 @@
   import GameHUD from './GameHUD.svelte'
   import Particles from './Particles.svelte'
   import PowerUps from './PowerUps.svelte'
-  import WaveTransition from '../WaveTransition.svelte'
   import ParallaxBackground from '../ParallaxBackground.svelte'
-  import BossHealthBar from '../BossHealthBar.svelte'
+  // import BossHealthBar from '../BossHealthBar.svelte'
   import VictoryScreen from '../VictoryScreen.svelte'
   import ScorePopup from '../ScorePopup.svelte'
   import DialogueSystem from '../DialogueSystem.svelte'
@@ -123,8 +122,7 @@
   <VictoryScreen />
 {:else if missionStarted}
   <GameHUD />
-  <WaveTransition />
-  <BossHealthBar />
+  <!-- <BossHealthBar /> -->
   <ToastNotification />
 
   {#if mode === 'STORY_MODE' && currentMission}
