@@ -6,6 +6,7 @@ import path from 'node:path'
 
 export default defineConfig({
   root: path.resolve(__dirname, 'src/renderer'),
+  base: '/',
 
   plugins: [
     svelte(),
@@ -38,6 +39,7 @@ export default defineConfig({
 
       workbox: {
         globPatterns: ['**/*.{js,css,html,wasm,png,svg,mp3,ogg}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // optional, for big assets
       }
     })
   ],
