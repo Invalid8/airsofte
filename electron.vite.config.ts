@@ -23,6 +23,7 @@ export default defineConfig({
       sourcemap: false,
       minify: 'esbuild',
       rollupOptions: {
+        external: ['$app/stores'],
         treeshake: true,
         output: {
           manualChunks(id) {
