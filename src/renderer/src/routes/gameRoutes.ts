@@ -11,6 +11,7 @@ export type GameRoute =
   | 'STORY_MODE_MENU'
   | 'STORY_MODE_PLAY'
   | 'DEBUG'
+  | 'EXIT'
 
 export type GameDifficulty = 'Easy' | 'Normal' | 'Hard'
 

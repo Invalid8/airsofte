@@ -41,12 +41,19 @@ function createGameStore() {
 
     navigateTo: (route: GameRoute) => {
       update((state) => {
+        const modalRoutes: GameRoute[] = ['SETTINGS', 'HIGH_SCORE', 'HELP', 'EXIT']
+
         inputManager.setRoute(route)
-        return {
-          ...state,
-          previousRoute: state.route,
-          route
+
+        if (!modalRoutes.includes(route)) {
+          return {
+            ...state,
+            previousRoute: modalRoutes.includes(state.route) ? state.previousRoute : state.route,
+            route
+          }
         }
+
+        return { ...state, route }
       })
     },
 

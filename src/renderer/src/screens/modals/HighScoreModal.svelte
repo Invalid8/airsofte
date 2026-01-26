@@ -16,7 +16,8 @@
   })
 
   function loadScores(): void {
-    const scores = StorageManager.getHighScores()
+    const userId = $currentUser?.id
+    const scores = StorageManager.getHighScores(userId)
     quickPlayScores = scores.quickPlay
     storyModeScores = scores.storyMode
   }

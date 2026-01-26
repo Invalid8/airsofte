@@ -181,8 +181,13 @@ export class EnemyController {
     bounds?: BoundingBox
   ): void {
     const isBoss = enemy.type === 'BOSS'
+    let currentPattern = enemy.pattern
 
-    switch (enemy.pattern) {
+    if (isBoss && enemy.health < enemy.maxHealth * 0.4) {
+      currentPattern = 'CHASE'
+    }
+
+    switch (currentPattern) {
       case 'STRAIGHT':
         MovementPatterns.updateStraight(enemy, deltaTime)
         break

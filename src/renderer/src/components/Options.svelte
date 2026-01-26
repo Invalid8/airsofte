@@ -28,18 +28,15 @@
 
   let optionButtons: HTMLButtonElement[] = []
 
-  // Handle option selection
   function handleSelect(value: string, onClick?: () => void): void {
     selectedValue = value
     select(value)
 
-    // If a direct onClick function is provided, execute it
     if (onClick) {
       onClick()
     }
   }
 
-  // Set up keyboard navigation if enabled
   $effect(() => {
     if (useKeyboardNav) {
       const navigation = createKeyboardNavigation(() => optionButtons, {

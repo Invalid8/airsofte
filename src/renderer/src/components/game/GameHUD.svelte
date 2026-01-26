@@ -51,20 +51,21 @@
           {/if}
         </div>
       </div>
-
-      {#if showCombo}
-        <div class="text-yellow-400 font-bold text-sm hud">
-          x{comboMultiplier.toFixed(1)}
-        </div>
-      {/if}
     </div>
 
     <div class="flex justify-between mt-2 px-1">
       <div class="text-sm hud opacity-80">
         W{$currentWave}
       </div>
-      <div class="text-sm hud opacity-80">
-        {weaponType}
+      {#if showCombo}
+        <div class="text-yellow-400 font-bold text-sm hud">
+          x{comboMultiplier.toFixed(1)}
+        </div>
+      {/if}
+      <div class="flex items-center gap-5">
+        <div class="text-sm hud opacity-80">
+          {weaponType}
+        </div>
       </div>
     </div>
 

@@ -7,6 +7,7 @@
   import { currentUser } from '../utils/userManager'
 
   let isHighScore = $state(false)
+  let rank = $state(0)
   let stats = $derived($gameState.session)
 
   onMount(() => {
@@ -20,20 +21,37 @@
 
       if (scoreList.length < 20 || finalScore > scoreList[scoreList.length - 1].score) {
         isHighScore = true
+        const position = scoreList.filter((s) => s.score > finalScore).length
+        rank = position + 1
+
         const playerName = $currentUser.username
-        gameManager.saveHighScore(playerName, userId)
+        const saved = gameManager.saveHighScore(playerName, userId)
+
+        if (!saved) {
+          isHighScore = false
+        }
       }
     }
   })
 
   function handleRestart(): void {
     gameManager.isPlaying = false
-    if (gameManager.mode === 'STORY_MODE') {
-      const missionId = $gameState.currentMissionId || 1
-      gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
-    } else {
-      gameManager.startGame('QUICK_PLAY', gameManager.difficulty)
-    }
+
+    gameState.update((state) => ({
+      ...state,
+      session: null,
+      player: null,
+      score: 0
+    }))
+
+    setTimeout(() => {
+      if (gameManager.mode === 'STORY_MODE') {
+        const missionId = $gameState.currentMissionId || 1
+        gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
+      } else {
+        navigateTo('QUICK_PLAY')
+      }
+    }, 100)
   }
 
   function handleMainMenu(): void {
@@ -89,6 +107,7 @@
       {#if isHighScore}
         <div class="high-score-badge">
           <div class="badge-text">New High Score!</div>
+          <div class="badge-subtitle">Rank #{rank} on the leaderboard</div>
         </div>
       {/if}
     </div>
@@ -179,13 +198,14 @@
 
   .high-score-badge {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    padding: 1rem 2rem;
+    gap: 0.5rem;
+    padding: 1.5rem 2rem;
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
     border: 2px solid rgba(255, 215, 0, 0.6);
-    border-radius: 9999px;
+    border-radius: 1rem;
     animation: badge-pulse 1.5s ease-in-out infinite;
   }
 
@@ -206,5 +226,10 @@
     font-weight: bold;
     color: #ffd700;
     font-family: 'Press Start 2P', cursive;
+  }
+
+  .badge-subtitle {
+    font-size: 1.125rem;
+    opacity: 0.9;
   }
 </style>

@@ -97,17 +97,15 @@ export class StorageManager {
 
     const list = score.mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-    const timestamp = Date.now()
-    const uniqueId = `${score.name}_${timestamp}`
+    const isDuplicate = list.some(
+      (s) => s.score === score.score && s.date && Math.abs(s.date - Date.now()) < 1000
+    )
 
-    const scoreWithId = {
-      ...score,
-      name: score.name,
-      id: uniqueId,
-      date: timestamp
+    if (isDuplicate) {
+      return false
     }
 
-    list.push(scoreWithId as any)
+    list.push(score)
     list.sort((a, b) => b.score - a.score)
 
     if (list.length > 20) {

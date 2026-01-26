@@ -180,10 +180,10 @@
 
   @media (max-width: 768px) {
     .toast-container {
-      left: 1rem;
       right: 1rem;
-      max-width: none;
-      top: 5rem;
+      /* max-width: none; */
+      max-width: 20rem;
+      bottom: 1rem;
     }
 
     .toast {

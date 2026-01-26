@@ -3,6 +3,8 @@
   import { togglePause, navigateTo } from '../../stores/gameStore'
   import { modalManager } from '../../utils/ModalManager'
 
+  let buttons: HTMLButtonElement[] = []
+
   function handleResume(): void {
     togglePause()
   }
@@ -21,29 +23,37 @@
   }
 </script>
 
-<div class="pause-menu-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8 min-w-md">
+<div class="pause-menu-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8 lg:min-w-md min-w-sm">
   <div class="content flex flex-col items-center justify-center gap-4">
     <h2 class="title text-2xl uppercase glow-text-2">Paused</h2>
 
     <div class="options">
       <ul class="grid gap-1 justify-center items-center">
         <li class="mx-auto">
-          <Button label="Resume" onClick={handleResume} isFirst={true} />
+          <Button
+            label="Resume"
+            onClick={handleResume}
+            isFirst={true}
+            bind:buttonRef={buttons[0]}
+          />
         </li>
         <li class="mx-auto">
-          <Button label="Settings" onClick={handleSettings} />
+          <Button label="Settings" onClick={handleSettings} bind:buttonRef={buttons[1]} />
         </li>
         <li class="mx-auto">
-          <Button label="Help" onClick={handleHelp} />
+          <Button label="Help" onClick={handleHelp} bind:buttonRef={buttons[2]} />
         </li>
         <li class="mx-auto">
-          <Button label="Main Menu" onClick={handleMainMenu} />
+          <Button label="Main Menu" onClick={handleMainMenu} bind:buttonRef={buttons[3]} />
         </li>
       </ul>
     </div>
 
     <div class="pause-info text-center text-sm opacity-70 mt-4">
-      <p><span class="mr-2">Press </span><kbd class="key">ESC</kbd> <span class="ml-2">to resume</span></p>
+      <p>
+        <span class="mr-2">Press </span><kbd class="key">ESC</kbd>
+        <span class="ml-2">to resume</span>
+      </p>
     </div>
   </div>
 </div>

@@ -95,12 +95,17 @@
     isProcessing = true
     const guestName = `Guest_${Date.now().toString().slice(-6)}`
     const user = await userManager.createUser(guestName, undefined, true)
-    isProcessing = false
 
     if (user) {
-      await userManager.switchUser(user.id)
-      audioManager.playSound('powerup')
-      navigateTo('MAIN_MENU')
+      const success = await userManager.switchUser(user.id)
+      isProcessing = false
+
+      if (success) {
+        audioManager.playSound('powerup')
+        navigateTo('MAIN_MENU')
+      }
+    } else {
+      isProcessing = false
     }
   }
 

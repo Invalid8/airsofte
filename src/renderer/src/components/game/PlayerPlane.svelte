@@ -320,5 +320,6 @@
     background: linear-gradient(to top, #ff7700, #ffaa00);
     border-radius: 50% 50% 0 0;
     box-shadow: 0 0 8px #ff9933;
+    transform: translateY(-2px);
   }
 </style>

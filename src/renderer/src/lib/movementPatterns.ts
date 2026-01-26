@@ -69,8 +69,11 @@ export class MovementPatterns {
       const distance = Math.sqrt(dx * dx + dy * dy)
 
       if (distance > 0) {
-        enemy.x += (dx / distance) * enemy.speed * 0.7
-        enemy.y += (dy / distance) * enemy.speed * 0.7
+        const isBoss = enemy.type === 'BOSS'
+        const speedMultiplier = isBoss ? (distance < 300 ? 1.8 : 1.2) : 0.7
+
+        enemy.x += (dx / distance) * enemy.speed * speedMultiplier
+        enemy.y += (dy / distance) * enemy.speed * speedMultiplier
       }
     } else {
       enemy.y += enemy.speed

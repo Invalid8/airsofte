@@ -10,11 +10,22 @@
   let currentPhase = $derived(
     !bossEnemy ? 0 : healthPercentage > 66 ? 1 : healthPercentage > 33 ? 2 : 3
   )
+
+  let barX = $derived(bossEnemy ? bossEnemy.x + bossEnemy.width / 2 - 250 : 0)
+  let barY = $derived(bossEnemy ? bossEnemy.y - 80 : 0)
+
   function handleBossSpawn(event): void {
     const { enemy } = event.data
     if (enemy && enemy.type === 'BOSS') {
       bossEnemy = enemy
       showBossBar = true
+    }
+  }
+
+  function handleBossUpdate(event): void {
+    const { enemy } = event.data
+    if (enemy && enemy.type === 'BOSS' && bossEnemy?.id === enemy.id) {
+      bossEnemy = { ...enemy }
     }
   }
 
@@ -25,13 +36,19 @@
     }, 2000)
   }
 
+  let unsubSpawn: (() => void) | null = null
+  let unsubUpdate: (() => void) | null = null
+  let unsubDefeated: (() => void) | null = null
+
   onMount(() => {
-    const unsubSpawn = gameEvents.on('ENEMY_SPAWNED', handleBossSpawn)
-    const unsubDefeated = gameEvents.on('BOSS_DEFEATED', handleBossDefeated)
+    unsubSpawn = gameEvents.on('ENEMY_SPAWNED', handleBossSpawn)
+    unsubUpdate = gameEvents.on('BOSS_UPDATE', handleBossUpdate)
+    unsubDefeated = gameEvents.on('BOSS_DEFEATED', handleBossDefeated)
 
     return () => {
-      unsubSpawn()
-      unsubDefeated()
+      if (unsubSpawn) unsubSpawn()
+      if (unsubUpdate) unsubUpdate()
+      if (unsubDefeated) unsubDefeated()
     }
   })
 
@@ -43,20 +60,22 @@
 
 {#if showBossBar && bossEnemy}
   <div
-    class="boss-health-container fixed top-20 left-1/2 -translate-x-1/2 z-[55] w-full max-w-2xl px-8"
+    class="boss-health-container absolute z-[55]"
+    style="left: {barX}px; top: {barY}px;"
     in:fly={{ y: -50, duration: 500 }}
   >
-    <div class="boss-info mb-4 flex justify-between items-center">
-      <div class="boss-name text-2xl font-bold text-red-500 title animate-pulse">
+    <div class="boss-info mb-2 flex justify-between items-center">
+      <div class="boss-name text-xl font-bold text-red-500 title animate-pulse">
         ⚔️ THE GUARDIAN
       </div>
-      <div class="boss-phase text-sm opacity-70">
+      <div class="boss-phase text-xs opacity-70">
         PHASE {currentPhase} / 3
       </div>
     </div>
 
     <div
-      class="health-bar-container h-8 bg-black/80 border-2 border-red-500 rounded-lg overflow-hidden relative"
+      class="health-bar-container h-6 bg-black/80 border-2 border-red-500 rounded-lg overflow-hidden relative"
+      style="width: 500px;"
     >
       <div
         class="health-bar h-full transition-all duration-300"
@@ -67,7 +86,7 @@
       ></div>
 
       <div
-        class="health-text absolute inset-0 flex items-center justify-center font-bold hud text-lg z-10"
+        class="health-text absolute inset-0 flex items-center justify-center font-bold hud text-sm z-10"
       >
         {Math.ceil(bossEnemy.health)} / {bossEnemy.maxHealth}
       </div>
@@ -83,15 +102,16 @@
 <style>
   .boss-health-container {
     animation: boss-entrance 0.5s ease-out;
+    pointer-events: none;
   }
 
   @keyframes boss-entrance {
     from {
-      transform: translateX(-50%) scale(0.8);
+      transform: scale(0.8);
       opacity: 0;
     }
     to {
-      transform: translateX(-50%) scale(1);
+      transform: scale(1);
       opacity: 1;
     }
   }

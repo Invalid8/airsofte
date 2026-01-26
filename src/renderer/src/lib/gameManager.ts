@@ -82,11 +82,6 @@ export class GameManager {
       0
     )
     this.enemiesDestroyedInWave = 0
-
-    console.log('Wave enemy count initialized:', {
-      wave: this.session.currentWave,
-      enemiesSpawned: this.enemiesSpawned
-    })
   }
 
   startGame(mode: GameMode, difficulty?: GameDifficulty, missionId?: number): void {
@@ -198,9 +193,11 @@ export class GameManager {
     const finalScore = this.session.score
     const finalWave = this.session.currentWave
 
+    const showVictory = victory && this.mode === 'STORY_MODE'
+
     setTimeout(() => {
       gameEvents.emit('GAME_OVER', {
-        victory,
+        victory: showVictory,
         score: finalScore,
         wave: finalWave,
         stats: { ...this.session }
@@ -261,17 +258,9 @@ export class GameManager {
     this.addScore(enemy.scoreValue)
     this.incrementCombo()
 
-    console.log('Enemy destroyed:', {
-      enemyType: enemy.type,
-      destroyedInWave: this.enemiesDestroyedInWave,
-      spawnedInWave: this.enemiesSpawned,
-      currentWave: this.session.currentWave
-    })
-
     gameEvents.emit('ENEMY_DESTROYED', { enemy })
 
     if (this.enemiesDestroyedInWave >= this.enemiesSpawned && !this.waveCompleting) {
-      console.log('All spawned enemies in wave defeated, completing wave...')
       this.completeWave()
     }
   }
@@ -406,12 +395,10 @@ export class GameManager {
 
   completeWave(): void {
     if (!this.currentWave || this.waveCompleting) {
-      console.log('Wave completion blocked (already completing)')
       return
     }
 
     this.waveCompleting = true
-    console.log('Completing wave:', this.currentWaveIndex + 1)
 
     this.currentWave.completed = true
     this.addScore(SCORE_VALUES.WAVE_COMPLETE)
@@ -474,10 +461,7 @@ export class GameManager {
   private nextStoryWave(): void {
     this.currentWaveIndex++
 
-    console.log('Advancing to wave:', this.currentWaveIndex + 1, '/', this.waves.length)
-
     if (this.currentWaveIndex >= this.waves.length) {
-      console.log('All waves completed - Victory!')
       this.endGame(true)
       return
     }
@@ -495,7 +479,7 @@ export class GameManager {
     }, 100)
   }
 
-  saveHighScore(playerName: string = 'Player', userId?: string): void {
+  saveHighScore(playerName: string = 'Player', userId?: string): boolean {
     StorageManager.addHighScore(
       {
         name: playerName,
@@ -507,6 +491,8 @@ export class GameManager {
       },
       userId
     )
+
+    return true
   }
 
   getGameState() {

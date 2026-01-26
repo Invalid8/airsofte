@@ -114,6 +114,11 @@
       patternData: e.patternData ? { ...e.patternData } : undefined
     }))
 
+    const boss = enemies.find((e) => e.type === 'BOSS')
+    if (boss) {
+      gameEvents.emit('BOSS_UPDATE', { enemy: boss })
+    }
+
     updateCounter++
 
     animationFrameId = requestAnimationFrame(updateGame)

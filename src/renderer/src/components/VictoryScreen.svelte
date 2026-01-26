@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fly, scale } from 'svelte/transition'
+  import { fly, scale, fade } from 'svelte/transition'
   import { onMount } from 'svelte'
   import Button from '../components/Button.svelte'
   import { navigateTo, gameState } from '../stores/gameStore'
@@ -80,50 +80,53 @@
 
   function handleReplay(): void {
     gameManager.isPlaying = false
-    if (gameManager.mode === 'STORY_MODE') {
-      const missionId = $gameState.currentMissionId || 1
-      gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
-    } else {
-      gameManager.startGame('QUICK_PLAY', gameManager.difficulty)
-    }
+
+    gameState.update((state) => ({
+      ...state,
+      session: null,
+      player: null,
+      score: 0
+    }))
+
+    setTimeout(() => {
+      if (gameManager.mode === 'STORY_MODE') {
+        const missionId = $gameState.currentMissionId || 1
+        gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
+      } else {
+        gameManager.startGame('QUICK_PLAY', gameManager.difficulty)
+      }
+    }, 100)
   }
 </script>
 
 {#if showVictory}
   <div class="victory-screen p-6 min-h-screen w-screen overflow-auto scroll">
     <div
-      class="victory-container flex flex-col items-center justify-center gap-6 w-full mx-auto"
+      class="victory-container flex flex-col items-center justify-center gap-8 w-full mx-auto max-w-4xl"
       in:scale={{ duration: 600, start: 0.9 }}
     >
-      <div class="victory-header text-center mb-8">
-        <h1 class="victory-title text-6xl uppercase glow-text title mb-4">Victory!</h1>
-        <p class="victory-subtitle text-xl opacity-80">Mission Accomplished</p>
+      <div class="victory-header text-center">
+        <h1
+          class="victory-title text-6xl uppercase glow-text title mb-4"
+          in:fly={{ y: -30, delay: 200 }}
+        >
+          Victory!
+        </h1>
+        <p class="victory-subtitle text-xl opacity-80" in:fade={{ delay: 400 }}>
+          Mission Accomplished
+        </p>
       </div>
 
-      <div class="stats-panel">
-        <div class="main-score-section mb-6">
-          <div class="score-label">Total Score</div>
-          <div class="score-value glow-text-green hud">{totalScore.toLocaleString()}</div>
-          {#if bonusScore > 0}
-            <div class="bonus-breakdown">
-              <span class="base-score">{$gameState.score.toLocaleString()}</span>
-              <span class="plus">+</span>
-              <span class="bonus-score">{bonusScore.toLocaleString()}</span>
-              <span class="bonus-label">bonus</span>
-            </div>
-          {/if}
-        </div>
-
-        {#if gameManager.mode === 'STORY_MODE' && showStars}
-          <div class="stars-display mb-6" in:fly={{ y: -30, duration: 500 }}>
-            <div class="stars-container flex gap-4 justify-center">
-              {#each Array(3) as x, i (i)}
+      {#if gameManager.mode === 'STORY_MODE' && showStars}
+        <div class="stars-display" in:fly={{ y: -30, duration: 500, delay: 600 }}>
+          <div class="stars-container flex gap-6 justify-center mb-4">
+            {#each Array(3) as x, i (i)}
+              <div class="star-wrapper" in:scale={{ delay: 700 + i * 150, duration: 400 }} id={x}>
                 <svg
-                  id={x}
                   class="star"
                   class:filled={i < missionStars}
-                  width="64"
-                  height="64"
+                  width="80"
+                  height="80"
                   viewBox="0 0 24 24"
                   fill={i < missionStars ? '#FFD700' : 'none'}
                   stroke={i < missionStars ? '#FFA500' : '#666'}
@@ -133,54 +136,128 @@
                     d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                   />
                 </svg>
-              {/each}
-            </div>
-            <div class="stars-text text-center mt-4 text-2xl font-bold hud">
-              {missionStars === 3
-                ? 'Perfect!'
-                : missionStars === 2
-                  ? 'Great!'
-                  : missionStars === 1
-                    ? 'Good!'
-                    : 'Try Again'}
-            </div>
+              </div>
+            {/each}
           </div>
-        {/if}
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-label">Waves <br /> Cleared</div>
-            <div class="stat-value hud">{stats?.currentWave || 0}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Enemies <br /> Defeated</div>
-            <div class="stat-value hud">{stats?.enemiesDefeated || 0}</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Shot <br />Accuracy</div>
-            <div class="stat-value hud">{stats?.accuracy.toFixed(1) || 0}%</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Time <br /> Spent</div>
-            <div class="stat-value hud">
-              {Math.floor((stats?.timeElapsed ?? 0) / 60000)}:{String(
-                Math.floor(((stats?.timeElapsed ?? 0) % 60000) / 1000)
-              ).padStart(2, '0')}
-            </div>
+          <div class="stars-text text-center text-2xl font-bold hud">
+            {missionStars === 3
+              ? 'Perfect!'
+              : missionStars === 2
+                ? 'Great!'
+                : missionStars === 1
+                  ? 'Good!'
+                  : 'Try Again'}
           </div>
         </div>
+      {/if}
 
-        {#if isHighScore}
-          <div class="high-score-banner" in:fly={{ y: 30, duration: 400, delay: 400 }}>
-            <div class="banner-content">
-              <div class="banner-title">New High Score!</div>
-              <div class="banner-subtitle">Rank #{rank} on the leaderboard</div>
-            </div>
+      <div class="score-hero" in:fly={{ y: 30, delay: 400 }}>
+        <div class="score-label">Total Score</div>
+        <div class="score-value glow-text-green hud">{totalScore.toLocaleString()}</div>
+        {#if bonusScore > 0}
+          <div class="bonus-breakdown">
+            <span class="base-score">{$gameState.score.toLocaleString()}</span>
+            <span class="plus">+</span>
+            <span class="bonus-score">{bonusScore.toLocaleString()}</span>
+            <span class="bonus-label">bonus</span>
           </div>
         {/if}
       </div>
 
-      <div class="actions flex gap-4 justify-center mt-8">
+      <div class="stats-list" in:fly={{ y: 30, delay: 500 }}>
+        <div class="stat-card">
+          <svg
+            class="stat-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+          <div class="stat-content">
+            <span class="stat-label">Waves Cleared</span>
+            <span class="stat-value hud">{stats?.currentWave || 0}</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <svg
+            class="stat-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <div class="stat-content">
+            <span class="stat-label">Enemies Defeated</span>
+            <span class="stat-value hud">{stats?.enemiesDefeated || 0}</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <svg
+            class="stat-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M16 8l-8 8M8 8l8 8" />
+          </svg>
+          <div class="stat-content">
+            <span class="stat-label">Shot Accuracy</span>
+            <span class="stat-value hud">{stats?.accuracy.toFixed(1) || 0}%</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <svg
+            class="stat-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <div class="stat-content">
+            <span class="stat-label">Time Spent</span>
+            <span class="stat-value hud">
+              {Math.floor((stats?.timeElapsed ?? 0) / 60000)}:{String(
+                Math.floor(((stats?.timeElapsed ?? 0) % 60000) / 1000)
+              ).padStart(2, '0')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {#if isHighScore}
+        <div class="high-score-banner" in:fly={{ y: 30, duration: 400, delay: 700 }}>
+          <svg
+            class="banner-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            />
+          </svg>
+          <div class="banner-content">
+            <div class="banner-title">New High Score!</div>
+            <div class="banner-subtitle">Rank #{rank} on the leaderboard</div>
+          </div>
+        </div>
+      {/if}
+
+      <div class="actions flex gap-4 justify-center" in:fade={{ delay: 800 }}>
         <Button label="Continue" onClick={handleContinue} isFirst={true} />
         <Button label="Play Again" onClick={handleReplay} />
       </div>
@@ -221,8 +298,11 @@
   }
 
   .stars-display {
-    padding-bottom: 2rem;
-    border-bottom: 1px solid rgba(0, 255, 170, 0.2);
+    padding: 2rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 1rem;
+    margin-bottom: 1rem;
   }
 
   .star {
@@ -244,23 +324,20 @@
     }
   }
 
-  .stats-panel {
-    background: rgba(0, 0, 0, 0.7);
+  .score-hero {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(0, 0, 0, 0.6);
     border: 2px solid rgba(0, 255, 170, 0.4);
     border-radius: 1rem;
-    padding: 2rem;
-  }
-
-  .main-score-section {
-    text-align: center;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid rgba(0, 255, 170, 0.2);
+    width: 100%;
+    max-width: 600px;
   }
 
   .score-label {
     font-size: 1.25rem;
     opacity: 0.7;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     text-transform: uppercase;
   }
 
@@ -268,16 +345,16 @@
     font-size: 4rem;
     font-weight: bold;
     line-height: 1;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
   }
 
   .bonus-breakdown {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    font-size: 1.125rem;
-    opacity: 0.8;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    opacity: 0.9;
   }
 
   .base-score {
@@ -286,6 +363,7 @@
 
   .plus {
     color: #00ff88;
+    font-weight: bold;
   }
 
   .bonus-score {
@@ -294,30 +372,52 @@
   }
 
   .bonus-label {
-    font-size: 0.875rem;
+    font-size: 1rem;
     opacity: 0.7;
   }
 
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  .stats-list {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
-    margin-top: 2rem;
+    width: 100%;
+    max-width: 600px;
   }
 
   .stat-card {
-    text-align: center;
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(0, 255, 170, 0.2);
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    background: rgba(0, 255, 170, 0.05);
+    border-color: rgba(0, 255, 170, 0.4);
+    transform: translateX(8px);
+  }
+
+  .stat-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #00ff88;
+    flex-shrink: 0;
+  }
+
+  .stat-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
   }
 
   .stat-label {
-    font-size: 0.875rem;
-    opacity: 0.7;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
+    font-size: 1.125rem;
+    opacity: 0.8;
   }
 
   .stat-value {
@@ -329,30 +429,81 @@
   .high-score-banner {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 1.5rem;
-    margin-top: 2rem;
-    padding: 1.5rem 2rem;
-    background: linear-gradient(135deg, rgba(112, 218, 112, 0.2), rgba(143, 221, 98, 0.2));
-    border: 2px solid rgba(154, 221, 160, 0.6);
+    padding: 1.5rem 2.5rem;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
+    border: 2px solid rgba(255, 215, 0, 0.6);
     border-radius: 1rem;
+    animation: badge-pulse 1.5s ease-in-out infinite;
+    max-width: 600px;
+    width: 100%;
+  }
+
+  @keyframes badge-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    }
+  }
+
+  .banner-icon {
+    width: 3rem;
+    height: 3rem;
+    color: #ffd700;
+    flex-shrink: 0;
   }
 
   .banner-content {
-    text-align: center;
+    flex: 1;
   }
 
   .banner-title {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: bold;
-    color: #00ff88;
+    color: #ffd700;
     font-family: 'Press Start 2P', cursive;
-    line-height: 1.2;
+    line-height: 1.4;
     margin-bottom: 0.25rem;
   }
 
   .banner-subtitle {
     font-size: 1.125rem;
     opacity: 0.9;
+  }
+
+  @media (max-width: 768px) {
+    .victory-title {
+      font-size: 3rem;
+    }
+
+    .score-value {
+      font-size: 2.5rem;
+    }
+
+    .stats-list {
+      gap: 0.75rem;
+    }
+
+    .stat-card {
+      padding: 1rem;
+    }
+
+    .stat-icon {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+    }
+
+    .banner-title {
+      font-size: 1.125rem;
+    }
   }
 </style>
