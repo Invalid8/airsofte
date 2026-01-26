@@ -6,6 +6,7 @@
     },
     {
       "path": "./tsconfig.web.json"
-    }
-  ]
+    },
+  ],
+   "extends": "./.svelte-kit/tsconfig.json"
 }
