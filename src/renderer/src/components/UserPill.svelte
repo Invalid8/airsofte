@@ -24,8 +24,8 @@
   .user-badge {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
+    gap: 0.6rem;
+    padding: 0.8rem 1.1rem;
     background: rgba(0, 0, 0, 0.4);
     border: 2px solid rgba(0, 170, 255, 0.3);
     border-radius: 9999px;
@@ -38,15 +38,15 @@
   }
 
   .user-avatar {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.2rem;
+    height: 2.2rem;
     border-radius: 50%;
     background: linear-gradient(135deg, rgba(0, 170, 255, 0.4), rgba(0, 255, 170, 0.4));
     border: 2px solid rgba(0, 170, 255, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: bold;
   }
 
@@ -58,7 +58,7 @@
   }
 
   .user-name {
-    font-size: 1.125rem;
+    font-size: 0.76rem;
     font-weight: bold;
     line-height: 1;
   }
@@ -67,7 +67,7 @@
     background: none;
     border: none;
     color: rgba(0, 170, 255, 0.8);
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     cursor: pointer;
     padding: 0;
     transition: color 0.2s;
