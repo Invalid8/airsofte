@@ -19,11 +19,14 @@ export default defineConfig({
   },
   renderer: {
     plugins: [svelte(), tailwindcss()],
+    optimizeDeps: {
+      exclude: ['@vercel/analytics']
+    },
     build: {
       sourcemap: false,
       minify: 'esbuild',
       rollupOptions: {
-        external: ['$app/stores'],
+        external: ['$app/stores', '$app/environment'],
         treeshake: true,
         output: {
           manualChunks(id) {

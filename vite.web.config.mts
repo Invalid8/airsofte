@@ -43,12 +43,14 @@ export default defineConfig({
       }
     })
   ],
-
+  optimizeDeps: {
+    exclude: ['@vercel/analytics']
+  },
   build: {
     outDir: path.resolve(__dirname, 'dist/web'),
     emptyOutDir: true,
     rollupOptions: {
-      external: ['$app/stores']
+      external: ['$app/stores', '$app/environment']
     }
   },
 
