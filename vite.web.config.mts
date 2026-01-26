@@ -38,8 +38,8 @@ export default defineConfig({
       },
 
       workbox: {
-        globPatterns: ['**/*.{js,css,html,wasm,png,svg,mp3,ogg}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // optional, for big assets
+        globPatterns: ['**/*.{js,css,html,wasm,png,svg,mp3,ogg,woff,woff2,ttf,eot}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
       }
     })
   ],
