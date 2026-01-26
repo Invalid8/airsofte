@@ -15,6 +15,7 @@
   import { onDestroy, onMount } from 'svelte'
   import GamePadIndicator from './components/GamePadIndicator.svelte'
   import UserPill from './components/UserPill.svelte'
+  import { injectAnalytics } from '@vercel/analytics/sveltekit'
 
   let audioInitialized = false
   let showUserSelection = $derived(!$currentUser && $gameState.route !== 'STARTUP')
@@ -27,6 +28,8 @@
   }
 
   onMount(() => {
+    injectAnalytics()
+
     document.addEventListener('click', initializeAudio, { once: true })
     document.addEventListener('keydown', initializeAudio, { once: true })
   })
