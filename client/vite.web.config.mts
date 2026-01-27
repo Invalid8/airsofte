@@ -43,23 +43,10 @@ export default defineConfig({
       }
     })
   ],
-  optimizeDeps: {
-    exclude: ['@vercel/analytics']
-  },
-  ssr: {
-    noExternal: ['@vercel/analytics']
-  },
   build: {
     outDir: path.resolve(__dirname, 'dist/web'),
     emptyOutDir: true
   },
-  resolve: {
-    alias: {
-      '$app/stores': path.resolve('./node_modules/@sveltejs/kit/src/runtime/stores.js'),
-      '$app/environment': path.resolve('./node_modules/@sveltejs/kit/src/runtime/environment.js')
-    }
-  },
-
   define: {
     __ELECTRON__: false
   }

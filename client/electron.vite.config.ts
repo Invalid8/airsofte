@@ -19,9 +19,6 @@ export default defineConfig({
   },
   renderer: {
     plugins: [svelte(), tailwindcss()],
-    optimizeDeps: {
-      exclude: ['@vercel/analytics']
-    },
     build: {
       sourcemap: false,
       minify: 'esbuild',
