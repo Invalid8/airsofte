@@ -25,7 +25,7 @@
 
 {#if isConnected}
   <div
-    class="gamepad-indicator fixed bottom-20 left-6 z-50 bg-black/80 border-2 border-green-500 rounded-lg px-4 py-2 flex items-center gap-3"
+    class="gamepad-indicator fixed bottom-20 left-6 z-50 bg-black/80 border-2 border-green-500 rounded-lg px-4 py-3 flex items-center gap-3 lg:max-w-md max-w-screen"
     in:fade={{ duration: 300 }}
     out:fade={{ duration: 300 }}
   >

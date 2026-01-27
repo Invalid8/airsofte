@@ -136,7 +136,7 @@ export type HighScore = {
   mode: 'QUICK_PLAY' | 'STORY_MODE'
 }
 
-export type MissionStars = 0 | 1 | 2 | 3
+export type MissionStars = 0 | 1 | 2 | 3 | number
 
 export type StoryMission = {
   id: number

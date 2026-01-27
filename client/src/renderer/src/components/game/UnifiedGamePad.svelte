@@ -40,10 +40,8 @@
     if (gameEnded) return
     gameEnded = true
 
-    if (event.data?.victory === true) {
-      if (mode === 'STORY_MODE' && currentMission) {
-        handleMissionComplete()
-      }
+    if (event.data?.victory === true && mode === 'STORY_MODE') {
+      handleMissionComplete()
       showVictory = true
     } else {
       showVictory = false

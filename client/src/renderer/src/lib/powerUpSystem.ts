@@ -1,7 +1,7 @@
 import type { PowerUp, PowerUpType, BoundingBox } from '../types/gameTypes'
 import { POWERUP_CONFIG, DIFFICULTY_MODIFIERS } from '../config/gameConstants'
 import { gameManager } from './gameManager'
-import { gameEvents } from '../lib/eventBus'
+import { gameEvents } from './eventBus'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 
@@ -66,10 +66,10 @@ export class PowerUpSystem {
     if (Math.random() > spawnRate) return null
 
     const types: PowerUpType[] = ['HEALTH', 'WEAPON', 'SHIELD', 'SPEED', 'SCORE']
-    const weights = [0.4, 0.25, 0.15, 0.1, 0.1]
+    const weights = [0.15, 0.3, 0.2, 0.2, 0.15]
 
     let random = Math.random()
-    let selectedType: PowerUpType = 'HEALTH'
+    let selectedType: PowerUpType = 'SCORE'
 
     for (let i = 0; i < types.length; i++) {
       random -= weights[i]
@@ -130,11 +130,12 @@ export class PowerUpSystem {
         gameManager.healPlayer(powerUp.value)
         break
 
-      case 'WEAPON':
+      case 'WEAPON': {
         const weaponTypes = ['DOUBLE', 'TRIPLE', 'SPREAD'] as const
         const randomWeapon = weaponTypes[Math.floor(Math.random() * weaponTypes.length)]
         gameManager.changeWeapon(randomWeapon, POWERUP_CONFIG.WEAPON.duration)
         break
+      }
 
       case 'SHIELD':
         gameManager.activateShield(POWERUP_CONFIG.SHIELD.duration!)

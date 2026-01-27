@@ -103,17 +103,29 @@ export class StoryMissionManager {
       accuracy: number
     }
   ): MissionStars {
-    let stars: MissionStars = 1
-
     const baseScore = mission.waves.length * 1000
     const allObjectivesComplete = mission.objectives.every((obj) => obj.current >= obj.target)
 
     if (!allObjectivesComplete) return 0
 
-    if (stats.score >= baseScore * 1.5) stars = 2
-    if (stats.score >= baseScore * 2 && stats.accuracy >= 70) stars = 3
+    let stars: MissionStars = 1
 
-    if (stats.damageTaken === 0 && stars < 3) stars = 3
+    const star2Requirements = [
+      stats.score >= baseScore * 1.8,
+      stats.accuracy >= 60,
+      stats.damageTaken < 40
+    ]
+
+    if (star2Requirements.filter(Boolean).length >= 2) stars = 2
+
+    const star3Requirements = [
+      stats.score >= baseScore * 2.5,
+      stats.accuracy >= 75,
+      stats.damageTaken === 0,
+      stats.score >= baseScore * 3
+    ]
+
+    if (star3Requirements.filter(Boolean).length >= 3) stars = 3
 
     return stars
   }

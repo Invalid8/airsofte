@@ -193,11 +193,9 @@ export class GameManager {
     const finalScore = this.session.score
     const finalWave = this.session.currentWave
 
-    const showVictory = victory && this.mode === 'STORY_MODE'
-
     setTimeout(() => {
       gameEvents.emit('GAME_OVER', {
-        victory: showVictory,
+        victory: victory && this.mode === 'STORY_MODE',
         score: finalScore,
         wave: finalWave,
         stats: { ...this.session }

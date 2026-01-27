@@ -7,7 +7,6 @@
   import { storyMissionManager } from '../lib/storyMissionData'
   import { StorageManager } from '../utils/storageManager'
   import { currentUser } from '../utils/userManager'
-  import type { MissionStars } from '../types/gameTypes'
 
   let showVictory = $state(false)
   let stats = $derived($gameState.session)
@@ -15,7 +14,7 @@
   let totalScore = $state(0)
   let isHighScore = $state(false)
   let rank = $state(0)
-  let missionStars = $state<MissionStars>(0)
+  let missionStars = $state(0)
   let showStars = $state(false)
 
   onMount(() => {
@@ -92,36 +91,28 @@
       if (gameManager.mode === 'STORY_MODE') {
         const missionId = $gameState.currentMissionId || 1
         gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
+        navigateTo('STORY_MODE_PLAY')
       } else {
         gameManager.startGame('QUICK_PLAY', gameManager.difficulty)
+        navigateTo('QUICK_PLAY')
       }
     }, 100)
   }
 </script>
 
 {#if showVictory}
-  <div class="victory-screen p-6 min-h-screen w-screen overflow-auto scroll">
-    <div
-      class="victory-container flex flex-col items-center justify-center gap-8 w-full mx-auto max-w-4xl"
-      in:scale={{ duration: 600, start: 0.9 }}
-    >
-      <div class="victory-header text-center">
-        <h1
-          class="victory-title text-6xl uppercase glow-text title mb-4"
-          in:fly={{ y: -30, delay: 200 }}
-        >
-          Victory!
-        </h1>
-        <p class="victory-subtitle text-xl opacity-80" in:fade={{ delay: 400 }}>
-          Mission Accomplished
-        </p>
+  <div class="victory-screen">
+    <div class="victory-container" in:scale={{ duration: 600, start: 0.9 }}>
+      <div class="victory-header" in:fly={{ y: -30, delay: 200 }}>
+        <h1 class="victory-title title">Victory!</h1>
+        <p class="victory-subtitle">Mission Accomplished</p>
       </div>
 
       {#if gameManager.mode === 'STORY_MODE' && showStars}
         <div class="stars-display" in:fly={{ y: -30, duration: 500, delay: 600 }}>
-          <div class="stars-container flex gap-6 justify-center mb-4">
+          <div class="stars-container">
             {#each Array(3) as x, i (i)}
-              <div class="star-wrapper" in:scale={{ delay: 700 + i * 150, duration: 400 }} id={x}>
+              <div class="star-wrapper" id={x} in:scale={{ delay: 700 + i * 150, duration: 400 }}>
                 <svg
                   class="star"
                   class:filled={i < missionStars}
@@ -139,7 +130,7 @@
               </div>
             {/each}
           </div>
-          <div class="stars-text text-center text-2xl font-bold hud">
+          <div class="stars-text hud">
             {missionStars === 3
               ? 'Perfect!'
               : missionStars === 2
@@ -257,7 +248,7 @@
         </div>
       {/if}
 
-      <div class="actions flex gap-4 justify-center" in:fade={{ delay: 800 }}>
+      <div class="actions" in:fade={{ delay: 800 }}>
         <Button label="Continue" onClick={handleContinue} isFirst={true} />
         <Button label="Play Again" onClick={handleReplay} />
       </div>
@@ -275,12 +266,30 @@
       rgba(0, 255, 170, 0.08) 0%,
       rgba(0, 0, 0, 0.95) 100%
     );
+    padding: 2rem;
+    overflow-y: auto;
+  }
+
+  .victory-container {
+    max-width: 42rem;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .victory-header {
+    text-align: center;
   }
 
   .victory-title {
+    font-size: 3.5rem;
     word-spacing: -30px;
     line-height: 110%;
     animation: title-glow 2s ease-in-out infinite;
+    margin-bottom: 0.5rem;
   }
 
   @keyframes title-glow {
@@ -297,11 +306,21 @@
     }
   }
 
+  .victory-subtitle {
+    font-size: 1.25rem;
+    opacity: 0.9;
+  }
+
   .stars-display {
     padding: 2rem;
-    background: rgba(0, 0, 0, 0.4);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 1rem;
+    width: 100%;
+    max-width: 32rem;
+  }
+
+  .stars-container {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
     margin-bottom: 1rem;
   }
 
@@ -324,6 +343,12 @@
     }
   }
 
+  .stars-text {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
   .score-hero {
     text-align: center;
     padding: 2rem;
@@ -331,18 +356,18 @@
     border: 2px solid rgba(0, 255, 170, 0.4);
     border-radius: 1rem;
     width: 100%;
-    max-width: 600px;
+    max-width: 32rem;
   }
 
   .score-label {
-    font-size: 1.25rem;
-    opacity: 0.7;
+    font-size: 1.125rem;
+    opacity: 0.8;
     margin-bottom: 0.75rem;
     text-transform: uppercase;
   }
 
   .score-value {
-    font-size: 4rem;
+    font-size: 3.5rem;
     font-weight: bold;
     line-height: 1;
     margin-bottom: 1rem;
@@ -353,7 +378,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     opacity: 0.9;
   }
 
@@ -372,7 +397,7 @@
   }
 
   .bonus-label {
-    font-size: 1rem;
+    font-size: 0.875rem;
     opacity: 0.7;
   }
 
@@ -381,14 +406,14 @@
     flex-direction: column;
     gap: 1rem;
     width: 100%;
-    max-width: 600px;
+    max-width: 32rem;
   }
 
   .stat-card {
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    padding: 1.5rem;
+    padding: 1.25rem;
     background: rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(0, 255, 170, 0.2);
     border-radius: 0.75rem;
@@ -416,12 +441,12 @@
   }
 
   .stat-label {
-    font-size: 1.125rem;
+    font-size: 1rem;
     opacity: 0.8;
   }
 
   .stat-value {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: bold;
     color: #00ff88;
   }
@@ -430,12 +455,12 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    padding: 1.5rem 2.5rem;
+    padding: 1.5rem 2rem;
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
     border: 2px solid rgba(255, 215, 0, 0.6);
     border-radius: 1rem;
     animation: badge-pulse 1.5s ease-in-out infinite;
-    max-width: 600px;
+    max-width: 32rem;
     width: 100%;
   }
 
@@ -472,13 +497,20 @@
   }
 
   .banner-subtitle {
-    font-size: 1.125rem;
+    font-size: 1rem;
     opacity: 0.9;
+  }
+
+  .actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   @media (max-width: 768px) {
     .victory-title {
-      font-size: 3rem;
+      font-size: 2.5rem;
     }
 
     .score-value {
@@ -499,7 +531,7 @@
     }
 
     .stat-value {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
     }
 
     .banner-title {
