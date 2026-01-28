@@ -97,16 +97,12 @@
     const user = await userManager.createUser(guestName, undefined, true)
 
     if (user) {
-      const success = await userManager.switchUser(user.id)
-      isProcessing = false
-
-      if (success) {
-        audioManager.playSound('powerup')
-        navigateTo('MAIN_MENU')
-      }
-    } else {
-      isProcessing = false
+      await userManager.switchUser(user.id)
+      audioManager.playSound('powerup')
+      navigateTo('MAIN_MENU')
     }
+
+    isProcessing = false
   }
 
   function cancelPasswordPrompt(): void {

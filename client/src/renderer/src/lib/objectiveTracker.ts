@@ -55,6 +55,10 @@ export class ObjectiveTracker {
     gameEvents.on('ADD_BONUS_OBJECTIVE', (event) => {
       this.addBonusObjective(event.data)
     })
+
+    gameEvents.on('SURVIVE_OBJECTIVE_COMPLETE', () => {
+      gameEvents.emit('DISABLE_CONTINUOUS_SPAWN')
+    })
   }
 
   updateObjective(type: string, value: number): void {
@@ -88,6 +92,9 @@ export class ObjectiveTracker {
 
         if (elapsed >= objective.target) {
           this.completeObjective(index)
+
+          // Disable continuous spawning when SURVIVE objective is met
+          gameEvents.emit('SURVIVE_OBJECTIVE_COMPLETE')
         }
 
         gameEvents.emit('OBJECTIVE_UPDATED', {

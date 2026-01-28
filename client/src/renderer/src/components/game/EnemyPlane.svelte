@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import type { Enemy, Bullet } from '../../types/gameTypes'
+  import type { Enemy, Bullet, MovementPattern } from '../../types/gameTypes'
   import { EnemyController } from '../../lib/enemyController'
   import { EnemySpawner } from '../../lib/enemySpawner'
   import { gameManager } from '../../lib/gameManager'
@@ -13,6 +13,8 @@
   import EnemyBasic from '../../assets/sprites/enemy-basic.png'
   import EnemyScout from '../../assets/sprites/enemy-scout.png'
   import EnemyBomber from '../../assets/sprites/enemy-bomber.png'
+  // import BossHealthBar from '../BossHealthBar.svelte'
+  import { audioManager } from '../../utils/AudioManager'
 
   let {
     game_pad,
@@ -176,21 +178,32 @@
 
     const playerEnemyCollisions = combatSystem.checkPlayerEnemyCollisions(playerBox, enemies)
 
-    playerEnemyCollisions.forEach(({ enemyId }) => {
+    playerEnemyCollisions.forEach(({ enemyId, isBoss }) => {
       const enemy = enemyController.getEnemyById(enemyId)
       if (!enemy) return
 
       if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
-        gameManager.damagePlayer(30)
+        if (!isBoss) {
+          gameManager.damagePlayer(30)
 
-        particleSystem.createExplosion(
-          enemy.x + enemy.width / 2,
-          enemy.y + enemy.height / 2,
-          20,
-          '#ff3300'
-        )
-        ScreenEffects.shake(12, 0.4)
-        ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
+          particleSystem.createExplosion(
+            enemy.x + enemy.width / 2,
+            enemy.y + enemy.height / 2,
+            20,
+            '#ff3300'
+          )
+          ScreenEffects.shake(12, 0.4)
+          ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
+        } else {
+          gameManager.player.health = 0
+          gameManager.damagePlayer(0)
+
+          enhancedParticles.createBigExplosion(
+            enemy.x + enemy.width / 2,
+            enemy.y + enemy.height / 2
+          )
+          audioManager.playSound('playerHit')
+        }
       }
 
       enemyController.damageEnemy(enemyId, enemy.maxHealth)
@@ -220,7 +233,7 @@
   let unsubGameStart: (() => void) | null = null
 
   onMount(() => {
-    if (!game_pad) return
+    if (!game_pad) return null
 
     const bounds = {
       width: game_pad.clientWidth,
@@ -243,6 +256,25 @@
           enemySpawner.startWave(gameManager.currentWave)
         }
       }, 1000)
+    }
+
+    const unsubContinuous = gameEvents.on('SPAWN_CONTINUOUS_ENEMIES', (event) => {
+      const { count, types } = event.data
+
+      for (let i = 0; i < count; i++) {
+        const type = types[Math.floor(Math.random() * types.length)]
+        const pattern = ['STRAIGHT', 'WAVE', 'ZIGZAG'][
+          Math.floor(Math.random() * 3)
+        ] as MovementPattern
+
+        const x = Math.random() * (game_pad.clientWidth - 80)
+        enemyController.spawnEnemy(type, x, -100, pattern)
+      }
+    })
+
+    return () => {
+      // ... existing cleanup ...
+      unsubContinuous()
     }
   })
 
@@ -270,6 +302,8 @@
     />
   </div>
 {/each}
+
+<!-- <BossHealthBar /> -->
 
 {#each enemyBullets as bullet (bullet.id)}
   <div

@@ -150,27 +150,50 @@ class GamepadManager {
 
   private handleButtonRelease(buttonIndex: number): void {
     if (STANDARD_MAPPING.moveUp.includes(buttonIndex)) {
-      this.simulateKeyUp('ArrowUp')
+      this.simulateKeyUp('w')
     } else if (STANDARD_MAPPING.moveDown.includes(buttonIndex)) {
-      this.simulateKeyUp('ArrowDown')
+      this.simulateKeyUp('s')
     } else if (STANDARD_MAPPING.moveLeft.includes(buttonIndex)) {
-      this.simulateKeyUp('ArrowLeft')
+      this.simulateKeyUp('a')
     } else if (STANDARD_MAPPING.moveRight.includes(buttonIndex)) {
-      this.simulateKeyUp('ArrowRight')
+      this.simulateKeyUp('d')
     }
   }
 
   private handleStickMovement(x: number, y: number): void {
-    ;['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].forEach((key) => {
-      if (this.activeKeys.has(key)) {
-        this.simulateKeyUp(key)
-      }
-    })
+    const threshold = this.deadzone
 
-    if (y < -this.deadzone) this.simulateKeyDown('ArrowUp')
-    if (y > this.deadzone) this.simulateKeyDown('ArrowDown')
-    if (x < -this.deadzone) this.simulateKeyDown('ArrowLeft')
-    if (x > this.deadzone) this.simulateKeyDown('ArrowRight')
+    // Determine which directions should be active
+    const shouldMoveUp = y < -threshold
+    const shouldMoveDown = y > threshold
+    const shouldMoveLeft = x < -threshold
+    const shouldMoveRight = x > threshold
+
+    // Handle vertical movement
+    if (shouldMoveUp && !this.activeKeys.has('w')) {
+      this.simulateKeyDown('w')
+    } else if (!shouldMoveUp && this.activeKeys.has('w')) {
+      this.simulateKeyUp('w')
+    }
+
+    if (shouldMoveDown && !this.activeKeys.has('s')) {
+      this.simulateKeyDown('s')
+    } else if (!shouldMoveDown && this.activeKeys.has('s')) {
+      this.simulateKeyUp('s')
+    }
+
+    // Handle horizontal movement
+    if (shouldMoveLeft && !this.activeKeys.has('a')) {
+      this.simulateKeyDown('a')
+    } else if (!shouldMoveLeft && this.activeKeys.has('a')) {
+      this.simulateKeyUp('a')
+    }
+
+    if (shouldMoveRight && !this.activeKeys.has('d')) {
+      this.simulateKeyDown('d')
+    } else if (!shouldMoveRight && this.activeKeys.has('d')) {
+      this.simulateKeyUp('d')
+    }
   }
 
   private simulateKeyPress(key: string): void {

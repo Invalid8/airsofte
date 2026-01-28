@@ -148,6 +148,10 @@ export class EnemyController {
 
       this.updateEnemyPosition(enemy, deltaTime, playerX, playerY, bounds)
 
+      if (enemy.type === 'BOSS') {
+        gameEvents.emit('BOSS_UPDATE', { enemy })
+      }
+
       if (this.shouldShoot(enemy) && enemy.y > 0 && !this.isEnemyTeleporting(enemy)) {
         const bullet = this.shootBullet(enemy)
         if (bullet) newBullets.push(bullet)

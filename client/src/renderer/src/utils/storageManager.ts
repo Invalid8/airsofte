@@ -97,14 +97,6 @@ export class StorageManager {
 
     const list = score.mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-    const isDuplicate = list.some(
-      (s) => s.score === score.score && s.date && Math.abs(s.date - Date.now()) < 1000
-    )
-
-    if (isDuplicate) {
-      return false
-    }
-
     list.push(score)
     list.sort((a, b) => b.score - a.score)
 

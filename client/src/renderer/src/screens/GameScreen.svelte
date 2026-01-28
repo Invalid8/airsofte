@@ -40,6 +40,15 @@
           </li>
           <li>
             <Button
+              label="AI Missions"
+              onClick={() => {
+                load = true
+                loadFunction = () => navigateTo("AI_MISSIONS")
+              }}
+            />
+          </li>
+          <li>
+            <Button
               label="Help Me"
               onClick={() => {
                 toggleHelp()

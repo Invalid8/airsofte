@@ -19,7 +19,7 @@
 </script>
 
 {#if $currentModal}
-  <div class="modal-system fixed inset-0 z-[999]" role="dialog" aria-modal="true">
+  <div class="modal-system fixed inset-0 z-[999] scroll" role="dialog" aria-modal="true">
     <button
       class="overlay fixed inset-0 bg-black/70 cursor-pointer"
       onclick={handleOverlayClick}

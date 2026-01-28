@@ -54,6 +54,10 @@ export class GameManager {
   private startTime: number = 0
   private comboTimeoutId: number | null = null
   private waveCompleting = false
+  private continuousSpawnMode: boolean = false
+  private continuousSpawnInterval: number | null = null
+
+  private pauseStartTime: number = 0
 
   private constructor() {
     this.loadSettings()
@@ -69,6 +73,10 @@ export class GameManager {
   private loadSettings(): void {
     const settings = StorageManager.getSettings()
     this.difficulty = settings.difficulty
+
+    gameEvents.on('DISABLE_CONTINUOUS_SPAWN', () => {
+      this.disableContinuousSpawn()
+    })
   }
 
   private initializeWaveEnemyCount(): void {
@@ -93,6 +101,11 @@ export class GameManager {
 
     if (mode === 'STORY_MODE' && missionId) {
       this.initializeStoryMission(missionId)
+
+      const mission = storyMissionManager.getMissionById(missionId)
+      if (mission?.objectives.some((obj) => obj.type === 'SURVIVE')) {
+        this.enableContinuousSpawn()
+      }
     } else {
       this.initializeWaves()
     }
@@ -115,6 +128,32 @@ export class GameManager {
         hasBoss: this.currentWave?.enemies.some((e) => e.type === 'BOSS')
       })
     }, 1500)
+  }
+
+  enableContinuousSpawn(): void {
+    if (this.continuousSpawnMode) return
+
+    this.continuousSpawnMode = true
+
+    // Spawn small groups of enemies every 5 seconds
+    this.continuousSpawnInterval = window.setInterval(() => {
+      if (!this.isPlaying || this.isPaused) return
+
+      const count = Math.floor(Math.random() * 3) + 2
+
+      gameEvents.emit('SPAWN_CONTINUOUS_ENEMIES', {
+        count,
+        types: ['BASIC', 'SCOUT']
+      })
+    }, 5000)
+  }
+
+  disableContinuousSpawn(): void {
+    this.continuousSpawnMode = false
+    if (this.continuousSpawnInterval) {
+      clearInterval(this.continuousSpawnInterval)
+      this.continuousSpawnInterval = null
+    }
   }
 
   private startGameLoop(): void {
@@ -169,6 +208,9 @@ export class GameManager {
     if (!this.isPlaying) return
     this.isPaused = true
     this.session.playing = false
+
+    this.pauseStartTime = performance.now()
+
     gameEvents.emit('GAME_PAUSED')
   }
 
@@ -176,7 +218,12 @@ export class GameManager {
     if (!this.isPlaying) return
     this.isPaused = false
     this.session.playing = true
+
+    const pauseDuration = performance.now() - (this.pauseStartTime || 0)
     this.lastFrameTime = performance.now()
+
+    this.startTime += pauseDuration
+
     gameEvents.emit('GAME_RESUMED')
   }
 
@@ -184,6 +231,8 @@ export class GameManager {
     this.isPlaying = false
     this.isPaused = false
     this.session.playing = false
+
+    this.disableContinuousSpawn()
 
     if (this.gameLoopId) {
       cancelAnimationFrame(this.gameLoopId)

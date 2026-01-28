@@ -155,17 +155,26 @@
         {/if}
       </div>
 
-      <div class="stats-list" in:fly={{ y: 30, delay: 500 }}>
+      <div class="stats-grid">
         <div class="stat-card">
-          <svg
-            class="stat-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-          </svg>
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Final Score</span>
+            <span class="stat-value hud">{totalScore.toLocaleString()}</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
           <div class="stat-content">
             <span class="stat-label">Waves Cleared</span>
             <span class="stat-value hud">{stats?.currentWave || 0}</span>
@@ -173,16 +182,12 @@
         </div>
 
         <div class="stat-card">
-          <svg
-            class="stat-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-          </svg>
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M16 8l-8 8M8 8l8 8" />
+            </svg>
+          </div>
           <div class="stat-content">
             <span class="stat-label">Enemies Defeated</span>
             <span class="stat-value hud">{stats?.enemiesDefeated || 0}</span>
@@ -190,35 +195,27 @@
         </div>
 
         <div class="stat-card">
-          <svg
-            class="stat-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M16 8l-8 8M8 8l8 8" />
-          </svg>
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="8 12 12 16 16 8" />
+            </svg>
+          </div>
           <div class="stat-content">
-            <span class="stat-label">Shot Accuracy</span>
+            <span class="stat-label">Accuracy</span>
             <span class="stat-value hud">{stats?.accuracy.toFixed(1) || 0}%</span>
           </div>
         </div>
 
         <div class="stat-card">
-          <svg
-            class="stat-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
           <div class="stat-content">
-            <span class="stat-label">Time Spent</span>
+            <span class="stat-label">Time</span>
             <span class="stat-value hud">
               {Math.floor((stats?.timeElapsed ?? 0) / 60000)}:{String(
                 Math.floor(((stats?.timeElapsed ?? 0) % 60000) / 1000)
@@ -401,29 +398,30 @@
     opacity: 0.7;
   }
 
-  .stats-list {
-    display: flex;
-    flex-direction: column;
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
     width: 100%;
     max-width: 32rem;
+    margin-bottom: 2rem;
   }
 
   .stat-card {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
     padding: 1.25rem;
     background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(0, 255, 170, 0.2);
+    border: 1px solid rgba(0, 255, 136, 0.2);
     border-radius: 0.75rem;
     transition: all 0.3s ease;
   }
 
   .stat-card:hover {
-    background: rgba(0, 255, 170, 0.05);
-    border-color: rgba(0, 255, 170, 0.4);
-    transform: translateX(8px);
+    transform: translateY(-4px);
+    border-color: rgba(0, 255, 136, 0.6);
+    box-shadow: 0 8px 16px rgba(0, 255, 136, 0.2);
   }
 
   .stat-icon {
@@ -433,22 +431,40 @@
     flex-shrink: 0;
   }
 
+  .stat-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
   .stat-content {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 0.25rem;
     flex: 1;
   }
 
   .stat-label {
-    font-size: 1rem;
-    opacity: 0.8;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .stat-value {
     font-size: 1.5rem;
     font-weight: bold;
     color: #00ff88;
+    line-height: 1;
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+    }
   }
 
   .high-score-banner {

@@ -15,6 +15,7 @@
   import { onDestroy, onMount } from 'svelte'
   import GamePadIndicator from './components/GamePadIndicator.svelte'
   import UserPill from './components/UserPill.svelte'
+  import GeminiMissionCreator from './screens/GeminiMissionCreator.svelte'
 
   let audioInitialized = false
   let showUserSelection = $derived(!$currentUser && $gameState.route !== 'STARTUP')
@@ -51,6 +52,8 @@
     <GameScreen />
   {:else if $gameState.route === 'QUICK_PLAY'}
     <QuickPlay />
+  {:else if $gameState.route === 'AI_MISSIONS'}
+    <GeminiMissionCreator />
   {:else if $gameState.route === 'STORY_MODE_MENU'}
     <StoryModeMenu />
   {:else if $gameState.route === 'STORY_MODE_PLAY'}

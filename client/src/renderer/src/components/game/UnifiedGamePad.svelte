@@ -6,7 +6,6 @@
   import Particles from './Particles.svelte'
   import PowerUps from './PowerUps.svelte'
   import ParallaxBackground from '../ParallaxBackground.svelte'
-  // import BossHealthBar from '../BossHealthBar.svelte'
   import VictoryScreen from '../VictoryScreen.svelte'
   import ScorePopup from '../ScorePopup.svelte'
   import DialogueSystem from '../DialogueSystem.svelte'
@@ -125,8 +124,6 @@
   {#if mode === 'STORY_MODE' && currentMission}
     <DialogueSystem mission={currentMission} />
   {/if}
-
-  <!-- <BossHealthBar /> -->
 
   <div class="game-wrapper">
     <div class="game-container" bind:this={game_pad}>

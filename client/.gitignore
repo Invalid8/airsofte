@@ -6,3 +6,4 @@ out
 *.log*
 
 .svelte-kit
+.env
