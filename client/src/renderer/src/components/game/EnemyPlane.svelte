@@ -10,10 +10,11 @@
   import { ScreenEffects } from '../../lib/screenEffects'
   import { getBoundingBox } from '../../utils/collisionSystem'
   import { enhancedParticles } from '../../lib/enhancedParticles'
+  import { viewportCuller } from '../../utils/viewportCuller'
   import EnemyBasic from '../../assets/sprites/enemy-basic.png'
   import EnemyScout from '../../assets/sprites/enemy-scout.png'
   import EnemyBomber from '../../assets/sprites/enemy-bomber.png'
-  // import BossHealthBar from '../BossHealthBar.svelte'
+  import BossHealthBar from '../BossHealthBar.svelte'
 
   let {
     game_pad,
@@ -107,6 +108,8 @@
       return true
     })
 
+    enemyBullets = viewportCuller.cullBullets(enemyBullets, game_pad.clientHeight)
+
     checkCollisions()
 
     const activeEnemies = enemyController.getActiveEnemies()
@@ -177,24 +180,44 @@
 
     const playerEnemyCollisions = combatSystem.checkPlayerEnemyCollisions(playerBox, enemies)
 
-    playerEnemyCollisions.forEach(({ enemyId }) => {
+    playerEnemyCollisions.forEach(({ enemyId, isBoss }) => {
       const enemy = enemyController.getEnemyById(enemyId)
       if (!enemy) return
 
       if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
-        gameManager.damagePlayer(30)
+        if (isBoss) {
+          const playerHealthPercent = gameManager.player.health / gameManager.player.maxHealth
+          const bossHealthPercent = enemy.health / enemy.maxHealth
 
-        particleSystem.createExplosion(
-          enemy.x + enemy.width / 2,
-          enemy.y + enemy.height / 2,
-          20,
-          '#ff3300'
-        )
-        ScreenEffects.shake(12, 0.4)
-        ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
+          const damageToPlayer = Math.floor(50 * bossHealthPercent)
+          gameManager.damagePlayer(damageToPlayer)
+
+          const damageToBoss = Math.floor(enemy.maxHealth * playerHealthPercent * 0.5)
+          enemyController.damageEnemy(enemyId, damageToBoss)
+
+          particleSystem.createExplosion(
+            enemy.x + enemy.width / 2,
+            enemy.y + enemy.height / 2,
+            30,
+            '#ff3300'
+          )
+          ScreenEffects.shake(15, 0.3)
+          ScreenEffects.flash('rgba(255, 100, 0, 0.3)', 0.15)
+        } else {
+          gameManager.damagePlayer(30)
+
+          particleSystem.createExplosion(
+            enemy.x + enemy.width / 2,
+            enemy.y + enemy.height / 2,
+            20,
+            '#ff3300'
+          )
+          ScreenEffects.shake(12, 0.3)
+          ScreenEffects.flash('rgba(255, 0, 0, 0.3)', 0.15)
+
+          enemyController.damageEnemy(enemyId, enemy.maxHealth)
+        }
       }
-
-      enemyController.damageEnemy(enemyId, enemy.maxHealth)
     })
   }
 
@@ -261,7 +284,6 @@
     })
 
     return () => {
-      // ... existing cleanup ...
       unsubContinuous()
     }
   })
@@ -291,7 +313,7 @@
   </div>
 {/each}
 
-<!-- <BossHealthBar /> -->
+<BossHealthBar />
 
 {#each enemyBullets as bullet (bullet.id)}
   <div

@@ -6,6 +6,8 @@ import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
 import { MovementPatterns } from './movementPatterns'
 import { gameEvents } from './eventBus'
+import { viewportCuller } from '../utils/viewportCuller'
+import { CONFIG } from '../config/performanceConfig'
 
 export class EnemyController {
   public enemies: Enemy[] = []
@@ -43,6 +45,10 @@ export class EnemyController {
   }
 
   spawnEnemy(type: EnemyType, x: number, y: number, pattern: MovementPattern): Enemy {
+    if (this.enemies.length >= CONFIG.maxEnemies) {
+      return null
+    }
+
     const config = ENEMY_CONFIG[type]
     const modifier = DIFFICULTY_MODIFIERS[gameManager.difficulty]
 
@@ -158,16 +164,16 @@ export class EnemyController {
       }
     })
 
-    this.enemies = this.enemies.filter((enemy) => {
-      if (!enemy.active) return false
+    this.enemies.forEach((enemy) => {
+      if (!enemy.active || enemy.type === 'BOSS') return
 
-      if (enemy.type !== 'BOSS' && enemy.y > bounds.height + 100) {
+      if (enemy.y > bounds.height + 200) {
         enemy.active = false
-        return false
+        gameManager.onEnemyDestroyed(enemy)
       }
-
-      return true
     })
+
+    this.enemies = viewportCuller.cull(this.enemies, bounds.width, bounds.height, Date.now())
 
     return newBullets
   }

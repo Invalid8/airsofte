@@ -45,7 +45,49 @@ export default defineConfig({
   ],
   build: {
     outDir: path.resolve(__dirname, 'dist/web'),
-    emptyOutDir: true
+    emptyOutDir: true,
+
+    chunkSizeWarningLimit: 500,
+
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug']
+      }
+    },
+
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-core': ['svelte', 'svelte/store'],
+          'vendor-audio': ['howler']
+        },
+
+        chunkFileNames: 'js/[name]-[hash].js',
+        entryFileNames: 'js/[name]-[hash].js',
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo?.names
+          const ext = info[info.length - 1]
+          if (/png|jpe?g|svg|gif|webp|avif/i.test(ext)) {
+            return `images/[name]-[hash][extname]`
+          } else if (/woff2?|ttf|otf/i.test(ext)) {
+            return `fonts/[name]-[hash][extname]`
+          } else if (/mp3|ogg|wav/i.test(ext)) {
+            return `audio/[name]-[hash][extname]`
+          }
+          return `assets/[name]-[hash][extname]`
+        }
+      }
+    },
+
+    sourcemap: false,
+    cssCodeSplit: false
+  },
+  optimizeDeps: {
+    include: ['svelte', 'svelte/store', 'howler'],
+    exclude: []
   },
   define: {
     __ELECTRON__: false

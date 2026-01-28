@@ -4,6 +4,7 @@ import { gameManager } from './gameManager'
 import { gameEvents } from './eventBus'
 import { getBoundingBox } from '../utils/collisionSystem'
 import { poolManager } from '../utils/objectPool'
+import { viewportCuller } from '../utils/viewportCuller'
 
 export class PowerUpSystem {
   public powerUps: PowerUp[] = []
@@ -83,19 +84,13 @@ export class PowerUpSystem {
   }
 
   updatePowerUps(bounds: BoundingBox): void {
-    this.powerUps = this.powerUps.filter((powerUp) => {
-      if (!powerUp.active) return false
-
-      powerUp.y += powerUp.speed
-
-      if (powerUp.y > bounds.height + 50) {
-        powerUp.active = false
-        this.powerUpPool!.release(powerUp)
-        return false
+    this.powerUps.forEach((powerUp) => {
+      if (powerUp.active) {
+        powerUp.y += powerUp.speed
       }
-
-      return true
     })
+
+    this.powerUps = viewportCuller.cull(this.powerUps, bounds.width, bounds.height, Date.now())
   }
 
   checkPlayerCollision(playerBox: BoundingBox): PowerUp | null {

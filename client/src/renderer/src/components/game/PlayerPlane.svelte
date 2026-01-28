@@ -6,6 +6,7 @@
   import { gameManager } from '../../lib/gameManager'
   import { gameEvents } from '../../lib/eventBus'
   import { getBoundingBox } from '../../utils/collisionSystem'
+  import { viewportCuller } from '../../utils/viewportCuller'
   import type { Bullet } from '../../types/gameTypes'
 
   let {
@@ -180,6 +181,8 @@
         return true
       })
       .map((b) => ({ ...b }))
+
+    bullets = viewportCuller.cullBullets(bullets, game_pad.clientHeight)
 
     animationFrameId = requestAnimationFrame(updateGame)
   }

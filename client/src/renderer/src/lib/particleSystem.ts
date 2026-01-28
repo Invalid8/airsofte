@@ -1,4 +1,5 @@
 import { poolManager } from '../utils/objectPool'
+import { CONFIG, limitArray } from '../config/performanceConfig'
 
 export type Particle = {
   id: string
@@ -48,9 +49,10 @@ export class ParticleSystem {
   }
 
   createExplosion(x: number, y: number, count: number = 20, color: string = '#ff6600'): void {
-    for (let i = 0; i < count; i++) {
+    const particleCount = Math.min(count, CONFIG.explosionParticles)
+    for (let i = 0; i < particleCount; i++) {
       const particle = this.particlePool!.acquire()
-      const angle = (Math.PI * 2 * i) / count
+      const angle = (Math.PI * 2 * i) / particleCount
       const speed = 2 + Math.random() * 3
 
       particle.x = x
@@ -84,7 +86,8 @@ export class ParticleSystem {
   }
 
   createHitEffect(x: number, y: number, count: number = 8): void {
-    for (let i = 0; i < count; i++) {
+    const particleCount = Math.min(count, CONFIG.hitParticles)
+    for (let i = 0; i < particleCount; i++) {
       const particle = this.particlePool!.acquire()
       const angle = Math.random() * Math.PI * 2
       const speed = 1 + Math.random() * 2
@@ -121,6 +124,8 @@ export class ParticleSystem {
 
       return true
     })
+
+    this.particles = limitArray(this.particles, CONFIG.maxParticles)
   }
 
   getActiveParticles(): Particle[] {

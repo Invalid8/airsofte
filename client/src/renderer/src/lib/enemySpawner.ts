@@ -1,5 +1,6 @@
 import type { EnemyType, MovementPattern, WaveInstance } from '../types/gameTypes'
 import { EnemyController } from './enemyController'
+import { CONFIG } from '../config/performanceConfig'
 
 type SpawnConfig = {
   type: EnemyType
@@ -36,9 +37,14 @@ export class EnemySpawner {
     }
 
     const config = this.spawnQueue[0]
-    this.spawnEnemy(config)
 
-    config.count--
+    if (this.enemyController.enemies.length < CONFIG.maxEnemies) {
+      this.spawnEnemy(config)
+      config.count--
+    } else {
+      console.log('Enemy limit reached, delaying spawn')
+    }
+
     if (config.count <= 0) {
       this.spawnQueue.shift()
     }

@@ -51,7 +51,7 @@
   <div
     class="boss-health-bar"
     style="
-      left: {bossEnemy.x + 200}px;
+      left: {bossEnemy.x}px;
       top: {bossEnemy.y - 40}px;
       width: {bossEnemy.width}px;
     "

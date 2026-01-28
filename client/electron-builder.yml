@@ -1,5 +1,6 @@
 appId: com.airsofte.app
 productName: airsofte
+compression: maximum
 directories:
   buildResources: build
 files:
@@ -10,16 +11,28 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!**/*.map'
+  - '!**/*.md'
+  - '!**/LICENSE'
 asarUnpack:
   - resources/**
 win:
   executableName: airsofte
+  target:
+    - target: nsis
+      arch:
+        - x64
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  differentialPackage: true
 mac:
+  target:
+    - dmg
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -27,15 +40,14 @@ mac:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
+  minimumSystemVersion: '10.13.0'
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
   target:
     - AppImage
-    - snap
-    - deb
   maintainer: electronjs.org
-  category: Utility
+  category: Game
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false

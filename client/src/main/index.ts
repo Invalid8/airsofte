@@ -8,7 +8,6 @@ function createWindow(): void {
     height: 670,
     minWidth: 640,
     minHeight: 720,
-    fullscreen: true,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon: '../../resources/icons/256x256.png' } : {}),

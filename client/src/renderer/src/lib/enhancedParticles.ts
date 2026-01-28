@@ -1,9 +1,10 @@
-import { particleSystem, type Particle } from './particleSystem'
+import { particleSystem } from './particleSystem'
 import { audioManager } from '../utils/AudioManager'
+import { CONFIG } from '../config/performanceConfig'
 
 export class EnhancedParticleEffects {
   static createPlayerTrail(x: number, y: number): void {
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < CONFIG.trailParticles; i++) {
       particleSystem.createTrail(x + 40 + (Math.random() - 0.5) * 30, y + 140, '#00aaff')
       particleSystem.createTrail(x + 110 + (Math.random() - 0.5) * 30, y + 140, '#00aaff')
     }
@@ -14,25 +15,27 @@ export class EnhancedParticleEffects {
   }
 
   static createBigExplosion(x: number, y: number): void {
-    particleSystem.createExplosion(x, y, 40, '#ff6600')
+    particleSystem.createExplosion(x, y, CONFIG.explosionParticles, '#ff6600')
 
+    const secondaryCount = Math.floor(CONFIG.explosionParticles / 2)
     for (let i = 0; i < 3; i++) {
       setTimeout(() => {
         particleSystem.createExplosion(
           x + (Math.random() - 0.5) * 60,
           y + (Math.random() - 0.5) * 60,
-          20,
+          secondaryCount,
           '#ffaa00'
         )
       }, i * 100)
     }
 
+    const sparkCount = Math.floor(CONFIG.explosionParticles / 3)
     for (let i = 0; i < 8; i++) {
       setTimeout(() => {
         particleSystem.createExplosion(
           x + (Math.random() - 0.5) * 100,
           y + (Math.random() - 0.5) * 100,
-          10,
+          sparkCount,
           '#ffffff'
         )
       }, i * 50)
@@ -49,9 +52,10 @@ export class EnhancedParticleEffects {
     }
 
     const color = colors[type] || '#00ff88'
+    const particleCount = CONFIG.explosionParticles
 
-    for (let i = 0; i < 30; i++) {
-      const angle = (Math.PI * 2 * i) / 30
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (Math.PI * 2 * i) / particleCount
       const speed = 3 + Math.random() * 2
 
       particleSystem.createExplosion(x, y, 1, color)
@@ -73,8 +77,9 @@ export class EnhancedParticleEffects {
   }
 
   static createShieldBreakEffect(x: number, y: number): void {
-    for (let i = 0; i < 20; i++) {
-      const angle = (Math.PI * 2 * i) / 20
+    const particleCount = CONFIG.explosionParticles
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (Math.PI * 2 * i) / particleCount
       const speed = 4
 
       const particle = particleSystem['particlePool']!.acquire()
@@ -92,7 +97,8 @@ export class EnhancedParticleEffects {
   }
 
   static createWarpEffect(x: number, y: number): void {
-    for (let i = 0; i < 50; i++) {
+    const particleCount = CONFIG.explosionParticles * 2
+    for (let i = 0; i < particleCount; i++) {
       setTimeout(() => {
         const angle = Math.random() * Math.PI * 2
         const distance = Math.random() * 100
@@ -114,7 +120,7 @@ export class EnhancedParticleEffects {
 
   static createBossDeathExplosion(x: number, y: number): void {
     const maxWaves = 4
-    const particlesPerWave = 12
+    const particlesPerWave = CONFIG.explosionParticles / 2
 
     for (let wave = 0; wave < maxWaves; wave++) {
       setTimeout(() => {
@@ -137,7 +143,7 @@ export class EnhancedParticleEffects {
     }
 
     setTimeout(() => {
-      particleSystem.createExplosion(x, y, 50, '#ffffff')
+      particleSystem.createExplosion(x, y, CONFIG.explosionParticles, '#ffffff')
 
       for (let i = 0; i < 15; i++) {
         setTimeout(() => {
