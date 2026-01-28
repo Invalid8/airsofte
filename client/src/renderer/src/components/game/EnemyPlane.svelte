@@ -14,7 +14,6 @@
   import EnemyScout from '../../assets/sprites/enemy-scout.png'
   import EnemyBomber from '../../assets/sprites/enemy-bomber.png'
   // import BossHealthBar from '../BossHealthBar.svelte'
-  import { audioManager } from '../../utils/AudioManager'
 
   let {
     game_pad,
@@ -178,32 +177,21 @@
 
     const playerEnemyCollisions = combatSystem.checkPlayerEnemyCollisions(playerBox, enemies)
 
-    playerEnemyCollisions.forEach(({ enemyId, isBoss }) => {
+    playerEnemyCollisions.forEach(({ enemyId }) => {
       const enemy = enemyController.getEnemyById(enemyId)
       if (!enemy) return
 
       if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
-        if (!isBoss) {
-          gameManager.damagePlayer(30)
+        gameManager.damagePlayer(30)
 
-          particleSystem.createExplosion(
-            enemy.x + enemy.width / 2,
-            enemy.y + enemy.height / 2,
-            20,
-            '#ff3300'
-          )
-          ScreenEffects.shake(12, 0.4)
-          ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
-        } else {
-          gameManager.player.health = 0
-          gameManager.damagePlayer(0)
-
-          enhancedParticles.createBigExplosion(
-            enemy.x + enemy.width / 2,
-            enemy.y + enemy.height / 2
-          )
-          audioManager.playSound('playerHit')
-        }
+        particleSystem.createExplosion(
+          enemy.x + enemy.width / 2,
+          enemy.y + enemy.height / 2,
+          20,
+          '#ff3300'
+        )
+        ScreenEffects.shake(12, 0.4)
+        ScreenEffects.flash('rgba(255, 0, 0, 0.5)', 0.2)
       }
 
       enemyController.damageEnemy(enemyId, enemy.maxHealth)
