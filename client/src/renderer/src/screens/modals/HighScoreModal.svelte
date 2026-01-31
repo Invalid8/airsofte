@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import Button from '../../components/Button.svelte'
+  import Options from '../../components/Options.svelte'
   import { modalManager } from '../../utils/ModalManager'
   import { StorageManager } from '../../utils/storageManager'
   import { currentUser } from '../../utils/userManager'
-  import { cn } from '../../lib/utils'
+  import { cn, formatNumberWithCommas } from '../../lib/utils'
   import type { HighScore } from '../../types/gameTypes'
 
   let tab: 'quick_play' | 'story_mode' = $state('quick_play')
@@ -52,6 +52,40 @@
   }
 
   let currentScores = $derived(tab === 'quick_play' ? quickPlayScores : storyModeScores)
+
+  const modalOptions = $derived(
+    currentScores.length > 0
+      ? [
+          {
+            label: 'Reset This Mode',
+            value: 'reset_mode',
+            onClick: resetScores
+          },
+          {
+            label: 'Reset All Scores',
+            value: 'reset_all',
+            onClick: resetAllScores
+          },
+          {
+            label: 'Close',
+            value: 'close',
+            isFirst: true,
+            onClick: () => modalManager.close()
+          }
+        ]
+      : [
+          {
+            label: 'Close',
+            value: 'close',
+            isFirst: true,
+            onClick: () => modalManager.close()
+          }
+        ]
+  )
+
+  function handleSelect(value: string): void {
+    console.log(`High score modal option selected: ${value}`)
+  }
 </script>
 
 <div class="high-score-modal w-full min-w-2xl max-w-2xl rounded-xl modal-bg p-6 pt-8">
@@ -132,7 +166,7 @@
                   {/if}
                 </div>
                 <div class="score text-center hud text-xl font-bold text-cyan-400">
-                  {score.score.toLocaleString()}
+                  {formatNumberWithCommas(score.score)}
                 </div>
                 <div class="wave text-center hud text-lg">{score.wave}</div>
                 <div class="date text-center text-sm opacity-70">{formatDate(score.date)}</div>
@@ -143,21 +177,7 @@
       </div>
     </div>
 
-    <div class="options">
-      <ul class="grid text-center gap-2">
-        {#if currentScores.length > 0}
-          <li>
-            <Button label="Reset This Mode" onClick={resetScores} />
-          </li>
-          <li>
-            <Button label="Reset All Scores" onClick={resetAllScores} />
-          </li>
-        {/if}
-        <li>
-          <Button label="Close" onClick={() => modalManager.close()} isFirst={true} />
-        </li>
-      </ul>
-    </div>
+    <Options options={modalOptions} layout="horizontal" gap="md" select={handleSelect} />
   </div>
 </div>
 

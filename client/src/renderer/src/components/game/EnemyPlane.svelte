@@ -34,6 +34,7 @@
   let enemyBullets = $state<Bullet[]>([])
   let animationFrameId: number
   let updateCounter = $state(0)
+  let enemyCollisionCooldowns = new Map<string, number>()
 
   const enemySprites = {
     BASIC: EnemyBasic,
@@ -139,7 +140,7 @@
       const enemy = enemyController.getEnemyById(enemyId)
       if (!enemy) return
 
-      particleSystem.createHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 6)
+      particleSystem.createHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 4)
 
       const killed = enemyController.damageEnemy(enemyId, damage)
 
@@ -147,19 +148,20 @@
 
       if (killed) {
         if (enemy.type === 'BOSS') {
-          enhancedParticles.createBossDeathExplosion(
+          enhancedParticles.createBigExplosion(
             enemy.x + enemy.width / 2,
             enemy.y + enemy.height / 2
           )
+          ScreenEffects.shake(10, 0.3)
         } else {
           particleSystem.createExplosion(
             enemy.x + enemy.width / 2,
             enemy.y + enemy.height / 2,
-            25,
+            12,
             '#ff6600'
           )
+          ScreenEffects.shake(3, 0.15)
         }
-        ScreenEffects.shake(enemy.type === 'BOSS' ? 15 : 5, enemy.type === 'BOSS' ? 0.5 : 0.2)
       }
     })
 
@@ -173,47 +175,53 @@
       gameManager.damagePlayer(damage)
       bullet.active = false
 
-      particleSystem.createHitEffect(bullet.x, bullet.y, 8)
-      ScreenEffects.shake(8, 0.3)
-      ScreenEffects.flash('rgba(255, 0, 0, 0.3)', 0.15)
+      particleSystem.createHitEffect(bullet.x, bullet.y, 5)
+      ScreenEffects.shake(5, 0.2)
+      ScreenEffects.flash('rgba(255, 0, 0, 0.2)', 0.1)
     })
 
     const playerEnemyCollisions = combatSystem.checkPlayerEnemyCollisions(playerBox, enemies)
 
+    const now = Date.now()
     playerEnemyCollisions.forEach(({ enemyId, isBoss }) => {
       const enemy = enemyController.getEnemyById(enemyId)
       if (!enemy) return
 
+      const lastCollision = enemyCollisionCooldowns.get(enemyId) || 0
+      if (now - lastCollision < 500) return
+
       if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
+        enemyCollisionCooldowns.set(enemyId, now)
+
         if (isBoss) {
           const playerHealthPercent = gameManager.player.health / gameManager.player.maxHealth
           const bossHealthPercent = enemy.health / enemy.maxHealth
 
-          const damageToPlayer = Math.floor(50 * bossHealthPercent)
+          const damageToPlayer = Math.floor(60 * bossHealthPercent)
           gameManager.damagePlayer(damageToPlayer)
 
-          const damageToBoss = Math.floor(enemy.maxHealth * playerHealthPercent * 0.5)
+          const damageToBoss = Math.floor(enemy.maxHealth * playerHealthPercent * 0.4)
           enemyController.damageEnemy(enemyId, damageToBoss)
 
           particleSystem.createExplosion(
-            enemy.x + enemy.width / 2,
-            enemy.y + enemy.height / 2,
-            30,
-            '#ff3300'
+            playerX + 75,
+            playerY + 75,
+            15,
+            '#ff6600'
           )
-          ScreenEffects.shake(15, 0.3)
-          ScreenEffects.flash('rgba(255, 100, 0, 0.3)', 0.15)
+          ScreenEffects.shake(8, 0.2)
+          ScreenEffects.flash('rgba(255, 100, 0, 0.2)', 0.1)
         } else {
           gameManager.damagePlayer(30)
 
           particleSystem.createExplosion(
             enemy.x + enemy.width / 2,
             enemy.y + enemy.height / 2,
-            20,
+            12,
             '#ff3300'
           )
-          ScreenEffects.shake(12, 0.3)
-          ScreenEffects.flash('rgba(255, 0, 0, 0.3)', 0.15)
+          ScreenEffects.shake(5, 0.2)
+          ScreenEffects.flash('rgba(255, 0, 0, 0.2)', 0.1)
 
           enemyController.damageEnemy(enemyId, enemy.maxHealth)
         }
@@ -326,35 +334,33 @@
   .enemy-wrapper {
     position: absolute;
     pointer-events: none;
-    transition: opacity 0.1s ease;
   }
 
   .enemy {
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.5));
-    transition: filter 0.2s;
+    filter: drop-shadow(0 0 6px rgba(255, 0, 0, 0.4));
   }
 
   .enemy.damaged {
-    filter: drop-shadow(0 0 12px rgba(255, 100, 0, 0.8)) brightness(1.2);
+    filter: drop-shadow(0 0 10px rgba(255, 100, 0, 0.7)) brightness(1.1);
   }
 
   .enemy.damaged-critical {
-    filter: drop-shadow(0 0 16px rgba(255, 0, 0, 1)) brightness(1.5);
-    animation: flash 0.2s infinite;
+    filter: drop-shadow(0 0 12px rgba(255, 0, 0, 0.9)) brightness(1.3);
+    animation: flash 0.3s infinite;
   }
 
   .enemy.teleporting {
-    filter: drop-shadow(0 0 20px rgba(0, 170, 255, 1)) brightness(1.3);
+    filter: drop-shadow(0 0 15px rgba(0, 170, 255, 0.9)) brightness(1.2);
   }
 
   .portal-effect {
     position: absolute;
-    inset: -20px;
+    inset: -15px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(0, 170, 255, 0.4) 0%, transparent 70%);
-    border: 2px solid rgba(0, 170, 255, 0.6);
+    background: radial-gradient(circle, rgba(0, 170, 255, 0.3) 0%, transparent 70%);
+    border: 2px solid rgba(0, 170, 255, 0.5);
     animation: portal-pulse 0.6s ease-in-out;
     pointer-events: none;
   }
@@ -370,7 +376,7 @@
     }
     100% {
       transform: scale(1);
-      opacity: 0.8;
+      opacity: 0.7;
     }
   }
 
@@ -380,7 +386,7 @@
       opacity: 1;
     }
     50% {
-      opacity: 0.7;
+      opacity: 0.8;
     }
   }
 
@@ -389,6 +395,6 @@
     pointer-events: none;
     background: linear-gradient(to bottom, #ff0000, #ff6600);
     border-radius: 0 0 50% 50%;
-    box-shadow: 0 0 8px #ff3333;
+    box-shadow: 0 0 6px #ff3333;
   }
 </style>

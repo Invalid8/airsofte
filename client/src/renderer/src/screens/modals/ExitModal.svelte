@@ -1,7 +1,29 @@
 <script lang="ts">
-  import Button from '../../components/Button.svelte'
+  import Options from '../../components/Options.svelte'
   import { modalManager } from '../../utils/ModalManager'
   import { exitGame } from '../../stores/gameStore'
+
+  const exitOptions = [
+    {
+      label: 'Cancel',
+      value: 'cancel',
+      isFirst: true,
+      onClick: () => {
+        modalManager.close()
+      }
+    },
+    {
+      label: 'Exit',
+      value: 'exit',
+      onClick: () => {
+        exitGame()
+      }
+    }
+  ]
+
+  function handleSelect(value: string): void {
+    console.log(`Exit modal option selected: ${value}`)
+  }
 </script>
 
 <div class="exit-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8 lg:px-16 lg:py-12">
@@ -9,15 +31,7 @@
     <h2 class="title text-2xl uppercase glow-text-2">Exit Game</h2>
     <p class="message text-center text-lg mb-2">Are you sure you want to exit?</p>
 
-    <div class="options flex gap-4 mt-2">
-      <Button label="Cancel" onClick={() => modalManager.close()} isFirst={true} />
-      <Button
-        label="Exit"
-        onClick={() => {
-          exitGame()
-        }}
-      />
-    </div>
+    <Options options={exitOptions} layout="horizontal" gap="md" select={handleSelect} />
   </div>
 </div>
 

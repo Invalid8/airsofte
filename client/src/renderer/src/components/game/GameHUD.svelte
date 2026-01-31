@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
   import {
     currentScore,
     playerHealth,
@@ -6,6 +7,7 @@
     currentWave,
     gameState
   } from '../../stores/gameStore'
+  import { gameEvents } from '../../lib/eventBus'
 
   let showCombo = $derived(
     $gameState.session?.comboMultiplier && $gameState.session.comboMultiplier > 1
@@ -16,9 +18,87 @@
   let healthPercentage = $derived(($playerHealth / maxHealth) * 100)
   let shieldActive = $derived($gameState.player?.shieldActive ?? false)
   let invincible = $derived($gameState.player?.invincible ?? false)
+
+  let activePowerUps = $state<
+    Array<{
+      type: string
+      endTime: number
+      duration: number
+    }>
+  >([])
+
+  function formatTime(ms: number): string {
+    const seconds = Math.ceil(ms / 1000)
+    return `${seconds}s`
+  }
+
+  function getPowerUpProgress(powerUp: (typeof activePowerUps)[0]): number {
+    const now = Date.now()
+    const elapsed = powerUp.duration - (powerUp.endTime - now)
+    return Math.max(0, Math.min(100, (elapsed / powerUp.duration) * 100))
+  }
+
+  function getPowerUpTimeLeft(powerUp: (typeof activePowerUps)[0]): number {
+    const now = Date.now()
+    return Math.max(0, powerUp.endTime - now)
+  }
+
+  $effect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now()
+      activePowerUps = activePowerUps.filter((p) => p.endTime > now)
+    }, 100)
+
+    return () => clearInterval(interval)
+  })
+
+  onMount(() => {
+    const unsubWeaponChanged = gameEvents.on('WEAPON_CHANGED', (event) => {
+      const { to } = event.data
+      if (to !== 'SINGLE') {
+        activePowerUps = [
+          ...activePowerUps,
+          {
+            type: 'WEAPON',
+            endTime: Date.now() + 15000,
+            duration: 15000
+          }
+        ]
+      }
+    })
+
+    const unsubShieldActivated = gameEvents.on('SHIELD_ACTIVATED', () => {
+      activePowerUps = [
+        ...activePowerUps,
+        {
+          type: 'SHIELD',
+          endTime: Date.now() + 10000,
+          duration: 10000
+        }
+      ]
+    })
+
+    const unsubSpeedBoost = gameEvents.on('SPEED_BOOST_ACTIVATED', () => {
+      activePowerUps = [
+        ...activePowerUps,
+        {
+          type: 'SPEED',
+          endTime: Date.now() + 8000,
+          duration: 8000
+        }
+      ]
+    })
+
+    return () => {
+      unsubWeaponChanged()
+      unsubShieldActivated()
+      unsubSpeedBoost()
+    }
+  })
 </script>
 
 <div class="hud fixed top-0 left-0 right-0 pointer-events-none z-50 p-3 sm:p-6">
+  <!-- Mobile HUD -->
   <div class="sm:hidden">
     <div
       class="flex items-center justify-between gap-3 bg-black/60 border border-cyan-500/40 rounded-lg px-3 py-2"
@@ -28,10 +108,9 @@
       </div>
 
       <div class="flex gap-1">
-        {#each Array($playerLives) as x, i (i)}
+        {#each Array(Math.min(5, $playerLives)) as _, i (i)}
           <svg class="w-4 h-4 fill-red-500" viewBox="0 0 24 24">
             <path
-              id={x}
               d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
             />
           </svg>
@@ -62,18 +141,31 @@
           x{comboMultiplier.toFixed(1)}
         </div>
       {/if}
-      <div class="flex items-center gap-5">
-        <div class="text-sm hud opacity-80">
-          {weaponType}
-        </div>
+      <div class="text-sm hud opacity-80">
+        {weaponType}
       </div>
     </div>
 
     {#if invincible}
       <div class="text-center text-sm text-cyan-400 animate-pulse hud mt-1">INVINCIBLE</div>
     {/if}
+
+    <!-- Power-up indicators (mobile) -->
+    {#if activePowerUps.length > 0}
+      <div class="mt-2 flex flex-col gap-1">
+        {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
+          <div class="powerup-indicator">
+            <div class="powerup-bar">
+              <div class="powerup-fill" style="width: {getPowerUpProgress(powerUp)}%"></div>
+            </div>
+            <span class="powerup-time">{formatTime(getPowerUpTimeLeft(powerUp))}</span>
+          </div>
+        {/each}
+      </div>
+    {/if}
   </div>
 
+  <!-- Desktop HUD -->
   <div class="hidden sm:flex justify-between items-start gap-4">
     <div class="left-panel">
       <div class="score-display">
@@ -103,10 +195,9 @@
     <div class="right-panel text-right">
       <div class="lives-display flex items-center justify-end gap-2">
         <div class="hearts flex gap-1">
-          {#each Array($playerLives) as x, i (i)}
+          {#each Array(Math.min(5, $playerLives)) as _, i (i)}
             <svg class="w-6 h-6 fill-red-500" viewBox="0 0 24 24">
               <path
-                id={x}
                 d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
               />
             </svg>
@@ -152,6 +243,24 @@
           INVINCIBLE
         </div>
       {/if}
+
+      <!-- Power-up progress bars (desktop) -->
+      {#if activePowerUps.length > 0}
+        <div class="powerups-container mt-4">
+          {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
+            <div class="powerup-bar-container">
+              <div class="powerup-label">{powerUp.type}</div>
+              <div class="powerup-progress-bar">
+                <div
+                  class="powerup-progress-fill"
+                  style="width: {100 - getPowerUpProgress(powerUp)}%"
+                ></div>
+              </div>
+              <div class="powerup-timer">{formatTime(getPowerUpTimeLeft(powerUp))}</div>
+            </div>
+          {/each}
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -176,6 +285,78 @@
 
   .health-bar {
     box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+
+  .powerup-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .powerup-bar {
+    flex: 1;
+    height: 0.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .powerup-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff88, #00aaff);
+    transition: width 0.1s linear;
+  }
+
+  .powerup-time {
+    font-size: 0.75rem;
+    min-width: 2rem;
+    text-align: right;
+  }
+
+  .powerups-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .powerup-bar-container {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    border-radius: 4px;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .powerup-label {
+    font-size: 0.75rem;
+    min-width: 4rem;
+  }
+
+  .powerup-progress-bar {
+    flex: 1;
+    height: 0.75rem;
+    background: rgba(0, 170, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .powerup-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff88, #00aaff);
+    transition: width 0.1s linear;
+  }
+
+  .powerup-timer {
+    font-size: 0.875rem;
+    min-width: 2.5rem;
+    text-align: right;
+    font-family: 'VT323', monospace;
   }
 
   @keyframes pulse {

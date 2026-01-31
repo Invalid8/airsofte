@@ -36,13 +36,12 @@
       height: {particle.size}px;
       background-color: {particle.color};
       opacity: {particle.life};
-      box-shadow: 0 0 {particle.size * 2}px {particle.color};
     "
   ></div>
 {/each}
 
 <style>
   .particle {
-    transition: opacity 0.05s linear;
+    will-change: transform;
   }
 </style>

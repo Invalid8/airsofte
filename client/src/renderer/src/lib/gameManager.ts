@@ -40,7 +40,14 @@ export class GameManager {
     weaponType: 'SINGLE',
     shieldActive: false,
     invincible: false,
-    invincibleUntil: 0
+    invincibleUntil: 0,
+    shieldDuration: 0,
+    shieldStartTime: 0,
+    weaponUpgradeDuration: 0,
+    weaponUpgradeStartTime: 0,
+    speedBoostActive: false,
+    speedBoostDuration: 0,
+    speedBoostStartTime: 0
   }
 
   public currentWave: Wave | null = null
@@ -157,7 +164,7 @@ export class GameManager {
   }
 
   private startGameLoop(): void {
-    const loop = (timestamp: number) => {
+    const loop = (timestamp: number): void => {
       if (!this.isPlaying) return
 
       const deltaTime = timestamp - this.lastFrameTime
@@ -200,7 +207,14 @@ export class GameManager {
       weaponType: 'SINGLE',
       shieldActive: false,
       invincible: false,
-      invincibleUntil: 0
+      invincibleUntil: 0,
+      shieldDuration: 0,
+      shieldStartTime: 0,
+      weaponUpgradeDuration: 0,
+      weaponUpgradeStartTime: 0,
+      speedBoostActive: false,
+      speedBoostDuration: 0,
+      speedBoostStartTime: 0
     }
   }
 
@@ -327,7 +341,7 @@ export class GameManager {
 
   private incrementCombo(): void {
     const maxIndex = GAME_CONFIG.COMBO.MULTIPLIERS.length - 1
-    const currentIndex = GAME_CONFIG.COMBO.MULTIPLIERS.indexOf(this.session.comboMultiplier as any)
+    const currentIndex = GAME_CONFIG.COMBO.MULTIPLIERS.indexOf(this.session.comboMultiplier)
 
     if (currentIndex < maxIndex) {
       this.session.comboMultiplier = GAME_CONFIG.COMBO.MULTIPLIERS[currentIndex + 1]
@@ -358,8 +372,7 @@ export class GameManager {
   damagePlayer(damage: number): void {
     if (this.player.invincible || this.player.shieldActive) {
       if (this.player.shieldActive) {
-        this.player.shieldActive = false
-        gameEvents.emit('SHIELD_BROKEN')
+        this.deactivateShield()
       }
       return
     }
@@ -417,27 +430,63 @@ export class GameManager {
     gameEvents.emit('LIFE_GAINED', { lives: this.player.lives })
   }
 
-  activateShield(duration: number): void {
+  activateShield(duration: number = 10000): void {
     this.player.shieldActive = true
+    this.player.shieldDuration = duration
+    this.player.shieldStartTime = Date.now()
+
     gameEvents.emit('SHIELD_ACTIVATED')
 
     setTimeout(() => {
-      this.player.shieldActive = false
-      gameEvents.emit('SHIELD_DEACTIVATED')
+      this.deactivateShield()
     }, duration)
   }
 
-  changeWeapon(weaponType: PlayerStats['weaponType'], duration?: number): void {
+  private deactivateShield(): void {
+    this.player.shieldActive = false
+    this.player.shieldDuration = 0
+    this.player.shieldStartTime = 0
+    gameEvents.emit('SHIELD_DEACTIVATED')
+  }
+
+  changeWeapon(weaponType: PlayerStats['weaponType'], duration: number = 10000): void {
     const previousWeapon = this.player.weaponType
     this.player.weaponType = weaponType
+
+    if (weaponType !== 'SINGLE') {
+      this.player.weaponUpgradeDuration = duration
+      this.player.weaponUpgradeStartTime = Date.now()
+    }
+
     gameEvents.emit('WEAPON_CHANGED', { from: previousWeapon, to: weaponType })
 
-    if (duration) {
+    if (duration && weaponType !== 'SINGLE') {
       setTimeout(() => {
         this.player.weaponType = 'SINGLE'
+        this.player.weaponUpgradeDuration = 0
+        this.player.weaponUpgradeStartTime = 0
         gameEvents.emit('WEAPON_EXPIRED', { weapon: weaponType })
       }, duration)
     }
+  }
+
+  activateSpeedBoost(duration: number = 8000, speedMultiplier: number = 1.5): void {
+    this.player.speedBoostActive = true
+    this.player.speedBoostDuration = duration
+    this.player.speedBoostStartTime = Date.now()
+
+    const originalSpeed = this.player.speed
+    this.player.speed = originalSpeed * speedMultiplier
+
+    gameEvents.emit('SPEED_BOOST_ACTIVATED')
+
+    setTimeout(() => {
+      this.player.speedBoostActive = false
+      this.player.speedBoostDuration = 0
+      this.player.speedBoostStartTime = 0
+      this.player.speed = originalSpeed
+      gameEvents.emit('SPEED_BOOST_DEACTIVATED')
+    }, duration)
   }
 
   completeWave(): void {
@@ -542,7 +591,15 @@ export class GameManager {
     return true
   }
 
-  getGameState() {
+  getGameState(): {
+    mode: GameMode
+    difficulty: GameDifficulty
+    isPlaying: boolean
+    isPaused: boolean
+    session: GameSessionState
+    player: PlayerStats
+    currentWave: Wave | null
+  } {
     return {
       mode: this.mode,
       difficulty: this.difficulty,

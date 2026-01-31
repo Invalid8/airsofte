@@ -1,194 +1,108 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte'
-  import { fly, fade } from 'svelte/transition'
-  import { gameEvents } from '../lib/eventBus'
+  import { fly } from 'svelte/transition'
 
-  type Toast = {
-    id: string
-    message: string
-    type: 'success' | 'info' | 'warning' | 'error'
-    duration: number
-  }
+  let {
+    message,
+    visible = false,
+    duration = 3000,
+    onClose = () => {},
+    type = 'info'
+  }: {
+    message?: string
+    visible?: boolean
+    duration?: number
+    onClose?: () => void
+    type?: 'success' | 'info' | 'warning' | 'error'
+  } = $props()
 
-  let toasts = $state<Toast[]>([])
-  let toastCounter = 0
+  $effect(() => {
+    if (visible && duration > 0) {
+      const timer = setTimeout(() => {
+        visible = false
+        onClose()
+      }, duration)
 
-  function addToast(message: string, type: Toast['type'] = 'info', duration: number = 3000): void {
-    const toast: Toast = {
-      id: `toast_${toastCounter++}`,
-      message,
-      type,
-      duration
+      return () => clearTimeout(timer)
     }
 
-    toasts = [...toasts, toast]
-
-    setTimeout(() => {
-      removeToast(toast.id)
-    }, duration)
-  }
-
-  function removeToast(id: string): void {
-    toasts = toasts.filter((t) => t.id !== id)
-  }
-
-  onMount(() => {
-    const unsubObjectiveComplete = gameEvents.on('OBJECTIVE_COMPLETED', (event) => {
-      addToast(`✓ ${event.data.objective.description}`, 'success', 4000)
-    })
-
-    const unsubObjectiveFailed = gameEvents.on('OBJECTIVE_FAILED', (event) => {
-      addToast(`✗ ${event.data.objective.description} - Failed`, 'error', 4000)
-    })
-
-    const unsubBonusComplete = gameEvents.on('BONUS_OBJECTIVE_COMPLETED', (event) => {
-      addToast(
-        `⭐ Bonus: ${event.data.objective.description} +${event.data.reward}`,
-        'success',
-        5000
-      )
-    })
-
-    const unsubMessage = gameEvents.on('SHOW_MESSAGE', (event) => {
-      const typeMap = {
-        '#00ff88': 'success',
-        '#00aaff': 'info',
-        '#ffaa00': 'warning',
-        '#ff6600': 'warning',
-        '#ff0000': 'error'
-      }
-      const type = typeMap[event.data.color] || 'info'
-      addToast(event.data.text, type, event.data.duration || 3000)
-    })
-
-    const unsubWaveComplete = gameEvents.on('WAVE_COMPLETE', (event) => {
-      addToast(`Wave ${event.data.wave} Complete!`, 'success', 3000)
-    })
-
-    const unsubWaveStart = gameEvents.on('WAVE_START', (event) => {
-      addToast(`Wave ${event.data.wave} - Incoming!`, 'info', 2500)
-    })
-
-    return () => {
-      unsubObjectiveComplete()
-      unsubObjectiveFailed()
-      unsubBonusComplete()
-      unsubMessage()
-      unsubWaveComplete()
-      unsubWaveStart()
-    }
-  })
-
-  onDestroy(() => {
-    toasts = []
+    return null
   })
 </script>
 
-<div class="toast-container">
-  {#each toasts as toast (toast.id)}
-    <div
-      class="toast toast-{toast.type}"
-      in:fly={{ x: 300, duration: 300 }}
-      out:fade={{ duration: 200 }}
-    >
-      <div class="toast-content">
-        {toast.message}
-      </div>
-      <button class="toast-close" onclick={() => removeToast(toast.id)}>×</button>
+{#if visible}
+  <div class="toast {type}" transition:fly={{ y: -50, duration: 300 }}>
+    <div class="toast-content">
+      {#if type === 'success'}
+        <span class="icon">✓</span>
+      {:else if type === 'error'}
+        <span class="icon">✗</span>
+      {:else if type === 'warning'}
+        <span class="icon">⚠</span>
+      {:else}
+        <span class="icon">ℹ</span>
+      {/if}
+      <span class="message">{message}</span>
     </div>
-  {/each}
-</div>
+  </div>
+{/if}
 
 <style>
-  .toast-container {
-    position: fixed;
-    bottom: 3rem;
-    right: 2rem;
-    z-index: 150;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    pointer-events: none;
-    max-width: 24rem;
-  }
-
   .toast {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    background: rgba(0, 0, 0, 0.92);
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
-    pointer-events: auto;
-    border: 2px solid;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 0.75rem;
-    line-height: 1.4;
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: bold;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 200px;
+    max-width: 400px;
   }
 
-  .toast-success {
-    border-color: rgba(0, 255, 136, 0.8);
-    background: linear-gradient(135deg, rgba(0, 255, 136, 0.15) 0%, rgba(0, 0, 0, 0.92) 100%);
-    color: #00ff88;
+  .toast.info {
+    background: rgba(0, 170, 255, 0.95);
+    border: 2px solid #00aaff;
   }
 
-  .toast-info {
-    border-color: rgba(0, 170, 255, 0.8);
-    background: linear-gradient(135deg, rgba(0, 170, 255, 0.15) 0%, rgba(0, 0, 0, 0.92) 100%);
-    color: #00aaff;
+  .toast.success {
+    background: rgba(0, 255, 136, 0.95);
+    border: 2px solid #00ff88;
   }
 
-  .toast-warning {
-    border-color: rgba(255, 170, 0, 0.8);
-    background: linear-gradient(135deg, rgba(255, 170, 0, 0.15) 0%, rgba(0, 0, 0, 0.92) 100%);
-    color: #ffaa00;
+  .toast.warning {
+    background: rgba(255, 170, 0, 0.95);
+    border: 2px solid #ffaa00;
   }
 
-  .toast-error {
-    border-color: rgba(255, 0, 0, 0.8);
-    background: linear-gradient(135deg, rgba(255, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.92) 100%);
-    color: #ff6666;
+  .toast.error {
+    background: rgba(255, 68, 68, 0.95);
+    border: 2px solid #ff4444;
   }
 
   .toast-content {
-    flex: 1;
-  }
-
-  .toast-close {
-    background: none;
-    border: none;
-    color: inherit;
-    font-size: 1.5rem;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-    padding: 0;
-    width: 1.5rem;
-    height: 1.5rem;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .icon {
+    font-size: 1.5rem;
     flex-shrink: 0;
   }
 
-  .toast-close:hover {
-    opacity: 1;
+  .message {
+    flex: 1;
+    font-size: 0.9375rem;
   }
 
   @media (max-width: 768px) {
-    .toast-container {
-      right: 1rem;
-      /* max-width: none; */
-      max-width: 20rem;
-      bottom: 1rem;
-    }
-
     .toast {
-      font-size: 0.7rem;
-      padding: 0.875rem 1rem;
+      top: 1rem;
+      right: 1rem;
+      left: 1rem;
+      max-width: none;
     }
   }
 </style>

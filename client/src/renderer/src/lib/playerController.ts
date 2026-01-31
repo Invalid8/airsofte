@@ -76,9 +76,9 @@ export class PlayerController {
 
   shoot(): Bullet[] {
     const now = Date.now()
-    const fireRate = gameManager.player.fireRate
+    const weaponConfig = WEAPON_CONFIG[gameManager.player.weaponType]
 
-    if (!this.canShoot || now - this.lastShotTime < fireRate) {
+    if (!this.canShoot || now - this.lastShotTime < weaponConfig.fireRate) {
       return []
     }
 
@@ -87,7 +87,7 @@ export class PlayerController {
 
     setTimeout(() => {
       this.canShoot = true
-    }, fireRate)
+    }, weaponConfig.fireRate)
 
     const bullets = this.createBullets()
 
@@ -101,60 +101,90 @@ export class PlayerController {
 
   private createBullets(): Bullet[] {
     const weaponType = gameManager.player.weaponType
-    const config = WEAPON_CONFIG[weaponType]
-    const bullets: Bullet[] = []
+    const weaponConfig = WEAPON_CONFIG[weaponType]
 
-    const centerX = this.x + this.width / 2
-
-    if (config.bulletCount === 1) {
+    // Handle CANNON weapon (single high-damage bullet)
+    if (weaponType === 'CANNON') {
       const bullet = this.bulletPool!.acquire()
-      bullet.x = centerX - bullet.width / 2
+      bullet.x = this.x + this.width / 2 - bullet.width / 2
       bullet.y = this.y
       bullet.vx = 0
       bullet.vy = -bullet.speed
       bullet.active = true
-      bullet.damage = config.damage
-      bullets.push(bullet)
-    } else if (config.bulletCount === 2) {
-      const offset = config.spread / 2
+      bullet.damage = weaponConfig.damage // 40 damage
+      bullet.type = 'CANNON'
 
-      const leftBullet = this.bulletPool!.acquire()
-      leftBullet.x = centerX - offset - leftBullet.width / 2
-      leftBullet.y = this.y
-      leftBullet.vx = 0
-      leftBullet.vy = -leftBullet.speed
-      leftBullet.active = true
-      leftBullet.damage = config.damage
-      bullets.push(leftBullet)
-
-      const rightBullet = this.bulletPool!.acquire()
-      rightBullet.x = centerX + offset - rightBullet.width / 2
-      rightBullet.y = this.y
-      rightBullet.vx = 0
-      rightBullet.vy = -rightBullet.speed
-      rightBullet.active = true
-      rightBullet.damage = config.damage
-      bullets.push(rightBullet)
-    } else {
-      const angleStep = config.spread / (config.bulletCount - 1)
-      const startAngle = -config.spread / 2
-
-      for (let i = 0; i < config.bulletCount; i++) {
-        const bullet = this.bulletPool!.acquire()
-        const angle = startAngle + angleStep * i
-        const angleRad = (angle * Math.PI) / 180
-
-        bullet.x = centerX - bullet.width / 2
-        bullet.y = this.y
-        bullet.vx = Math.sin(angleRad) * bullet.speed
-        bullet.vy = -Math.cos(angleRad) * bullet.speed
-        bullet.active = true
-        bullet.damage = config.damage
-        bullets.push(bullet)
-      }
+      audioManager.playSound('CANNON_SHOOT')
+      return [bullet]
     }
 
-    return bullets
+    // Handle SINGLE weapon
+    if (weaponType === 'SINGLE') {
+      const bullet = this.bulletPool!.acquire()
+      bullet.x = this.x + this.width / 2 - bullet.width / 2
+      bullet.y = this.y
+      bullet.vx = 0
+      bullet.vy = -bullet.speed
+      bullet.active = true
+      bullet.damage = weaponConfig.damage
+      bullet.type = 'SINGLE'
+
+      audioManager.playSound('PLAYER_SHOOT')
+      return [bullet]
+    }
+
+    // Handle DOUBLE weapon
+    if (weaponType === 'DOUBLE') {
+      const bullets: Bullet[] = []
+      const offset = 30
+
+      for (let i = 0; i < 2; i++) {
+        const bullet = this.bulletPool!.acquire()
+        bullet.x =
+          this.x + (i === 0 ? this.width / 2 - offset : this.width / 2 + offset) - bullet.width / 2
+        bullet.y = this.y
+        bullet.vx = 0
+        bullet.vy = -bullet.speed
+        bullet.active = true
+        bullet.damage = weaponConfig.damage
+        bullet.type = 'DOUBLE'
+        bullets.push(bullet)
+      }
+
+      audioManager.playSound('PLAYER_SHOOT')
+      return bullets
+    }
+
+    // Handle TRIPLE weapon
+    if (weaponType === 'TRIPLE') {
+      const bullets: Bullet[] = []
+      const offset = 35
+
+      for (let i = 0; i < 3; i++) {
+        const bullet = this.bulletPool!.acquire()
+        if (i === 0) {
+          bullet.x = this.x + this.width / 2 - bullet.width / 2
+          bullet.vx = 0
+        } else if (i === 1) {
+          bullet.x = this.x + this.width / 2 - offset - bullet.width / 2
+          bullet.vx = -2
+        } else {
+          bullet.x = this.x + this.width / 2 + offset - bullet.width / 2
+          bullet.vx = 2
+        }
+        bullet.y = this.y
+        bullet.vy = -bullet.speed
+        bullet.active = true
+        bullet.damage = weaponConfig.damage
+        bullet.type = 'TRIPLE'
+        bullets.push(bullet)
+      }
+
+      audioManager.playSound('PLAYER_SHOOT')
+      return bullets
+    }
+
+    return []
   }
 
   getBoundingBox(): BoundingBox {

@@ -10,7 +10,7 @@ export type BoundingBox = {
   height: number
 }
 
-export type WeaponType = 'SINGLE' | 'DOUBLE' | 'TRIPLE' | 'SPREAD'
+export type WeaponType = 'SINGLE' | 'DOUBLE' | 'TRIPLE' | 'SPREAD' | 'CANNON'
 
 export type EnemyType = 'BASIC' | 'SCOUT' | 'BOMBER' | 'BOSS'
 

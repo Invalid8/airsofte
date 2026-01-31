@@ -4,6 +4,7 @@
   import { navigateTo } from '../stores/gameStore'
   import { userManager } from '../utils/userManager'
   import { audioManager } from '../utils/AudioManager'
+  import { formatScore } from '../lib/numberFormatter'
   import Button from '../components/Button.svelte'
   import type { UserProfile } from '../types/userTypes'
 
@@ -164,7 +165,7 @@
                     <span class="stat-label">Games</span>
                   </div>
                   <div class="stat">
-                    <span class="stat-value hud">{user.stats.totalScore.toLocaleString()}</span>
+                    <span class="stat-value hud">{formatScore(user.stats.totalScore)}</span>
                     <span class="stat-label">Score</span>
                   </div>
                 </div>
@@ -603,7 +604,6 @@
   }
 
   .guest-mode {
-    /* background: linear-gradient(135deg, rgba(100, 50, 200, 0.1), rgba(50, 100, 255, 0.1)); */
     border-color: rgba(100, 100, 255, 0.4);
   }
 

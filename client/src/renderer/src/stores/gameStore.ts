@@ -261,3 +261,52 @@ export const currentScore = derived(gameState, ($state) => $state.score)
 export const playerHealth = derived(gameState, ($state) => $state.player?.health ?? 0)
 export const playerLives = derived(gameState, ($state) => $state.player?.lives ?? 0)
 export const currentWave = derived(gameState, ($state) => $state.session?.currentWave ?? 0)
+
+export const activePowerUps = derived(gameState, ($state) => {
+  const player = $state.player
+  if (!player) return []
+
+  const powerups: Array<{
+    type: string
+    timeLeft: number
+    duration: number
+  }> = []
+
+  if (player.shieldActive && player.shieldDuration) {
+    const elapsed = Date.now() - (player.shieldStartTime || Date.now())
+    const timeLeft = Math.max(0, player.shieldDuration - elapsed)
+    if (timeLeft > 0) {
+      powerups.push({
+        type: 'SHIELD',
+        timeLeft,
+        duration: player.shieldDuration
+      })
+    }
+  }
+
+  if (player.weaponType !== 'SINGLE' && player.weaponUpgradeDuration) {
+    const elapsed = Date.now() - (player.weaponUpgradeStartTime || Date.now())
+    const timeLeft = Math.max(0, player.weaponUpgradeDuration - elapsed)
+    if (timeLeft > 0) {
+      powerups.push({
+        type: 'WEAPON',
+        timeLeft,
+        duration: player.weaponUpgradeDuration
+      })
+    }
+  }
+
+  if (player.speedBoostActive && player.speedBoostDuration) {
+    const elapsed = Date.now() - (player.speedBoostStartTime || Date.now())
+    const timeLeft = Math.max(0, player.speedBoostDuration - elapsed)
+    if (timeLeft > 0) {
+      powerups.push({
+        type: 'SPEED',
+        timeLeft,
+        duration: player.speedBoostDuration
+      })
+    }
+  }
+
+  return powerups
+})

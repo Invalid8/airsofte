@@ -1,25 +1,43 @@
 <script lang="ts">
-  import Button from '../../components/Button.svelte'
+  import Options from '../../components/Options.svelte'
   import { togglePause, navigateTo } from '../../stores/gameStore'
   import { modalManager } from '../../utils/ModalManager'
 
-  let buttons: HTMLButtonElement[] = []
+  const pauseOptions = [
+    {
+      label: 'Resume',
+      value: 'resume',
+      isFirst: true,
+      onClick: () => {
+        togglePause()
+      }
+    },
+    {
+      label: 'Settings',
+      value: 'settings',
+      onClick: () => {
+        modalManager.open('SETTINGS')
+      }
+    },
+    {
+      label: 'Help',
+      value: 'help',
+      onClick: () => {
+        modalManager.open('HELP')
+      }
+    },
+    {
+      label: 'Main Menu',
+      value: 'main_menu',
+      onClick: () => {
+        modalManager.close()
+        navigateTo('MAIN_MENU')
+      }
+    }
+  ]
 
-  function handleResume(): void {
-    togglePause()
-  }
-
-  function handleHelp(): void {
-    modalManager.open('HELP')
-  }
-
-  function handleSettings(): void {
-    modalManager.open('SETTINGS')
-  }
-
-  function handleMainMenu(): void {
-    modalManager.close()
-    navigateTo('MAIN_MENU')
+  function handleSelect(value: string): void {
+    console.log(`Pause menu option selected: ${value}`)
   }
 </script>
 
@@ -27,27 +45,7 @@
   <div class="content flex flex-col items-center justify-center gap-4">
     <h2 class="title text-2xl uppercase glow-text-2">Paused</h2>
 
-    <div class="options">
-      <ul class="grid gap-1 justify-center items-center">
-        <li class="mx-auto">
-          <Button
-            label="Resume"
-            onClick={handleResume}
-            isFirst={true}
-            bind:buttonRef={buttons[0]}
-          />
-        </li>
-        <li class="mx-auto">
-          <Button label="Settings" onClick={handleSettings} bind:buttonRef={buttons[1]} />
-        </li>
-        <li class="mx-auto">
-          <Button label="Help" onClick={handleHelp} bind:buttonRef={buttons[2]} />
-        </li>
-        <li class="mx-auto">
-          <Button label="Main Menu" onClick={handleMainMenu} bind:buttonRef={buttons[3]} />
-        </li>
-      </ul>
-    </div>
+    <Options options={pauseOptions} layout="vertical" gap="sm" select={handleSelect} />
 
     <div class="pause-info text-center text-sm opacity-70 mt-4">
       <p>
@@ -83,7 +81,6 @@
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid #00aaff;
     border-radius: 0.25rem;
-    /* font-family: 'VT323', monospace; */
     font-size: 1rem;
     color: #00aaff;
   }

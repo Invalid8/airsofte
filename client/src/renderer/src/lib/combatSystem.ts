@@ -1,5 +1,6 @@
 import type { Bullet, Enemy, BoundingBox } from '../types/gameTypes'
 import { checkCollision, getBoundingBox } from '../utils/collisionSystem'
+import type { PlayerController } from './playerController'
 
 export class CombatSystem {
   checkPlayerBulletCollisions(
@@ -55,7 +56,8 @@ export class CombatSystem {
 
   checkPlayerEnemyCollisions(
     playerBox: BoundingBox,
-    enemies: Enemy[]
+    enemies: Enemy[],
+    playerController?: PlayerController
   ): Array<{ enemyId: string; isBoss: boolean }> {
     const collisions: Array<{ enemyId: string; isBoss: boolean }> = []
 
@@ -69,10 +71,43 @@ export class CombatSystem {
           enemyId: enemy.id,
           isBoss: enemy.type === 'BOSS'
         })
+
+        if (playerController) {
+          this.applyRecoil(playerController, enemy, playerBox, enemyBox)
+        }
       }
     })
 
     return collisions
+  }
+
+  private applyRecoil(
+    player: PlayerController,
+    enemy: Enemy,
+    playerBox: BoundingBox,
+    enemyBox: BoundingBox
+  ): void {
+    const playerCenterX = playerBox.x + playerBox.width / 2
+    const playerCenterY = playerBox.y + playerBox.height / 2
+    const enemyCenterX = enemyBox.x + enemyBox.width / 2
+    const enemyCenterY = enemyBox.y + enemyBox.height / 2
+
+    const dx = playerCenterX - enemyCenterX
+    const dy = playerCenterY - enemyCenterY
+    const distance = Math.sqrt(dx * dx + dy * dy)
+
+    if (distance === 0) return
+
+    const recoilForce = enemy.type === 'BOSS' ? 25 : 15
+    const recoilX = (dx / distance) * recoilForce
+    const recoilY = (dy / distance) * recoilForce
+
+    player.x += recoilX
+    player.y += recoilY
+
+    const enemyRecoilFactor = enemy.type === 'BOSS' ? 0.1 : 0.3
+    enemy.x -= recoilX * enemyRecoilFactor
+    enemy.y -= recoilY * enemyRecoilFactor
   }
 }
 

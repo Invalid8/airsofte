@@ -30,16 +30,22 @@ export const GAME_CONFIG = {
 
   BULLET: {
     PLAYER: {
-      WIDTH: 10,
-      HEIGHT: 30,
-      SPEED: 10,
+      WIDTH: 6, // Reduced from 10
+      HEIGHT: 20, // Reduced from 30
+      SPEED: 12, // Slightly faster
       DAMAGE: 15
     },
     ENEMY: {
-      WIDTH: 8,
-      HEIGHT: 20,
+      WIDTH: 5, // Reduced from 8
+      HEIGHT: 15, // Reduced from 20
       SPEED: 6,
       DAMAGE: 10
+    },
+    CANNON: {
+      WIDTH: 12,
+      HEIGHT: 25,
+      SPEED: 8,
+      DAMAGE: 30
     }
   },
 
@@ -53,6 +59,14 @@ export const GAME_CONFIG = {
     ENEMIES: 50,
     PARTICLES: 200,
     POWERUPS: 20
+  },
+
+  POWERUP: {
+    DURATION: {
+      WEAPON: 15000,
+      SHIELD: 10000,
+      SPEED: 8000
+    }
   }
 } as const
 
@@ -113,6 +127,7 @@ export const WEAPON_CONFIG: Record<
     spread: number
     fireRate: number
     damage: number
+    bulletType?: 'normal' | 'cannon'
   }
 > = {
   SINGLE: {
@@ -138,6 +153,13 @@ export const WEAPON_CONFIG: Record<
     spread: 20,
     fireRate: 300,
     damage: 6
+  },
+  CANNON: {
+    bulletCount: 1,
+    spread: 0,
+    fireRate: 400,
+    damage: 30,
+    bulletType: 'cannon'
   }
 }
 
