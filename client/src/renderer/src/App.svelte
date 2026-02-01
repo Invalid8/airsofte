@@ -17,6 +17,7 @@
   import UserPill from './components/UserPill.svelte'
   import GeminiMissionCreator from './screens/GeminiMissionCreator.svelte'
   import DeviceWarning from './components/DeviceWarning.svelte'
+  import AIMissionPlay from './screens/AIMissionPlay.svelte'
 
   let audioInitialized = false
   let showUserSelection = $derived(!$currentUser && $gameState.route !== 'STARTUP')
@@ -56,6 +57,8 @@
       <QuickPlay />
     {:else if $gameState.route === 'AI_MISSIONS'}
       <GeminiMissionCreator />
+    {:else if $gameState.route === 'AI_MISSION_PLAY'}
+      <AIMissionPlay />
     {:else if $gameState.route === 'STORY_MODE_MENU'}
       <StoryModeMenu />
     {:else if $gameState.route === 'STORY_MODE_PLAY'}

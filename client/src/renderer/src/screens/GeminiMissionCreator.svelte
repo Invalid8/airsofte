@@ -2,7 +2,7 @@
   import { geminiApiClient } from '../utils/geminiApiClient'
   import Button from '../components/Button.svelte'
   import { navigateTo } from '../stores/gameStore'
-  import { storyMissionManager } from '../lib/storyMissionData'
+  import { aiMissionStore } from '../stores/aiMissionStore'
   import type { StoryMission } from '../types/gameTypes'
   import { fly } from 'svelte/transition'
   import BackBtn from '../components/BackBtn.svelte'
@@ -27,8 +27,7 @@
         waveCount
       })
 
-      const aiMissions = storyMissionManager['getAIMissions']?.() || []
-      const nextId = 1000 + aiMissions.length
+      const nextId = 1000 + Date.now()
 
       generatedMission = {
         id: nextId,
@@ -49,10 +48,6 @@
         dialogue: missionData.dialogue,
         hasBoss: false
       }
-
-      if (storyMissionManager['saveMission']) {
-        storyMissionManager['saveMission'](generatedMission)
-      }
     } catch (err: any) {
       error = err.message
     } finally {
@@ -62,7 +57,10 @@
 
   function handlePlayMission() {
     if (!generatedMission) return
-    navigateTo('STORY_MODE_PLAY')
+
+    aiMissionStore.setMission(generatedMission)
+
+    navigateTo('AI_MISSION_PLAY')
   }
 </script>
 
@@ -377,6 +375,7 @@
 </div>
 
 <style>
+  /* All existing styles from the original file */
   .mission-creator-screen {
     min-height: 100vh;
     padding: 6rem 2rem 2rem;

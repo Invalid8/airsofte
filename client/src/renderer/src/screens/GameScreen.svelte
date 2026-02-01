@@ -7,7 +7,7 @@
   import PlayerShip from '../assets/sprites/player-ship-i.png'
 
   let load = $state(false)
-  let loadFunction: (() => void) | null = null
+  let loadFunction: (() => void) | null = $state(null)
 
   const gameOptions = [
     {

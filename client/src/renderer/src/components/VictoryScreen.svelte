@@ -1,83 +1,107 @@
 <script lang="ts">
-  import { fly, scale, fade } from 'svelte/transition'
   import { onMount } from 'svelte'
-  import Button from '../components/Button.svelte'
-  import { navigateTo, gameState } from '../stores/gameStore'
+  import Options from '../components/Options.svelte'
   import { gameManager } from '../lib/gameManager'
-  import { storyMissionManager } from '../lib/storyMissionData'
+  import { navigateTo, gameState } from '../stores/gameStore'
   import { StorageManager } from '../utils/storageManager'
   import { currentUser } from '../utils/userManager'
+  import { formatNumberWithCommas } from '../lib/utils'
 
-  let showVictory = $state(false)
-  let stats = $derived($gameState.session)
-  let bonusScore = $state(0)
-  let totalScore = $state(0)
   let isHighScore = $state(false)
   let rank = $state(0)
+  let stats = $derived($gameState.session)
   let missionStars = $state(0)
-  let showStars = $state(false)
+  let totalScore = $state(0)
+
+  const starMessages = {
+    0: {
+      title: 'Mission Failed',
+      message: 'Better luck next time, pilot.',
+      color: '#ff6666'
+    },
+    1: {
+      title: 'Mission Complete',
+      message: 'You got the job done.',
+      color: '#ffaa00'
+    },
+    2: {
+      title: 'Great Performance',
+      message: 'Impressive flying, pilot!',
+      color: '#00aaff'
+    },
+    3: {
+      title: 'Perfect Mission',
+      message: 'Exceptional! You are a true ace!',
+      color: '#00ff88'
+    }
+  }
+
+  let currentMessage = $derived(starMessages[missionStars as keyof typeof starMessages])
 
   onMount(() => {
-    setTimeout(() => {
-      showVictory = true
-    }, 300)
+    totalScore = $gameState.score
+    const mode = gameManager.mode
 
-    const baseScore = $gameState.score
-    const noDamageBonus = gameManager.player.health === gameManager.player.maxHealth ? 1000 : 0
-    const accuracyBonus = Math.floor((stats?.accuracy || 0) * 10)
-
-    bonusScore = noDamageBonus + accuracyBonus
-    totalScore = baseScore + bonusScore
-
-    gameManager.session.score = totalScore
-
-    if (gameManager.mode === 'STORY_MODE') {
-      const missionId = $gameState.currentMissionId || 1
-      const mission = storyMissionManager.getMissionById(missionId)
-
-      if (mission) {
-        missionStars = storyMissionManager.calculateStars(mission, {
-          score: totalScore,
-          timeElapsed: stats?.timeElapsed || 0,
-          damageTaken: gameManager.player.maxHealth - gameManager.player.health,
-          accuracy: stats?.accuracy || 0
-        })
-
-        storyMissionManager.completeMission(missionId, missionStars)
-
-        setTimeout(() => {
-          showStars = true
-        }, 800)
-      }
+    if (mode === 'STORY_MODE' && stats) {
+      calculateMissionStars()
     }
 
     if ($currentUser) {
-      const mode = gameManager.mode
       const userId = $currentUser.id
       const scores = StorageManager.getHighScores(userId)
       const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-      if (scoreList.length < 20 || totalScore > scoreList[scoreList.length - 1].score) {
+      if (scoreList.length < 20) {
         isHighScore = true
         const position = scoreList.filter((s) => s.score > totalScore).length
         rank = position + 1
-
-        const playerName = $currentUser.username
-        gameManager.saveHighScore(playerName, userId)
+        gameManager.saveHighScore($currentUser.username, userId)
+      } else {
+        const lowestScore = scoreList[scoreList.length - 1].score
+        if (totalScore > lowestScore) {
+          isHighScore = true
+          const position = scoreList.filter((s) => s.score > totalScore).length
+          rank = position + 1
+          gameManager.saveHighScore($currentUser.username, userId)
+        }
       }
     }
   })
 
-  function handleContinue(): void {
+  function calculateMissionStars(): void {
+    if (!stats) {
+      missionStars = 0
+      return
+    }
+
+    const baseScore = 5000
+    const twoStarThreshold = baseScore * 1.5
+    const threeStarRequirement = baseScore * 2
+
+    if (totalScore >= threeStarRequirement && (stats.accuracy >= 70 || stats.damageTaken === 0)) {
+      missionStars = 3
+    } else if (totalScore >= twoStarThreshold) {
+      missionStars = 2
+    } else if (totalScore >= baseScore) {
+      missionStars = 1
+    } else {
+      missionStars = 0
+    }
+  }
+
+  function handleContinue() {
     gameManager.isPlaying = false
+
     if (gameManager.mode === 'STORY_MODE') {
       navigateTo('STORY_MODE_MENU')
+    } else if (gameManager.mode === 'AI_MISSION') {
+      navigateTo('AI_MISSIONS')
     } else {
       navigateTo('MAIN_MENU')
     }
   }
 
-  function handleReplay(): void {
+  function handleRestart(): void {
     gameManager.isPlaying = false
 
     gameState.update((state) => ({
@@ -91,205 +115,157 @@
       if (gameManager.mode === 'STORY_MODE') {
         const missionId = $gameState.currentMissionId || 1
         gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
-        navigateTo('STORY_MODE_PLAY')
       } else {
-        gameManager.startGame('QUICK_PLAY', gameManager.difficulty)
         navigateTo('QUICK_PLAY')
       }
     }, 100)
   }
+
+  const victoryOptions = [
+    {
+      label: gameManager.mode === 'STORY_MODE' && missionStars > 0 ? 'Continue' : 'Retry Mission',
+      value: gameManager.mode === 'STORY_MODE' && missionStars > 0 ? 'continue' : 'retry',
+      isFirst: true,
+      onClick:
+        gameManager.mode === 'STORY_MODE' && missionStars > 0 ? handleContinue : handleRestart
+    },
+    {
+      label: 'Main Menu',
+      value: 'menu',
+      onClick: handleContinue
+    }
+  ]
+
+  function handleSelect(value: string): void {
+    console.log(`Victory option selected: ${value}`)
+  }
+
+  function formatTime(milliseconds: number): string {
+    const minutes = Math.floor(milliseconds / 60000)
+    const seconds = Math.floor((milliseconds % 60000) / 1000)
+    return `${minutes}:${String(seconds).padStart(2, '0')}`
+  }
 </script>
 
-{#if showVictory}
-  <div class="victory-screen">
-    <div class="victory-container" in:scale={{ duration: 600, start: 0.9 }}>
-      <div class="victory-header" in:fly={{ y: -30, delay: 200 }}>
-        <h1 class="victory-title title">Victory!</h1>
-        <p class="victory-subtitle">Mission Accomplished</p>
-      </div>
+<div class="victory-screen">
+  <div class="victory-container">
+    {#if gameManager.mode === 'STORY_MODE'}
+      <div class="mission-result" style="border-color: {currentMessage.color}">
+        <h2 class="result-title" style="color: {currentMessage.color}">
+          {currentMessage.title}
+        </h2>
+        <p class="result-message">{currentMessage.message}</p>
 
-      {#if gameManager.mode === 'STORY_MODE' && showStars}
-        <div class="stars-display" in:fly={{ y: -30, duration: 500, delay: 600 }}>
-          <div class="stars-container">
-            {#each Array(3) as x, i (i)}
-              <div class="star-wrapper" id={x} in:scale={{ delay: 700 + i * 150, duration: 400 }}>
-                <svg
-                  class="star"
-                  class:filled={i < missionStars}
-                  width="80"
-                  height="80"
-                  viewBox="0 0 24 24"
-                  fill={i < missionStars ? '#FFD700' : 'none'}
-                  stroke={i < missionStars ? '#FFA500' : '#666'}
-                  stroke-width="1.5"
-                >
-                  <path
-                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                  />
-                </svg>
-              </div>
-            {/each}
-          </div>
-          <div class="stars-text hud">
-            {missionStars === 3
-              ? 'Perfect!'
-              : missionStars === 2
-                ? 'Great!'
-                : missionStars === 1
-                  ? 'Good!'
-                  : 'Try Again'}
-          </div>
+        <div class="stars-display-large">
+          {#each Array(3) as _, i (i)}
+            <div
+              class="star-large"
+              class:filled={i < missionStars}
+              style="animation-delay: {i * 0.2}s"
+            >
+              ⭐
+            </div>
+          {/each}
         </div>
-      {/if}
 
-      <div class="score-hero" in:fly={{ y: 30, delay: 400 }}>
-        <div class="score-label">Total Score</div>
-        <div class="score-value glow-text-green hud">{totalScore.toLocaleString()}</div>
-        {#if bonusScore > 0}
-          <div class="bonus-breakdown">
-            <span class="base-score">{$gameState.score.toLocaleString()}</span>
-            <span class="plus">+</span>
-            <span class="bonus-score">{bonusScore.toLocaleString()}</span>
-            <span class="bonus-label">bonus</span>
+        <div class="stats-compact">
+          <span>Score: {formatNumberWithCommas(totalScore)}</span>
+          <span>•</span>
+          <span>Time: {formatTime(stats?.timeElapsed ?? 0)}</span>
+          <span>•</span>
+          <span>Accuracy: {stats?.accuracy.toFixed(0) ?? 0}%</span>
+        </div>
+
+        {#if isHighScore}
+          <div class="high-score-badge">
+            <div class="badge-text">New High Score!</div>
+            <div class="badge-subtitle">Rank #{rank}</div>
           </div>
         {/if}
       </div>
+    {:else}
+      <h1 class="title">Victory!</h1>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+      <div class="stats-panel">
+        <div class="stats-grid">
+          <div class="stat-item main-stat">
+            <div class="stat-label">Final Score</div>
+            <div class="stat-value large glow-text hud">
+              {formatNumberWithCommas(totalScore)}
+            </div>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">Final Score</span>
-            <span class="stat-value hud">{totalScore.toLocaleString()}</span>
+
+          <div class="stat-item">
+            <div class="stat-label">Wave <br /> Reached</div>
+            <div class="stat-value hud">{stats?.currentWave ?? 0}</div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-label">Enemies <br /> Defeated</div>
+            <div class="stat-value hud">{stats?.enemiesDefeated ?? 0}</div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-label">Shot <br /> Accuracy</div>
+            <div class="stat-value hud">{stats?.accuracy.toFixed(1) ?? 0}%</div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-label">Time <br /> Survived</div>
+            <div class="stat-value hud">
+              {formatTime(stats?.timeElapsed ?? 0)}
+            </div>
           </div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+        {#if isHighScore}
+          <div class="high-score-badge">
+            <div class="badge-text">New High Score!</div>
+            <div class="badge-subtitle">Rank #{rank} on the leaderboard</div>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">Waves Cleared</span>
-            <span class="stat-value hud">{stats?.currentWave || 0}</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M16 8l-8 8M8 8l8 8" />
-            </svg>
-          </div>
-          <div class="stat-content">
-            <span class="stat-label">Enemies Defeated</span>
-            <span class="stat-value hud">{stats?.enemiesDefeated || 0}</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="8 12 12 16 16 8" />
-            </svg>
-          </div>
-          <div class="stat-content">
-            <span class="stat-label">Accuracy</span>
-            <span class="stat-value hud">{stats?.accuracy.toFixed(1) || 0}%</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          </div>
-          <div class="stat-content">
-            <span class="stat-label">Time</span>
-            <span class="stat-value hud">
-              {Math.floor((stats?.timeElapsed ?? 0) / 60000)}:{String(
-                Math.floor(((stats?.timeElapsed ?? 0) % 60000) / 1000)
-              ).padStart(2, '0')}
-            </span>
-          </div>
-        </div>
+        {/if}
       </div>
+    {/if}
 
-      {#if isHighScore}
-        <div class="high-score-banner" in:fly={{ y: 30, duration: 400, delay: 700 }}>
-          <svg
-            class="banner-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-            />
-          </svg>
-          <div class="banner-content">
-            <div class="banner-title">New High Score!</div>
-            <div class="banner-subtitle">Rank #{rank} on the leaderboard</div>
-          </div>
-        </div>
-      {/if}
-
-      <div class="actions" in:fade={{ delay: 800 }}>
-        <Button label="Continue" onClick={handleContinue} isFirst={true} />
-        <Button label="Play Again" onClick={handleReplay} />
-      </div>
-    </div>
+    <Options options={victoryOptions} layout="horizontal" gap="md" select={handleSelect} />
   </div>
-{/if}
+</div>
 
 <style>
   .victory-screen {
-    position: fixed;
-    inset: 0;
-    z-index: 110;
+    min-height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
     background: radial-gradient(
       circle at center,
-      rgba(0, 255, 170, 0.08) 0%,
+      rgba(0, 255, 136, 0.05) 0%,
       rgba(0, 0, 0, 0.95) 100%
     );
-    padding: 2rem;
-    overflow-y: auto;
   }
 
   .victory-container {
-    max-width: 42rem;
+    max-width: 50rem;
     width: 100%;
-    margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 2rem;
     align-items: center;
   }
 
-  .victory-header {
-    text-align: center;
-  }
-
-  .victory-title {
+  .title {
     font-size: 3.5rem;
-    word-spacing: -30px;
-    line-height: 110%;
-    animation: title-glow 2s ease-in-out infinite;
-    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    word-spacing: -20px;
+    line-height: 120%;
+    color: #00ff88;
+    text-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
+    animation: title-pulse 2s ease-in-out infinite;
   }
 
-  @keyframes title-glow {
+  @keyframes title-pulse {
     0%,
     100% {
       text-shadow:
@@ -303,181 +279,127 @@
     }
   }
 
-  .victory-subtitle {
-    font-size: 1.25rem;
-    opacity: 0.9;
-  }
-
-  .stars-display {
-    padding: 2rem;
+  .mission-result {
     width: 100%;
-    max-width: 32rem;
-  }
-
-  .stars-container {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .star {
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
-  }
-
-  .star.filled {
-    animation: star-glow 1.5s ease-in-out infinite;
-  }
-
-  @keyframes star-glow {
-    0%,
-    100% {
-      filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
-    }
-    50% {
-      filter: drop-shadow(0 0 16px rgba(255, 215, 0, 1));
-    }
-  }
-
-  .stars-text {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-  }
-
-  .score-hero {
-    text-align: center;
-    padding: 2rem;
-    background: rgba(0, 0, 0, 0.6);
-    border: 2px solid rgba(0, 255, 170, 0.4);
+    background: rgba(0, 0, 0, 0.8);
+    border: 3px solid;
     border-radius: 1rem;
-    width: 100%;
-    max-width: 32rem;
+    padding: 2.5rem;
+    text-align: center;
   }
 
-  .score-label {
-    font-size: 1.125rem;
-    opacity: 0.8;
-    margin-bottom: 0.75rem;
-    text-transform: uppercase;
-  }
-
-  .score-value {
-    font-size: 3.5rem;
+  .result-title {
+    font-size: 2.5rem;
     font-weight: bold;
-    line-height: 1;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 20px currentColor;
   }
 
-  .bonus-breakdown {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
+  .result-message {
     font-size: 1.125rem;
     opacity: 0.9;
+    margin-bottom: 2rem;
   }
 
-  .base-score {
-    color: #ffffff;
+  .stars-display-large {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 2rem 0;
   }
 
-  .plus {
-    color: #00ff88;
-    font-weight: bold;
+  .star-large {
+    font-size: 4rem;
+    opacity: 0.3;
+    filter: grayscale(100%);
+    animation: star-appear 0.5s ease-out forwards;
   }
 
-  .bonus-score {
-    color: #ffaa00;
-    font-weight: bold;
+  .star-large.filled {
+    opacity: 1;
+    filter: grayscale(0%);
+    text-shadow: 0 0 20px #ffd700;
   }
 
-  .bonus-label {
-    font-size: 0.875rem;
-    opacity: 0.7;
+  @keyframes star-appear {
+    from {
+      transform: scale(0) rotate(-180deg);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1) rotate(0deg);
+    }
+  }
+
+  .stats-compact {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    font-size: 1rem;
+    opacity: 0.8;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .stats-panel {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid rgba(0, 255, 136, 0.3);
+    border-radius: 1rem;
+    padding: 2rem;
   }
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    width: 100%;
-    max-width: 32rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
   }
 
-  .stat-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.25rem;
-    background: rgba(0, 0, 0, 0.5);
+  .stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(0, 255, 136, 0.2);
-    border-radius: 0.75rem;
-    transition: all 0.3s ease;
+    border-radius: 0.5rem;
   }
 
-  .stat-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(0, 255, 136, 0.6);
-    box-shadow: 0 8px 16px rgba(0, 255, 136, 0.2);
-  }
-
-  .stat-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    color: #00ff88;
-    flex-shrink: 0;
-  }
-
-  .stat-icon svg {
-    width: 100%;
-    height: 100%;
-  }
-
-  .stat-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    flex: 1;
+  .stat-item.main-stat {
+    grid-column: 1 / -1;
+    padding: 1.5rem;
+    border-width: 2px;
+    border-color: rgba(0, 255, 136, 0.4);
   }
 
   .stat-label {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     opacity: 0.7;
+    margin-bottom: 0.5rem;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-family: 'Orbitron', sans-serif;
   }
 
   .stat-value {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: bold;
     color: #00ff88;
-    line-height: 1;
   }
 
-  @media (max-width: 768px) {
-    .stats-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .stat-value {
-      font-size: 1.25rem;
-    }
+  .stat-value.large {
+    font-size: 3rem;
   }
 
-  .high-score-banner {
+  .high-score-badge {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    justify-content: center;
+    gap: 0.5rem;
     padding: 1.5rem 2rem;
     background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
     border: 2px solid rgba(255, 215, 0, 0.6);
     border-radius: 1rem;
     animation: badge-pulse 1.5s ease-in-out infinite;
-    max-width: 32rem;
-    width: 100%;
   }
 
   @keyframes badge-pulse {
@@ -492,66 +414,45 @@
     }
   }
 
-  .banner-icon {
-    width: 3rem;
-    height: 3rem;
-    color: #ffd700;
-    flex-shrink: 0;
-  }
-
-  .banner-content {
-    flex: 1;
-  }
-
-  .banner-title {
+  .badge-text {
     font-size: 1.5rem;
     font-weight: bold;
     color: #ffd700;
     font-family: 'Press Start 2P', cursive;
-    line-height: 1.4;
-    margin-bottom: 0.25rem;
   }
 
-  .banner-subtitle {
-    font-size: 1rem;
+  .badge-subtitle {
+    font-size: 1.125rem;
     opacity: 0.9;
   }
 
-  .actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
   @media (max-width: 768px) {
-    .victory-title {
-      font-size: 2.5rem;
-    }
-
-    .score-value {
-      font-size: 2.5rem;
-    }
-
-    .stats-list {
-      gap: 0.75rem;
-    }
-
-    .stat-card {
+    .victory-screen {
       padding: 1rem;
     }
 
-    .stat-icon {
-      width: 2rem;
-      height: 2rem;
+    .title {
+      font-size: 2rem;
     }
 
-    .stat-value {
-      font-size: 1.25rem;
+    .result-title {
+      font-size: 1.75rem;
     }
 
-    .banner-title {
-      font-size: 1.125rem;
+    .stars-display-large {
+      gap: 1rem;
+    }
+
+    .star-large {
+      font-size: 3rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .mission-result {
+      padding: 1.5rem;
     }
   }
 </style>

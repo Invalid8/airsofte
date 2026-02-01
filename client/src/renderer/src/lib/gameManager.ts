@@ -8,8 +8,9 @@ import {
 import { StorageManager } from '../utils/storageManager'
 import { gameEvents } from './eventBus'
 import { storyMissionManager } from './storyMissionData'
+import { aiMissionStore } from '../stores/aiMissionStore'
 
-type GameMode = 'QUICK_PLAY' | 'STORY_MODE'
+type GameMode = 'QUICK_PLAY' | 'STORY_MODE' | 'AI_MISSION'
 
 export class GameManager {
   private static instance: GameManager
@@ -106,12 +107,26 @@ export class GameManager {
     this.resetSession()
     this.resetPlayer()
 
-    if (mode === 'STORY_MODE' && missionId) {
-      this.initializeStoryMission(missionId)
+    if (mode === 'STORY_MODE' || mode === 'AI_MISSION') {
+      if (!missionId) {
+        throw new Error('Mission ID required for story/AI missions')
+      }
 
-      const mission = storyMissionManager.getMissionById(missionId)
-      if (mission?.objectives.some((obj) => obj.type === 'SURVIVE')) {
-        this.enableContinuousSpawn()
+      if (mode === 'AI_MISSION') {
+        const mission = aiMissionStore.getMission()
+        if (mission) {
+          // this.loadMission(mission)
+          if (mission?.objectives.some((obj) => obj.type === 'SURVIVE')) {
+            this.enableContinuousSpawn()
+          }
+        }
+      } else {
+        this.initializeStoryMission(missionId)
+
+        const mission = storyMissionManager.getMissionById(missionId)
+        if (mission?.objectives.some((obj) => obj.type === 'SURVIVE')) {
+          this.enableContinuousSpawn()
+        }
       }
     } else {
       this.initializeWaves()
@@ -341,7 +356,9 @@ export class GameManager {
 
   private incrementCombo(): void {
     const maxIndex = GAME_CONFIG.COMBO.MULTIPLIERS.length - 1
-    const currentIndex = GAME_CONFIG.COMBO.MULTIPLIERS.indexOf(this.session.comboMultiplier)
+    const currentIndex = GAME_CONFIG.COMBO.MULTIPLIERS.indexOf(
+      this.session.comboMultiplier as 3 | 5 | 1 | 1.5 | 2 | 2.5 | 4
+    )
 
     if (currentIndex < maxIndex) {
       this.session.comboMultiplier = GAME_CONFIG.COMBO.MULTIPLIERS[currentIndex + 1]

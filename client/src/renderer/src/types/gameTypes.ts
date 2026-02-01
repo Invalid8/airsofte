@@ -38,6 +38,7 @@ export type Bullet = {
   damage: number
   active: boolean
   owner: 'PLAYER' | 'ENEMY'
+  bulletType?: 'normal' | 'cannon'
   type?: string
   vx?: number
   vy?: number
@@ -99,6 +100,13 @@ export type PlayerStats = {
   fireRate: number
   weaponType: WeaponType
   shieldActive: boolean
+  shieldDuration?: number
+  shieldStartTime?: number
+  weaponUpgradeDuration?: number
+  weaponUpgradeStartTime?: number
+  speedBoostActive?: boolean
+  speedBoostDuration?: number
+  speedBoostStartTime?: number
   invincible: boolean
   invincibleUntil: number
 }
@@ -121,10 +129,12 @@ export type GameSessionState = {
   currentWave: number
   enemiesDefeated: number
   bulletsShot: number
+  bulletsHit?: number
   accuracy: number
   timeElapsed: number
   comboMultiplier: number
   comboTimer: number
+  damageTaken?: number
 }
 
 export type HighScore = {
@@ -133,7 +143,7 @@ export type HighScore = {
   wave: number
   difficulty: GameDifficulty
   date: number
-  mode: 'QUICK_PLAY' | 'STORY_MODE'
+  mode: 'QUICK_PLAY' | 'STORY_MODE' | 'AI_MISSION'
 }
 
 export type MissionStars = 0 | 1 | 2 | 3 | number
@@ -230,6 +240,7 @@ export type GameEvent = {
     | 'BOSS_DEFEATED'
     | 'GAME_OVER'
     | 'ENEMY_SPAWNED'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any
   timestamp: number
 }

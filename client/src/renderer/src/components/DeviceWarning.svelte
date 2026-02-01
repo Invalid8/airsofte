@@ -1,12 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { getDeviceType, isLandscape } from '../lib/utils'
+  import { getDeviceType, isTouchDevice, isLandscape } from '../lib/utils'
 
   let deviceType = $state<'mobile' | 'tablet' | 'desktop'>('desktop')
   let showWarning = $state(false)
   let isLandscapeMode = $state(false)
-
-  let { children } = $props();
 
   onMount(() => {
     checkDevice()
@@ -56,20 +54,16 @@
         </div>
       {:else if deviceType === 'tablet'}
         <h1 class="warning-title title">Rotate Your Device</h1>
-        <p class="warning-message">Please rotate your tablet to landscape mode to play.</p>
+        <p class="warning-message">Please rotate your tablet to landscape mode to continue.</p>
         <div class="rotation-icon">🔄</div>
+        <div class="suggestion">
+          <p>Landscape orientation provides the best gaming experience.</p>
+        </div>
       {/if}
-
-      <div class="continue-anyway">
-        <button class="continue-btn" onclick={() => (showWarning = false)}>
-          Continue Anyway
-        </button>
-        <p class="disclaimer">Note: Controls may not work properly on touch devices</p>
-      </div>
     </div>
   </div>
 {:else}
-  {@render children()}
+  <slot />
 {/if}
 
 <style>
@@ -134,32 +128,13 @@
     animation: rotate 2s linear infinite;
   }
 
-  .continue-anyway {
-    margin-top: 2rem;
-  }
-
-  .continue-btn {
-    background: linear-gradient(135deg, rgba(2, 90, 179, 0.95), rgba(3, 129, 175, 0.95));
-    border: 2px solid #00aaff;
-    border-radius: 8px;
-    color: white;
-    padding: 0.875rem 2rem;
-    font-size: 1rem;
-    font-family: 'Press Start 2P', monospace;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 20px rgba(0, 170, 255, 0.4);
-  }
-
-  .continue-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 30px rgba(0, 170, 255, 0.6);
-  }
-
-  .disclaimer {
-    margin-top: 1rem;
-    font-size: 0.75rem;
-    opacity: 0.6;
+  .suggestion {
+    padding: 1rem;
+    background: rgba(0, 170, 255, 0.1);
+    border-left: 3px solid #00aaff;
+    border-radius: 0.25rem;
+    font-size: 0.9375rem;
+    opacity: 0.9;
   }
 
   @keyframes fadeInUp {
@@ -189,6 +164,20 @@
     }
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .warning-title {
+      font-size: 1.5rem;
+    }
+
+    .warning-message {
+      font-size: 1rem;
+    }
+
+    .device-info {
+      padding: 1rem;
     }
   }
 </style>

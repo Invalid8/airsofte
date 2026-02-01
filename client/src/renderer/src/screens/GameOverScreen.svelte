@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import Button from '../components/Button.svelte'
+  import Options from '../components/Options.svelte'
   import { gameManager } from '../lib/gameManager'
   import { navigateTo, gameState } from '../stores/gameStore'
   import { StorageManager } from '../utils/storageManager'
   import { currentUser } from '../utils/userManager'
+  import { formatNumberWithCommas } from '../lib/utils'
 
   let isHighScore = $state(false)
   let rank = $state(0)
@@ -19,16 +20,22 @@
       const scores = StorageManager.getHighScores(userId)
       const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-      if (scoreList.length < 20 || finalScore > scoreList[scoreList.length - 1].score) {
+      if (scoreList.length < 20) {
         isHighScore = true
         const position = scoreList.filter((s) => s.score > finalScore).length
         rank = position + 1
 
         const playerName = $currentUser.username
-        const saved = gameManager.saveHighScore(playerName, userId)
+        gameManager.saveHighScore(playerName, userId)
+      } else {
+        const lowestScore = scoreList[scoreList.length - 1].score
+        if (finalScore > lowestScore) {
+          isHighScore = true
+          const position = scoreList.filter((s) => s.score > finalScore).length
+          rank = position + 1
 
-        if (!saved) {
-          isHighScore = false
+          const playerName = $currentUser.username
+          gameManager.saveHighScore(playerName, userId)
         }
       }
     }
@@ -62,6 +69,30 @@
       navigateTo('MAIN_MENU')
     }
   }
+
+  const gameOverOptions = [
+    {
+      label: 'Play Again',
+      value: 'restart',
+      isFirst: true,
+      onClick: handleRestart
+    },
+    {
+      label: 'Main Menu',
+      value: 'main_menu',
+      onClick: handleMainMenu
+    }
+  ]
+
+  function handleSelect(value: string): void {
+    console.log(`Game over option selected: ${value}`)
+  }
+
+  function formatTime(milliseconds: number): string {
+    const minutes = Math.floor(milliseconds / 60000)
+    const seconds = Math.floor((milliseconds % 60000) / 1000)
+    return `${minutes}:${String(seconds).padStart(2, '0')}`
+  }
 </script>
 
 <div
@@ -75,7 +106,7 @@
         <div class="stat-item main-stat">
           <div class="stat-label">Final Score</div>
           <div class="stat-value large glow-text-red hud">
-            {$gameState.score.toLocaleString()}
+            {formatNumberWithCommas($gameState.score)}
           </div>
         </div>
 
@@ -97,9 +128,7 @@
         <div class="stat-item">
           <div class="stat-label">Time <br /> Survived</div>
           <div class="stat-value hud">
-            {Math.floor((stats?.timeElapsed ?? 0) / 60000)}:{String(
-              Math.floor(((stats?.timeElapsed ?? 0) % 60000) / 1000)
-            ).padStart(2, '0')}
+            {formatTime(stats?.timeElapsed ?? 0)}
           </div>
         </div>
       </div>
@@ -112,10 +141,7 @@
       {/if}
     </div>
 
-    <div class="actions flex gap-4 flex-wrap justify-center">
-      <Button label="Play Again" onClick={handleRestart} isFirst={true} />
-      <Button label="Main Menu" onClick={handleMainMenu} />
-    </div>
+    <Options options={gameOverOptions} layout="horizontal" gap="md" select={handleSelect} />
   </div>
 </div>
 

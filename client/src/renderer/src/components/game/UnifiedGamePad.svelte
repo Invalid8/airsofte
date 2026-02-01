@@ -21,7 +21,7 @@
     mode = 'QUICK_PLAY',
     difficulty = 'Normal'
   }: {
-    mode?: 'QUICK_PLAY' | 'STORY_MODE'
+    mode?: 'QUICK_PLAY' | 'STORY_MODE' | 'AI_MISSION'
     difficulty?: 'Easy' | 'Normal' | 'Hard'
   } = $props()
 
