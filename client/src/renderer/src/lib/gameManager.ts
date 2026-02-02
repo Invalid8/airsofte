@@ -12,6 +12,13 @@ import { aiMissionStore } from '../stores/aiMissionStore'
 
 type GameMode = 'QUICK_PLAY' | 'STORY_MODE' | 'AI_MISSION'
 
+type PowerUpTimer = {
+  type: 'shield' | 'weapon' | 'speed'
+  endTime: number
+  timeoutId: number | null
+  remainingTime: number
+}
+
 export class GameManager {
   private static instance: GameManager
 
@@ -66,6 +73,10 @@ export class GameManager {
   private continuousSpawnInterval: number | null = null
 
   private pauseStartTime: number = 0
+  private totalPausedTime: number = 0
+
+  private activePowerUpTimers: Map<string, PowerUpTimer> = new Map()
+  private basePlayerSpeed: number = GAME_CONFIG.PLAYER.SPEED
 
   private constructor() {
     this.loadSettings()
@@ -115,7 +126,6 @@ export class GameManager {
       if (mode === 'AI_MISSION') {
         const mission = aiMissionStore.getMission()
         if (mission) {
-          // this.loadMission(mission)
           if (mission?.objectives.some((obj) => obj.type === 'SURVIVE')) {
             this.enableContinuousSpawn()
           }
@@ -137,6 +147,7 @@ export class GameManager {
     this.session.playing = true
     this.startTime = performance.now()
     this.lastFrameTime = this.startTime
+    this.totalPausedTime = 0
 
     this.initializeWaveEnemyCount()
 
@@ -157,7 +168,6 @@ export class GameManager {
 
     this.continuousSpawnMode = true
 
-    // Spawn small groups of enemies every 5 seconds
     this.continuousSpawnInterval = window.setInterval(() => {
       if (!this.isPlaying || this.isPaused) return
 
@@ -210,6 +220,8 @@ export class GameManager {
     this.enemiesSpawned = 0
     this.enemiesDestroyedInWave = 0
     this.waveCompleting = false
+    this.activePowerUpTimers.clear()
+    this.totalPausedTime = 0
   }
 
   private resetPlayer(): void {
@@ -231,29 +243,84 @@ export class GameManager {
       speedBoostDuration: 0,
       speedBoostStartTime: 0
     }
+    this.basePlayerSpeed = GAME_CONFIG.PLAYER.SPEED
   }
 
   pauseGame(): void {
-    if (!this.isPlaying) return
+    if (!this.isPlaying || this.isPaused) return
     this.isPaused = true
     this.session.playing = false
 
-    this.pauseStartTime = performance.now()
+    this.pauseStartTime = Date.now()
+
+    this.activePowerUpTimers.forEach((timer) => {
+      if (timer.timeoutId) {
+        clearTimeout(timer.timeoutId)
+        timer.timeoutId = null
+      }
+      timer.remainingTime = timer.endTime - Date.now()
+    })
 
     gameEvents.emit('GAME_PAUSED')
   }
 
   resumeGame(): void {
-    if (!this.isPlaying) return
+    if (!this.isPlaying || !this.isPaused) return
+
+    const pauseDuration = Date.now() - this.pauseStartTime
+    this.totalPausedTime += pauseDuration
+
     this.isPaused = false
     this.session.playing = true
-
-    const pauseDuration = performance.now() - (this.pauseStartTime || 0)
     this.lastFrameTime = performance.now()
-
     this.startTime += pauseDuration
 
+    this.activePowerUpTimers.forEach((timer, key) => {
+      timer.endTime = Date.now() + timer.remainingTime
+
+      if (timer.type === 'shield') {
+        this.player.shieldStartTime = Date.now()
+        this.player.shieldDuration = timer.remainingTime
+      } else if (timer.type === 'weapon') {
+        this.player.weaponUpgradeStartTime = Date.now()
+        this.player.weaponUpgradeDuration = timer.remainingTime
+      } else if (timer.type === 'speed') {
+        this.player.speedBoostStartTime = Date.now()
+        this.player.speedBoostDuration = timer.remainingTime
+      }
+
+      timer.timeoutId = window.setTimeout(() => {
+        this.handlePowerUpExpiry(timer.type)
+        this.activePowerUpTimers.delete(key)
+      }, timer.remainingTime)
+    })
+
     gameEvents.emit('GAME_RESUMED')
+  }
+
+  private handlePowerUpExpiry(type: 'shield' | 'weapon' | 'speed'): void {
+    switch (type) {
+      case 'shield':
+        this.deactivateShield()
+        break
+      case 'weapon':
+        this.player.weaponType = 'SINGLE'
+        this.player.weaponUpgradeDuration = 0
+        this.player.weaponUpgradeStartTime = 0
+        gameEvents.emit('WEAPON_EXPIRED', { weapon: this.player.weaponType })
+        break
+      case 'speed':
+        this.player.speedBoostActive = false
+        this.player.speedBoostDuration = 0
+        this.player.speedBoostStartTime = 0
+        this.player.speed = this.basePlayerSpeed
+        gameEvents.emit('SPEED_BOOST_DEACTIVATED')
+        break
+    }
+  }
+
+  getTotalPausedTime(): number {
+    return this.totalPausedTime
   }
 
   endGame(victory: boolean = false): void {
@@ -262,6 +329,13 @@ export class GameManager {
     this.session.playing = false
 
     this.disableContinuousSpawn()
+
+    this.activePowerUpTimers.forEach((timer) => {
+      if (timer.timeoutId) {
+        clearTimeout(timer.timeoutId)
+      }
+    })
+    this.activePowerUpTimers.clear()
 
     if (this.gameLoopId) {
       cancelAnimationFrame(this.gameLoopId)
@@ -316,16 +390,14 @@ export class GameManager {
 
     this.currentWaveIndex = 0
     this.currentWave = this.waves[0]
-    this.session.currentWave = this.currentWaveIndex + 1
+    this.session.currentWave = 1
   }
 
   addScore(points: number): void {
-    const modifier = DIFFICULTY_MODIFIERS[this.difficulty].scoreMultiplier
-    const comboBonus = this.session.comboMultiplier
-    const finalScore = Math.floor(points * modifier * comboBonus)
-
-    this.session.score += finalScore
-    gameEvents.emit('SCORE_UPDATED', { points: finalScore, total: this.session.score })
+    const multiplier = DIFFICULTY_MODIFIERS[this.difficulty].scoreMultiplier
+    const comboPoints = points * this.session.comboMultiplier * multiplier
+    this.session.score += Math.floor(comboPoints)
+    gameEvents.emit('SCORE_UPDATED', { score: this.session.score })
   }
 
   onEnemyDestroyed(enemy: Enemy): void {
@@ -387,10 +459,13 @@ export class GameManager {
   }
 
   damagePlayer(damage: number): void {
-    if (this.player.invincible || this.player.shieldActive) {
-      if (this.player.shieldActive) {
-        this.deactivateShield()
-      }
+    if (this.player.invincible) {
+      return
+    }
+
+    if (this.player.shieldActive) {
+      this.deactivateShield()
+      gameEvents.emit('SHIELD_BLOCKED_HIT', { damage })
       return
     }
 
@@ -448,62 +523,108 @@ export class GameManager {
   }
 
   activateShield(duration: number = 10000): void {
+    const existingTimer = this.activePowerUpTimers.get('shield')
+    if (existingTimer?.timeoutId) {
+      clearTimeout(existingTimer.timeoutId)
+    }
+
     this.player.shieldActive = true
     this.player.shieldDuration = duration
     this.player.shieldStartTime = Date.now()
 
-    gameEvents.emit('SHIELD_ACTIVATED')
-
-    setTimeout(() => {
+    const endTime = Date.now() + duration
+    const timeoutId = window.setTimeout(() => {
       this.deactivateShield()
+      this.activePowerUpTimers.delete('shield')
     }, duration)
+
+    this.activePowerUpTimers.set('shield', {
+      type: 'shield',
+      endTime,
+      timeoutId,
+      remainingTime: duration
+    })
+
+    gameEvents.emit('SHIELD_ACTIVATED')
   }
 
   private deactivateShield(): void {
     this.player.shieldActive = false
     this.player.shieldDuration = 0
     this.player.shieldStartTime = 0
+
+    const timer = this.activePowerUpTimers.get('shield')
+    if (timer?.timeoutId) {
+      clearTimeout(timer.timeoutId)
+    }
+    this.activePowerUpTimers.delete('shield')
+
     gameEvents.emit('SHIELD_DEACTIVATED')
   }
 
-  changeWeapon(weaponType: PlayerStats['weaponType'], duration: number = 10000): void {
+  changeWeapon(weaponType: PlayerStats['weaponType'], duration: number = 15000): void {
+    const existingTimer = this.activePowerUpTimers.get('weapon')
+    if (existingTimer?.timeoutId) {
+      clearTimeout(existingTimer.timeoutId)
+      this.activePowerUpTimers.delete('weapon')
+    }
+
     const previousWeapon = this.player.weaponType
     this.player.weaponType = weaponType
 
     if (weaponType !== 'SINGLE') {
       this.player.weaponUpgradeDuration = duration
       this.player.weaponUpgradeStartTime = Date.now()
-    }
 
-    gameEvents.emit('WEAPON_CHANGED', { from: previousWeapon, to: weaponType })
-
-    if (duration && weaponType !== 'SINGLE') {
-      setTimeout(() => {
+      const endTime = Date.now() + duration
+      const timeoutId = window.setTimeout(() => {
         this.player.weaponType = 'SINGLE'
         this.player.weaponUpgradeDuration = 0
         this.player.weaponUpgradeStartTime = 0
+        this.activePowerUpTimers.delete('weapon')
         gameEvents.emit('WEAPON_EXPIRED', { weapon: weaponType })
       }, duration)
+
+      this.activePowerUpTimers.set('weapon', {
+        type: 'weapon',
+        endTime,
+        timeoutId,
+        remainingTime: duration
+      })
     }
+
+    gameEvents.emit('WEAPON_CHANGED', { from: previousWeapon, to: weaponType })
   }
 
   activateSpeedBoost(duration: number = 8000, speedMultiplier: number = 1.5): void {
+    const existingTimer = this.activePowerUpTimers.get('speed')
+    if (existingTimer?.timeoutId) {
+      clearTimeout(existingTimer.timeoutId)
+    }
+
     this.player.speedBoostActive = true
     this.player.speedBoostDuration = duration
     this.player.speedBoostStartTime = Date.now()
+    this.player.speed = this.basePlayerSpeed * speedMultiplier
 
-    const originalSpeed = this.player.speed
-    this.player.speed = originalSpeed * speedMultiplier
-
-    gameEvents.emit('SPEED_BOOST_ACTIVATED')
-
-    setTimeout(() => {
+    const endTime = Date.now() + duration
+    const timeoutId = window.setTimeout(() => {
       this.player.speedBoostActive = false
       this.player.speedBoostDuration = 0
       this.player.speedBoostStartTime = 0
-      this.player.speed = originalSpeed
+      this.player.speed = this.basePlayerSpeed
+      this.activePowerUpTimers.delete('speed')
       gameEvents.emit('SPEED_BOOST_DEACTIVATED')
     }, duration)
+
+    this.activePowerUpTimers.set('speed', {
+      type: 'speed',
+      endTime,
+      timeoutId,
+      remainingTime: duration
+    })
+
+    gameEvents.emit('SPEED_BOOST_ACTIVATED')
   }
 
   completeWave(): void {

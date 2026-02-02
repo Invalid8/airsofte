@@ -126,7 +126,7 @@ export class PowerUpSystem {
         break
 
       case 'WEAPON': {
-        const weaponTypes = ['DOUBLE', 'TRIPLE', 'SPREAD'] as const
+        const weaponTypes = ['DOUBLE', 'TRIPLE', 'SPREAD', 'CANNON'] as const
         const randomWeapon = weaponTypes[Math.floor(Math.random() * weaponTypes.length)]
         gameManager.changeWeapon(randomWeapon, POWERUP_CONFIG.WEAPON.duration)
         break
@@ -137,11 +137,7 @@ export class PowerUpSystem {
         break
 
       case 'SPEED':
-        gameManager.player.speed = gameManager.player.speed * powerUp.value
-        setTimeout(() => {
-          gameManager.player.speed = gameManager.player.speed / powerUp.value
-          gameEvents.emit('SPEED_BOOST_EXPIRED')
-        }, POWERUP_CONFIG.SPEED.duration)
+        gameManager.activateSpeedBoost(POWERUP_CONFIG.SPEED.duration, powerUp.value)
         break
 
       case 'SCORE':

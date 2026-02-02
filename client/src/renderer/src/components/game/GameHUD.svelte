@@ -41,27 +41,32 @@
   >([])
 
   let currentTime = $state(Date.now())
+  let lastTick = $state(Date.now())
 
   function formatTime(ms: number): string {
-    const seconds = Math.ceil(ms / 1000)
-    return `${seconds}s`
+    return `${Math.ceil(ms / 1000)}s`
   }
 
   function getPowerUpRemainingProgress(powerUp: (typeof activePowerUps)[0]): number {
-    const now = currentTime
-    const remaining = powerUp.endTime - now
+    const remaining = powerUp.endTime - currentTime
     return Math.max(0, Math.min(100, (remaining / powerUp.duration) * 100))
   }
 
   function getPowerUpTimeLeft(powerUp: (typeof activePowerUps)[0]): number {
-    const now = currentTime
-    return Math.max(0, powerUp.endTime - now)
+    return Math.max(0, powerUp.endTime - currentTime)
   }
 
   $effect(() => {
     const interval = setInterval(() => {
-      currentTime = Date.now() // Update reactive time
-      activePowerUps = activePowerUps.filter((p) => p.endTime > currentTime)
+      const now = Date.now()
+
+      if (!$gameState.isPaused) {
+        const delta = now - lastTick
+        currentTime += delta
+        activePowerUps = activePowerUps.filter((p) => p.endTime > currentTime)
+      }
+
+      lastTick = now
     }, 100)
 
     return () => clearInterval(interval)
@@ -75,7 +80,7 @@
           ...activePowerUps,
           {
             type: 'WEAPON',
-            endTime: Date.now() + 15000,
+            endTime: currentTime + 15000,
             duration: 15000
           }
         ]
@@ -87,7 +92,7 @@
         ...activePowerUps,
         {
           type: 'SHIELD',
-          endTime: Date.now() + 10000,
+          endTime: currentTime + 10000,
           duration: 10000
         }
       ]
@@ -98,7 +103,7 @@
         ...activePowerUps,
         {
           type: 'SPEED',
-          endTime: Date.now() + 8000,
+          endTime: currentTime + 8000,
           duration: 8000
         }
       ]
@@ -267,14 +272,17 @@
         <div class="powerups-container mt-4">
           {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
             <div class="powerup-bar-container justify-center">
-              <div class="powerup-label">{powerUp.type}</div>
+              <div class="powerup-header">
+                <span class="powerup-label">{powerUp.type}</span>
+                <span class="powerup-timer">{formatTime(getPowerUpTimeLeft(powerUp))}</span>
+              </div>
+
               <div class="powerup-progress-bar">
                 <div
                   class="powerup-progress-fill"
                   style="width: {getPowerUpRemainingProgress(powerUp)}%"
                 ></div>
               </div>
-              <div class="powerup-timer">{formatTime(getPowerUpTimeLeft(powerUp))}</div>
             </div>
           {/each}
         </div>
@@ -305,6 +313,55 @@
     box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3);
   }
 
+  .powerups-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .powerup-bar-container {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-width: 220px;
+  }
+
+  .powerup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .powerup-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .powerup-timer {
+    font-size: 0.75rem;
+    text-align: right;
+    min-width: unset;
+    font-family: 'VT323', monospace;
+  }
+
+  .powerup-progress-bar {
+    height: 0.5rem;
+    background: rgba(0, 170, 255, 0.25);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .powerup-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff88, #00aaff);
+    transition: width 0.1s linear;
+  }
+
   .powerup-indicator {
     display: flex;
     align-items: center;
@@ -333,48 +390,6 @@
     font-size: 0.75rem;
     min-width: 2rem;
     text-align: right;
-  }
-
-  .powerups-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .powerup-bar-container justify-center {
-    background: rgba(0, 0, 0, 0.7);
-    border: 1px solid rgba(0, 170, 255, 0.3);
-    border-radius: 4px;
-    padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .powerup-label {
-    font-size: 0.75rem;
-    min-width: 4rem;
-  }
-
-  .powerup-progress-bar {
-    flex: 1.5;
-    height: 0.75rem;
-    background: rgba(0, 170, 255, 0.2);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .powerup-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #00ff88, #00aaff);
-    transition: width 0.1s linear;
-  }
-
-  .powerup-timer {
-    font-size: 0.875rem;
-    min-width: 2.5rem;
-    text-align: right;
-    font-family: 'VT323', monospace;
   }
 
   @keyframes pulse {

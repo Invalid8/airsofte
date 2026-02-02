@@ -7,6 +7,7 @@
     "src/preload/*.d.ts"
   ],
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "verbatimModuleSyntax": true,
     "useDefineForClassFields": true,
     "strict": false,
