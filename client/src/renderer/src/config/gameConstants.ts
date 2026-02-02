@@ -30,14 +30,14 @@ export const GAME_CONFIG = {
 
   BULLET: {
     PLAYER: {
-      WIDTH: 6, // Reduced from 10
-      HEIGHT: 20, // Reduced from 30
-      SPEED: 12, // Slightly faster
+      WIDTH: 6,
+      HEIGHT: 20,
+      SPEED: 12,
       DAMAGE: 15
     },
     ENEMY: {
-      WIDTH: 5, // Reduced from 8
-      HEIGHT: 15, // Reduced from 20
+      WIDTH: 5,
+      HEIGHT: 15,
       SPEED: 6,
       DAMAGE: 10
     },

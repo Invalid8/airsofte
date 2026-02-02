@@ -98,9 +98,14 @@
     const user = await userManager.createUser(guestName, undefined, true)
 
     if (user) {
-      await userManager.switchUser(user.id)
-      audioManager.playSound('powerup')
-      navigateTo('MAIN_MENU')
+      // FIX: Directly log in the guest user instead of trying to switch
+      // Since guest users aren't saved to storage, switchUser won't find them
+      const success = await userManager.loginGuestUser(user)
+
+      if (success) {
+        audioManager.playSound('powerup')
+        navigateTo('MAIN_MENU')
+      }
     }
 
     isProcessing = false

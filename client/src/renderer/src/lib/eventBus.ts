@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { GameEvent } from '../types/gameTypes'
 
 type EventCallback = (event: GameEvent) => void
@@ -34,7 +35,7 @@ class GameEventBus {
 
     const callbacks = this.listeners.get(eventType)
     if (callbacks) {
-      callbacks.forEach(callback => callback(event))
+      callbacks.forEach((callback) => callback(event))
     }
   }
 

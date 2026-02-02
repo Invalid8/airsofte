@@ -38,7 +38,7 @@ class AudioManager {
 
   private eventCleanups: (() => void)[] = []
 
-  private constructor() {}
+  // private constructor() {}
 
   static getInstance(): AudioManager {
     if (!AudioManager.instance) {
@@ -223,6 +223,12 @@ class AudioManager {
   switchMusic(musicName: string, fadeTime: number = 1000): void {
     if (this.currentMusic === musicName) return
 
+    // Cancel any pending fade operation
+    if (this.musicFadeId !== null) {
+      clearTimeout(this.musicFadeId)
+      this.musicFadeId = null
+    }
+
     if (this.currentMusic) {
       const oldMusic = this.music.get(this.currentMusic)
       if (oldMusic && oldMusic.playing()) {
@@ -231,7 +237,7 @@ class AudioManager {
       }
     }
 
-    setTimeout(() => {
+    this.musicFadeId = window.setTimeout(() => {
       const newMusic = this.music.get(musicName)
       if (newMusic) {
         newMusic.volume(0)
@@ -243,10 +249,17 @@ class AudioManager {
         )
         this.currentMusic = musicName
       }
+      this.musicFadeId = null
     }, fadeTime / 2)
   }
 
   stopMusic(fadeOut: boolean = false): void {
+    // Cancel any pending fade operation
+    if (this.musicFadeId !== null) {
+      clearTimeout(this.musicFadeId)
+      this.musicFadeId = null
+    }
+
     if (fadeOut) {
       this.music.forEach((music) => {
         if (music.playing()) {
@@ -261,6 +274,12 @@ class AudioManager {
   }
 
   stopAllMusic(): void {
+    // Cancel any pending fade operation
+    if (this.musicFadeId !== null) {
+      clearTimeout(this.musicFadeId)
+      this.musicFadeId = null
+    }
+
     this.music.forEach((music) => music.stop())
     this.currentMusic = null
   }
@@ -330,6 +349,12 @@ class AudioManager {
   }
 
   cleanup(): void {
+    // Cancel any pending fade operation
+    if (this.musicFadeId !== null) {
+      clearTimeout(this.musicFadeId)
+      this.musicFadeId = null
+    }
+
     this.eventCleanups.forEach((cleanup) => cleanup())
     this.eventCleanups = []
     this.stopAll()

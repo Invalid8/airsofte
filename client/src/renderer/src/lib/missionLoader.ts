@@ -8,7 +8,7 @@ export class MissionLoader {
   private missions: Map<number, StoryMission> = new Map()
   private loaded: boolean = false
 
-  private constructor() {}
+  // private constructor() {}
 
   static getInstance(): MissionLoader {
     if (!MissionLoader.instance) {

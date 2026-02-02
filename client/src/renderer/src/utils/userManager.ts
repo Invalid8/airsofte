@@ -119,6 +119,25 @@ class UserManager {
     return newUser
   }
 
+  // NEW METHOD: Login a guest user directly without storage lookup
+  async loginGuestUser(user: UserProfile): Promise<boolean> {
+    if (!user.isGuest) {
+      console.error('loginGuestUser called with non-guest user')
+      return false
+    }
+
+    user.lastPlayedAt = Date.now()
+
+    this.sessionStore.update((session) => ({
+      ...session,
+      currentUser: user,
+      isLocked: false
+    }))
+
+    this.saveSession({ currentUser: user, isLocked: false })
+    return true
+  }
+
   logout(): void {
     const currentSession = this.getSession()
 
@@ -201,7 +220,25 @@ class UserManager {
     const users = this.getUsersFromStorage()
     const userIndex = users.findIndex((u) => u.id === userId)
 
-    if (userIndex === -1) return false
+    if (userIndex === -1) {
+      // Check if it's the current guest user
+      const currentSession = this.getSession()
+      if (currentSession.currentUser?.id === userId && currentSession.currentUser?.isGuest) {
+        // Update guest user stats in session only
+        const updatedUser = {
+          ...currentSession.currentUser,
+          stats: { ...currentSession.currentUser.stats, ...stats }
+        }
+
+        this.sessionStore.update((session) => ({
+          ...session,
+          currentUser: updatedUser
+        }))
+        this.saveSession({ currentUser: updatedUser, isLocked: false })
+        return true
+      }
+      return false
+    }
 
     users[userIndex].stats = { ...users[userIndex].stats, ...stats }
     this.saveUsersToStorage(users)

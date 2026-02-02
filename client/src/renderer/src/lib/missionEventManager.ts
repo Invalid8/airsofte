@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { PowerUpType } from '../types/gameTypes'
 import { gameEvents } from './eventBus'
 import { audioManager } from '../utils/AudioManager'
@@ -108,13 +109,13 @@ export class MissionEventManager {
         this.triggerReinforcements(event.data)
         break
       case 'ALLY_SUPPORT':
-        this.triggerAllySupport(event.data)
+        this.triggerAllySupport()
         break
       case 'ENEMY_RETREAT':
         this.triggerEnemyRetreat(event.data)
         break
       case 'HAZARD_INCOMING':
-        this.triggerHazard(event.data)
+        this.triggerHazard()
         break
       case 'BONUS_OBJECTIVE':
         this.triggerBonusObjective(event.data)
@@ -158,7 +159,7 @@ export class MissionEventManager {
     })
   }
 
-  private triggerAllySupport(data: any): void {
+  private triggerAllySupport(): void {
     gameEvents.emit('SHOW_MESSAGE', {
       text: '✈️ Allied Squadron Providing Support!',
       duration: 3000,
@@ -180,7 +181,7 @@ export class MissionEventManager {
     })
   }
 
-  private triggerHazard(data: any): void {
+  private triggerHazard(): void {
     gameEvents.emit('SHOW_MESSAGE', {
       text: '☄️ Incoming Hazard - Take Evasive Action!',
       duration: 3000,

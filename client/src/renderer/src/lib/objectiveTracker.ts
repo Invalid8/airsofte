@@ -36,7 +36,7 @@ export class ObjectiveTracker {
       this.updateObjective('DESTROY', 1)
     })
 
-    gameEvents.on('POWERUP_COLLECTED', (event) => {
+    gameEvents.on('POWERUP_COLLECTED', () => {
       this.updateObjective('COLLECT', 1)
     })
 

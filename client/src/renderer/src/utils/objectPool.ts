@@ -67,7 +67,7 @@ export class ObjectPool<T> {
 }
 
 export class PoolManager {
-  private pools: Map<string, ObjectPool<any>> = new Map()
+  private pools: Map<string, ObjectPool<unknown>> = new Map()
 
   createPool<T>(
     name: string,
@@ -77,12 +77,12 @@ export class PoolManager {
     maxSize: number = 100
   ): ObjectPool<T> {
     const pool = new ObjectPool(factory, reset, initialSize, maxSize)
-    this.pools.set(name, pool)
+    this.pools.set(name, pool as ObjectPool<unknown>)
     return pool
   }
 
   getPool<T>(name: string): ObjectPool<T> | undefined {
-    return this.pools.get(name)
+    return this.pools.get(name) as ObjectPool<T> | undefined
   }
 
   hasPool(name: string): boolean {

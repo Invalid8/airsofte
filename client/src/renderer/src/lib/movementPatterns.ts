@@ -12,11 +12,11 @@ export type TeleportState = {
 
 export class MovementPatterns {
   static updateStraight(enemy: Enemy, deltaTime: number): void {
-    enemy.y += enemy.speed
+    enemy.y += enemy.speed * deltaTime
   }
 
   static updateWave(enemy: Enemy, deltaTime: number): void {
-    enemy.y += enemy.speed
+    enemy.y += enemy.speed * deltaTime
     if (enemy.patternData && enemy.patternData.startY !== undefined) {
       const progress = enemy.y - enemy.patternData.startY
       const offset =
@@ -26,7 +26,7 @@ export class MovementPatterns {
   }
 
   static updateZigzag(enemy: Enemy, deltaTime: number): void {
-    enemy.y += enemy.speed
+    enemy.y += enemy.speed * deltaTime
     if (enemy.patternData && enemy.patternData.startY !== undefined) {
       const progress = enemy.y - enemy.patternData.startY
       const zigzag = Math.floor(progress / 50) % 2 === 0 ? 1 : -1
@@ -42,7 +42,7 @@ export class MovementPatterns {
   ): void {
     if (!enemy.patternData) return
 
-    enemy.patternData.angle = (enemy.patternData.angle || 0) + 0.02
+    enemy.patternData.angle = (enemy.patternData.angle || 0) + 0.02 * deltaTime
 
     if (isBoss && bounds) {
       const centerX = bounds.width / 2 - enemy.width / 2
@@ -56,7 +56,7 @@ export class MovementPatterns {
       enemy.x = centerX + Math.cos(enemy.patternData.angle) * 100
 
       if (enemy.patternData.startY !== undefined) {
-        enemy.patternData.startY += enemy.speed
+        enemy.patternData.startY += enemy.speed * deltaTime
         enemy.y = enemy.patternData.startY + Math.sin(enemy.patternData.angle) * 30
       }
     }
@@ -72,11 +72,11 @@ export class MovementPatterns {
         const isBoss = enemy.type === 'BOSS'
         const speedMultiplier = isBoss ? (distance < 300 ? 1.8 : 1.2) : 0.7
 
-        enemy.x += (dx / distance) * enemy.speed * speedMultiplier
-        enemy.y += (dy / distance) * enemy.speed * speedMultiplier
+        enemy.x += (dx / distance) * enemy.speed * speedMultiplier * deltaTime
+        enemy.y += (dy / distance) * enemy.speed * speedMultiplier * deltaTime
       }
     } else {
-      enemy.y += enemy.speed
+      enemy.y += enemy.speed * deltaTime
     }
   }
 
@@ -130,7 +130,7 @@ export class MovementPatterns {
         enemy.patternData!.scale = 1
       }
     } else {
-      enemy.y += enemy.speed * 0.5
+      enemy.y += enemy.speed * 0.5 * deltaTime
 
       const timeSinceLastTeleport = now - teleportState.lastTeleport
 
@@ -157,12 +157,12 @@ export class MovementPatterns {
       }
     }
 
-    enemy.patternData.angle = (enemy.patternData.angle || 0) + 0.05
-    enemy.patternData.radius = Math.max(20, (enemy.patternData.radius || 150) - 0.5)
+    enemy.patternData.angle = (enemy.patternData.angle || 0) + 0.05 * deltaTime
+    enemy.patternData.radius = Math.max(20, (enemy.patternData.radius || 150) - 0.5 * deltaTime)
 
     const centerX = enemy.patternData.startX || enemy.x
     enemy.x = centerX + Math.cos(enemy.patternData.angle) * enemy.patternData.radius
-    enemy.y += enemy.speed
+    enemy.y += enemy.speed * deltaTime
   }
 
   static updateDiagonal(
@@ -171,8 +171,8 @@ export class MovementPatterns {
     direction: 'left' | 'right' = 'right'
   ): void {
     const horizontalSpeed = enemy.speed * 0.7
-    enemy.y += enemy.speed
-    enemy.x += direction === 'right' ? horizontalSpeed : -horizontalSpeed
+    enemy.y += enemy.speed * deltaTime
+    enemy.x += (direction === 'right' ? horizontalSpeed : -horizontalSpeed) * deltaTime
   }
 }
 

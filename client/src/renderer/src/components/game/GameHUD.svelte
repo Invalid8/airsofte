@@ -266,7 +266,7 @@
       {#if activePowerUps.length > 0}
         <div class="powerups-container mt-4">
           {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
-            <div class="powerup-bar-container">
+            <div class="powerup-bar-container justify-center">
               <div class="powerup-label">{powerUp.type}</div>
               <div class="powerup-progress-bar">
                 <div
@@ -341,14 +341,14 @@
     gap: 0.5rem;
   }
 
-  .powerup-bar-container {
+  .powerup-bar-container justify-center {
     background: rgba(0, 0, 0, 0.7);
     border: 1px solid rgba(0, 170, 255, 0.3);
     border-radius: 4px;
     padding: 0.5rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
   .powerup-label {
@@ -357,7 +357,7 @@
   }
 
   .powerup-progress-bar {
-    flex: 1;
+    flex: 1.5;
     height: 0.75rem;
     background: rgba(0, 170, 255, 0.2);
     border-radius: 4px;
