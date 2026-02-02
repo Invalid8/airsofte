@@ -34,11 +34,11 @@ export function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
   const minDimension = Math.min(width, height)
   const maxDimension = Math.max(width, height)
 
-  if (isTablet || (minDimension >= 600 && maxDimension >= 900)) {
+  if (isTablet || (minDimension >= 450 && maxDimension >= 600)) {
     return 'tablet'
   }
 
-  if (isMobile || minDimension < 600) {
+  if (isMobile || minDimension < 450) {
     return 'mobile'
   }
 
