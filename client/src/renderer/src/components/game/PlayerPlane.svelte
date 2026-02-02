@@ -87,7 +87,6 @@
       }
 
       keys[event.key]()
-      updateShipPosition()
     }
 
     if (event.key === ' ' || event.key === 'Space') {
@@ -103,26 +102,24 @@
   function updateShipPosition(): void {
     if (!playerController || !ship) return
 
-    gsap.to(ship, {
-      x: playerController.x,
-      y: playerController.y,
-      duration: 0.2,
-      ease: 'power1.out',
-      onComplete: () => {
-        if (!idleTween && gameManager.isPlaying && !gameManager.isPaused) {
-          idleTween = gsap.to(ship, {
-            y: playerController.y + 10,
-            duration: 1,
-            yoyo: true,
-            repeat: -1,
-            ease: 'sine.inOut'
-          })
-        }
-      }
-    })
+    if (idleTween) {
+      idleTween.kill()
+      idleTween = null
+    }
+
+    gsap.set(ship, { x: playerController.x, y: playerController.y })
 
     x = playerController.x
     y = playerController.y
+
+    idleTween = gsap.to(ship, {
+      y: playerController.y + 10,
+      duration: 1,
+      yoyo: true,
+      repeat: -1,
+      ease: 'sine.inOut',
+      onUpdate: () => {}
+    })
   }
 
   function shoot(): void {
@@ -151,19 +148,36 @@
 
     if (keysPressed.has('ArrowUp') || keysPressed.has('w')) {
       keys['w']()
-      updateShipPosition()
     }
     if (keysPressed.has('ArrowDown') || keysPressed.has('s')) {
       keys['s']()
-      updateShipPosition()
     }
     if (keysPressed.has('ArrowLeft') || keysPressed.has('a')) {
       keys['a']()
-      updateShipPosition()
     }
     if (keysPressed.has('ArrowRight') || keysPressed.has('d')) {
       keys['d']()
-      updateShipPosition()
+    }
+
+    // Always sync position every frame so collision x/y stays accurate
+    if (playerController && ship) {
+      const moved =
+        keysPressed.has('ArrowUp') ||
+        keysPressed.has('w') ||
+        keysPressed.has('ArrowDown') ||
+        keysPressed.has('s') ||
+        keysPressed.has('ArrowLeft') ||
+        keysPressed.has('a') ||
+        keysPressed.has('ArrowRight') ||
+        keysPressed.has('d')
+
+      if (moved) {
+        updateShipPosition()
+      } else {
+        // No input — just keep logical position in sync (bob doesn't affect it)
+        x = playerController.x
+        y = playerController.y
+      }
     }
 
     bullets = bullets
@@ -260,13 +274,17 @@
       },
       onComplete: () => {
         starting = false
+        playerController.y = gsap.getProperty(ship, 'y') as number
+        x = playerController.x
+        y = playerController.y
 
         idleTween = gsap.to(ship, {
           y: playerController.y + 10,
           duration: 1,
           yoyo: true,
           repeat: -1,
-          ease: 'sine.inOut'
+          ease: 'sine.inOut',
+          onUpdate: () => {}
         })
       }
     })

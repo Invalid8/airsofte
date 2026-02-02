@@ -18,6 +18,29 @@
   import GeminiMissionCreator from './screens/GeminiMissionCreator.svelte'
   import DeviceWarning from './components/DeviceWarning.svelte'
   import AIMissionPlay from './screens/AIMissionPlay.svelte'
+  import { useRegisterSW } from 'virtual:pwa-register/svelte'
+
+  const SAFE_ROUTES = ['STARTUP', 'MAIN_MENU', 'GAME_OVER']
+
+  const { needRefresh, updateServiceWorker } = useRegisterSW()
+
+  let pendingUpdate = $state(false)
+
+  $effect(() => {
+    if (!$needRefresh) return
+
+    if (SAFE_ROUTES.includes($gameState.route)) {
+      updateServiceWorker(true)
+    } else {
+      pendingUpdate = true
+    }
+  })
+
+  $effect(() => {
+    if (pendingUpdate && SAFE_ROUTES.includes($gameState.route)) {
+      location.reload()
+    }
+  })
 
   let audioInitialized = false
   let showUserSelection = $derived(!$currentUser && $gameState.route !== 'STARTUP')

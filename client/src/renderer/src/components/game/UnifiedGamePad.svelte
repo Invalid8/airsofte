@@ -14,6 +14,7 @@
   import { gameManager } from '../../lib/gameManager'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import { gameEvents } from '../../lib/eventBus'
+  import { objectiveTracker } from '../../lib/objectiveTracker'
   import { syncGameState, navigateTo, gameState } from '../../stores/gameStore'
   import type { Bullet, StoryMission } from '../../types/gameTypes'
 
@@ -67,6 +68,7 @@
     showBriefing = false
     missionStarted = true
 
+    objectiveTracker.startMission(currentMission)
     gameManager.startGame('STORY_MODE', difficulty, currentMission.id)
   }
 
@@ -95,6 +97,9 @@
     const syncInterval = setInterval(() => {
       if (!gameEnded && missionStarted) {
         syncGameState()
+        if (mode === 'STORY_MODE') {
+          objectiveTracker.checkSurviveObjective()
+        }
       }
     }, 100)
 
@@ -108,6 +113,7 @@
     if (gameManager.isPlaying) {
       gameManager.endGame(false)
     }
+    objectiveTracker.reset()
     gameEnded = false
     showVictory = false
   })

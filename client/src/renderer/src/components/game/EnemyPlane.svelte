@@ -120,7 +120,7 @@
     }))
 
     const boss = enemies.find((e) => e.type === 'BOSS')
-    if (boss) {
+    if (boss && boss.health > 0) {
       gameEvents.emit('BOSS_UPDATE', { enemy: boss })
     }
 
@@ -153,6 +153,7 @@
             enemy.y + enemy.height / 2
           )
           ScreenEffects.shake(10, 0.3)
+          gameEvents.emit('BOSS_DEFEATED', { enemy })
         } else {
           particleSystem.createExplosion(
             enemy.x + enemy.width / 2,
@@ -165,7 +166,14 @@
       }
     })
 
-    const playerBox = getBoundingBox(playerX, playerY, 150, 150)
+    const playerHitboxW = 80
+    const playerHitboxH = 100
+    const playerBox = getBoundingBox(
+      playerX + (150 - playerHitboxW) / 2,
+      playerY + (150 - playerHitboxH) / 2,
+      playerHitboxW,
+      playerHitboxH
+    )
     const enemyBulletHits = combatSystem.checkEnemyBulletCollisions(enemyBullets, playerBox)
 
     enemyBulletHits.forEach(({ bulletId, damage }) => {
@@ -203,12 +211,7 @@
           const damageToBoss = Math.floor(enemy.maxHealth * playerHealthPercent * 0.4)
           enemyController.damageEnemy(enemyId, damageToBoss)
 
-          particleSystem.createExplosion(
-            playerX + 75,
-            playerY + 75,
-            15,
-            '#ff6600'
-          )
+          particleSystem.createExplosion(playerX + 75, playerY + 75, 15, '#ff6600')
           ScreenEffects.shake(8, 0.2)
           ScreenEffects.flash('rgba(255, 100, 0, 0.2)', 0.1)
         } else {
