@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { getDeviceType, isTouchDevice, isLandscape } from '../lib/utils'
+  import { getDeviceType, isLandscape } from '../lib/utils'
 
   let deviceType = $state<'mobile' | 'tablet' | 'desktop'>('desktop')
   let showWarning = $state(false)
