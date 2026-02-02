@@ -2,15 +2,50 @@
   import { onMount } from 'svelte'
   import { navigateTo, gameState } from '../../stores/gameStore'
   import { storyMissionManager } from '../../lib/storyMissionData'
+  import { progressionSystem } from '../../lib/progressionSystem'
   import { audioManager } from '../../utils/AudioManager'
   import BackBtn from '../../components/BackBtn.svelte'
   import type { StoryMission } from '../../types/gameTypes'
 
   let missions = $state<StoryMission[]>([])
+  let missionRatings = $state<Map<number, { stars: number; bestScore: number }>>(new Map())
+  let completedCount = $state(0)
+  let totalStars = $state(0)
 
   onMount(() => {
     missions = storyMissionManager.getMissions()
+    loadMissionRatings()
   })
+
+  function loadMissionRatings(): void {
+    const progression = progressionSystem.getProgression()
+    const ratingsMap = new Map<number, { stars: number; bestScore: number }>()
+
+    let completed = 0
+    let stars = 0
+
+    progression.missionRatings.forEach((rating) => {
+      ratingsMap.set(rating.missionId, {
+        stars: rating.stars,
+        bestScore: rating.bestScore
+      })
+
+      completed++
+      stars += rating.stars
+    })
+
+    missionRatings = ratingsMap
+    completedCount = completed
+    totalStars = stars
+  }
+
+  function getMissionStars(missionId: number): number {
+    return missionRatings.get(missionId)?.stars ?? 0
+  }
+
+  function getBestScore(missionId: number): number {
+    return missionRatings.get(missionId)?.bestScore ?? 0
+  }
 
   function startMission(mission: StoryMission): void {
     if (!mission.unlocked) return
@@ -41,11 +76,29 @@
   <div class="story-header">
     <h1 class="title">Story Mode</h1>
     <p class="subtitle">Complete missions to unlock the next chapter</p>
+
+    {#if completedCount > 0}
+      <div class="progress-summary">
+        <div class="summary-item">
+          <span class="summary-label">Missions Completed</span>
+          <span class="summary-value hud">{completedCount}/{missions.length}</span>
+        </div>
+        <div class="summary-divider">•</div>
+        <div class="summary-item">
+          <span class="summary-label">Total Stars</span>
+          <span class="summary-value stars hud">
+            {totalStars}/{missions.length * 3} ⭐
+          </span>
+        </div>
+      </div>
+    {/if}
   </div>
 
   <div class="missions-container">
     {#each missions as mission (mission.id)}
       {@const status = getMissionStatus(mission)}
+      {@const stars = getMissionStars(mission.id)}
+      {@const bestScore = getBestScore(mission.id)}
       <button
         class="mission-card col-span-1 size-full"
         class:unlocked={mission.unlocked}
@@ -73,20 +126,32 @@
 
           <div class="mission-meta">
             <div class="meta-item">
-              <!-- <span class="meta-icon">🌊</span> -->
               <span class="meta-text">{mission.waves.length} Waves</span>
             </div>
             <div class="meta-item">
-              <!-- <span class="meta-icon">🎯</span> -->
               <span class="meta-text">{mission.objectives.length} Objectives</span>
             </div>
             {#if mission.hasBoss}
-              <div class="meta-item">
-                <!-- <span class="meta-icon">⚔️</span> -->
+              <div class="meta-item boss">
                 <span class="meta-text">Boss</span>
               </div>
             {/if}
           </div>
+
+          {#if stars > 0}
+            <div class="stars-display">
+              {#each Array(3) as _, i (i)}
+                <span class="star" class:filled={i < stars}>⭐</span>
+              {/each}
+            </div>
+
+            {#if bestScore > 0}
+              <div class="best-score">
+                <span class="best-score-label">Best Score:</span>
+                <span class="best-score-value hud">{bestScore.toLocaleString()}</span>
+              </div>
+            {/if}
+          {/if}
         </div>
 
         {#if !mission.unlocked}
@@ -124,6 +189,48 @@
   .subtitle {
     font-size: 1.125rem;
     opacity: 0.8;
+    margin-bottom: 2rem;
+  }
+
+  .progress-summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, rgba(0, 170, 255, 0.1), rgba(0, 255, 136, 0.1));
+    border: 2px solid rgba(0, 170, 255, 0.3);
+    border-radius: 1rem;
+    max-width: 40rem;
+    margin: 0 auto;
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .summary-label {
+    font-size: 0.875rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+  }
+
+  .summary-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #00aaff;
+  }
+
+  .summary-value.stars {
+    color: #ffd700;
+  }
+
+  .summary-divider {
+    font-size: 1.5rem;
+    opacity: 0.3;
   }
 
   .missions-container {
@@ -242,6 +349,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+    margin-bottom: 1rem;
   }
 
   .meta-item {
@@ -258,10 +366,56 @@
   .meta-item.boss {
     border-color: rgba(255, 100, 100, 0.4);
     background: rgba(255, 0, 0, 0.1);
+    color: #ff6666;
   }
 
-  .meta-icon {
-    font-size: 1rem;
+  .stars-display {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    font-size: 1.5rem;
+  }
+
+  .star {
+    opacity: 0.3;
+    filter: grayscale(100%);
+    animation: star-shine 2s ease-in-out infinite;
+  }
+
+  .star.filled {
+    opacity: 1;
+    filter: grayscale(0%);
+    text-shadow: 0 0 10px #ffd700;
+  }
+
+  @keyframes star-shine {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+  }
+
+  .best-score {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 140, 0, 0.1));
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .best-score-label {
+    opacity: 0.8;
+  }
+
+  .best-score-value {
+    font-weight: bold;
+    color: #ffd700;
   }
 
   .card-overlay {
@@ -294,6 +448,16 @@
 
     .title {
       font-size: 2.5rem;
+    }
+
+    .progress-summary {
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .summary-divider {
+      display: none;
     }
 
     .missions-container {

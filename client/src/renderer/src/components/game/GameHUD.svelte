@@ -19,6 +19,19 @@
   let shieldActive = $derived($gameState.player?.shieldActive ?? false)
   let invincible = $derived($gameState.player?.invincible ?? false)
 
+  const weaponNames: Record<string, string> = {
+    SINGLE: 'Blaster',
+    SPREAD: 'Spread Shot',
+    RAPID: 'Rapid Fire',
+    LASER: 'Laser Beam',
+    MISSILE: 'Missiles',
+    CANNON: 'Heavy Cannon'
+  }
+
+  let weaponDisplayName = $derived(weaponNames[weaponType] || weaponType)
+
+  let safeLivesCount = $derived(Math.max(0, Math.min(5, Math.floor($playerLives || 0))))
+
   let activePowerUps = $state<
     Array<{
       type: string
@@ -27,26 +40,28 @@
     }>
   >([])
 
+  let currentTime = $state(Date.now())
+
   function formatTime(ms: number): string {
     const seconds = Math.ceil(ms / 1000)
     return `${seconds}s`
   }
 
-  function getPowerUpProgress(powerUp: (typeof activePowerUps)[0]): number {
-    const now = Date.now()
-    const elapsed = powerUp.duration - (powerUp.endTime - now)
-    return Math.max(0, Math.min(100, (elapsed / powerUp.duration) * 100))
+  function getPowerUpRemainingProgress(powerUp: (typeof activePowerUps)[0]): number {
+    const now = currentTime
+    const remaining = powerUp.endTime - now
+    return Math.max(0, Math.min(100, (remaining / powerUp.duration) * 100))
   }
 
   function getPowerUpTimeLeft(powerUp: (typeof activePowerUps)[0]): number {
-    const now = Date.now()
+    const now = currentTime
     return Math.max(0, powerUp.endTime - now)
   }
 
   $effect(() => {
     const interval = setInterval(() => {
-      const now = Date.now()
-      activePowerUps = activePowerUps.filter((p) => p.endTime > now)
+      currentTime = Date.now() // Update reactive time
+      activePowerUps = activePowerUps.filter((p) => p.endTime > currentTime)
     }, 100)
 
     return () => clearInterval(interval)
@@ -108,7 +123,7 @@
       </div>
 
       <div class="flex gap-1">
-        {#each Array(Math.min(5, $playerLives)) as _, i (i)}
+        {#each Array(safeLivesCount) as _, i (i)}
           <svg class="w-4 h-4 fill-red-500" viewBox="0 0 24 24">
             <path
               d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
@@ -142,7 +157,7 @@
         </div>
       {/if}
       <div class="text-sm hud opacity-80">
-        {weaponType}
+        {weaponDisplayName}
       </div>
     </div>
 
@@ -152,11 +167,14 @@
 
     <!-- Power-up indicators (mobile) -->
     {#if activePowerUps.length > 0}
-      <div class="mt-2 flex flex-col gap-1">
+      <div class="mt-2 flex flex-col gap-0">
         {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
           <div class="powerup-indicator">
             <div class="powerup-bar">
-              <div class="powerup-fill" style="width: {getPowerUpProgress(powerUp)}%"></div>
+              <div
+                class="powerup-fill"
+                style="width: {getPowerUpRemainingProgress(powerUp)}%"
+              ></div>
             </div>
             <span class="powerup-time">{formatTime(getPowerUpTimeLeft(powerUp))}</span>
           </div>
@@ -195,7 +213,7 @@
     <div class="right-panel text-right">
       <div class="lives-display flex items-center justify-end gap-2">
         <div class="hearts flex gap-1">
-          {#each Array(Math.min(5, $playerLives)) as _, i (i)}
+          {#each Array(safeLivesCount) as _, i (i)}
             <svg class="w-6 h-6 fill-red-500" viewBox="0 0 24 24">
               <path
                 d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
@@ -233,7 +251,7 @@
 
       <div class="weapon-display">
         <div class="label text-base tracking-wider opacity-70">WEAPON</div>
-        <div class="value text-xl font-bold hud">{weaponType}</div>
+        <div class="value text-xl font-bold hud">{weaponDisplayName}</div>
       </div>
 
       {#if invincible}
@@ -253,7 +271,7 @@
               <div class="powerup-progress-bar">
                 <div
                   class="powerup-progress-fill"
-                  style="width: {100 - getPowerUpProgress(powerUp)}%"
+                  style="width: {getPowerUpRemainingProgress(powerUp)}%"
                 ></div>
               </div>
               <div class="powerup-timer">{formatTime(getPowerUpTimeLeft(powerUp))}</div>

@@ -184,7 +184,41 @@ export class PlayerController {
       return bullets
     }
 
-    return []
+    // Handle SPREAD weapon (was missing!)
+    if (weaponType === 'SPREAD') {
+      const bullets: Bullet[] = []
+      const spreadAngles = [-25, -12, 0, 12, 25] // 5 bullets in a spread pattern
+
+      for (let i = 0; i < spreadAngles.length; i++) {
+        const bullet = this.bulletPool!.acquire()
+        const angleRad = (spreadAngles[i] * Math.PI) / 180
+
+        bullet.x = this.x + this.width / 2 - bullet.width / 2
+        bullet.y = this.y
+        bullet.vx = Math.sin(angleRad) * bullet.speed * 0.8
+        bullet.vy = -Math.cos(angleRad) * bullet.speed
+        bullet.active = true
+        bullet.damage = weaponConfig.damage
+        bullet.type = 'SPREAD'
+        bullets.push(bullet)
+      }
+
+      audioManager.playSound('PLAYER_SHOOT')
+      return bullets
+    }
+
+    console.warn(`Unknown weapon type: ${weaponType}, falling back to SINGLE`)
+    const bullet = this.bulletPool!.acquire()
+    bullet.x = this.x + this.width / 2 - bullet.width / 2
+    bullet.y = this.y
+    bullet.vx = 0
+    bullet.vy = -bullet.speed
+    bullet.active = true
+    bullet.damage = GAME_CONFIG.BULLET.PLAYER.DAMAGE
+    bullet.type = 'SINGLE'
+
+    audioManager.playSound('PLAYER_SHOOT')
+    return [bullet]
   }
 
   getBoundingBox(): BoundingBox {

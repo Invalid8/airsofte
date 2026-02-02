@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
   import Options from '../components/Options.svelte'
   import { gameManager } from '../lib/gameManager'
   import { navigateTo, gameState } from '../stores/gameStore'
   import { StorageManager } from '../utils/storageManager'
   import { currentUser } from '../utils/userManager'
   import { formatNumberWithCommas } from '../lib/utils'
+  import { progressionSystem } from '../lib/progressionSystem'
+  import { aiMissionStore } from '../stores/aiMissionStore'
 
   let isHighScore = $state(false)
   let rank = $state(0)
@@ -38,7 +39,7 @@
 
   let currentMessage = $derived(starMessages[missionStars as keyof typeof starMessages])
 
-  onMount(() => {
+  $effect(() => {
     totalScore = $gameState.score
     const mode = gameManager.mode
 
@@ -46,7 +47,7 @@
       calculateMissionStars()
     }
 
-    if ($currentUser) {
+    if ($currentUser && mode !== 'AI_MISSION') {
       const userId = $currentUser.id
       const scores = StorageManager.getHighScores(userId)
       const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
@@ -87,14 +88,31 @@
     } else {
       missionStars = 0
     }
+
+    if (missionStars > 0 && gameManager.mode === 'STORY_MODE' && $gameState.currentMissionId) {
+      progressionSystem.onMissionComplete({ id: $gameState.currentMissionId } as any, {
+        score: totalScore,
+        time: stats.timeElapsed,
+        damageTaken: stats.damageTaken || 0,
+        enemiesDestroyed: stats.enemiesDefeated
+      })
+    }
   }
 
   function handleContinue() {
     gameManager.isPlaying = false
 
+    gameState.update((state) => ({
+      ...state,
+      session: null,
+      player: null,
+      score: 0
+    }))
+
     if (gameManager.mode === 'STORY_MODE') {
       navigateTo('STORY_MODE_MENU')
     } else if (gameManager.mode === 'AI_MISSION') {
+      aiMissionStore.clear()
       navigateTo('AI_MISSIONS')
     } else {
       navigateTo('MAIN_MENU')
@@ -114,27 +132,88 @@
     setTimeout(() => {
       if (gameManager.mode === 'STORY_MODE') {
         const missionId = $gameState.currentMissionId || 1
-        gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
+        navigateTo('STORY_MODE_PLAY')
+        setTimeout(() => {
+          gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
+        }, 100)
+      } else if (gameManager.mode === 'AI_MISSION') {
+        navigateTo('AI_MISSION_PLAY')
+        setTimeout(() => {
+          const missionId = $gameState.currentMissionId || Date.now()
+          gameManager.startGame('AI_MISSION', gameManager.difficulty, missionId)
+        }, 100)
       } else {
         navigateTo('QUICK_PLAY')
+        setTimeout(() => {
+          gameManager.startGame('QUICK_PLAY', gameManager.difficulty)
+        }, 100)
       }
     }, 100)
   }
 
-  const victoryOptions = [
-    {
-      label: gameManager.mode === 'STORY_MODE' && missionStars > 0 ? 'Continue' : 'Retry Mission',
-      value: gameManager.mode === 'STORY_MODE' && missionStars > 0 ? 'continue' : 'retry',
-      isFirst: true,
-      onClick:
-        gameManager.mode === 'STORY_MODE' && missionStars > 0 ? handleContinue : handleRestart
-    },
-    {
-      label: 'Main Menu',
-      value: 'menu',
-      onClick: handleContinue
+  let victoryOptions = $derived(() => {
+    const mode = gameManager.mode
+
+    if (mode === 'STORY_MODE') {
+      return missionStars > 0
+        ? [
+            {
+              label: 'Continue',
+              value: 'continue',
+              isFirst: true,
+              onClick: handleContinue
+            },
+            {
+              label: 'Main Menu',
+              value: 'menu',
+              onClick: handleContinue
+            }
+          ]
+        : [
+            {
+              label: 'Retry Mission',
+              value: 'retry',
+              isFirst: true,
+              onClick: handleRestart
+            },
+            {
+              label: 'Main Menu',
+              value: 'menu',
+              onClick: handleContinue
+            }
+          ]
     }
-  ]
+
+    if (mode === 'AI_MISSION') {
+      return [
+        {
+          label: 'New Mission',
+          value: 'new',
+          isFirst: true,
+          onClick: handleContinue
+        },
+        {
+          label: 'Main Menu',
+          value: 'menu',
+          onClick: handleContinue
+        }
+      ]
+    }
+
+    return [
+      {
+        label: 'Retry',
+        value: 'retry',
+        isFirst: true,
+        onClick: handleRestart
+      },
+      {
+        label: 'Main Menu',
+        value: 'menu',
+        onClick: handleContinue
+      }
+    ]
+  })
 
   function handleSelect(value: string): void {
     console.log(`Victory option selected: ${value}`)
@@ -227,7 +306,7 @@
       </div>
     {/if}
 
-    <Options options={victoryOptions} layout="horizontal" gap="md" select={handleSelect} />
+    <Options options={victoryOptions()} layout="horizontal" gap="md" select={handleSelect} />
   </div>
 </div>
 
