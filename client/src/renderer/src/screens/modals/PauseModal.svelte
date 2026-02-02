@@ -41,7 +41,7 @@
   }
 </script>
 
-<div class="pause-menu-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8 lg:min-w-md min-w-sm">
+<div class="pause-menu-modal w-full max-w-md rounded-xl modal-bg p-6 pt-8">
   <div class="content flex flex-col items-center justify-center gap-4">
     <h2 class="title text-2xl uppercase glow-text-2">Paused</h2>
 

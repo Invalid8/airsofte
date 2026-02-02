@@ -4,6 +4,7 @@
   import { aiMissionStore } from '../stores/aiMissionStore'
   import { onMount } from 'svelte'
   import { navigateTo } from '../stores/gameStore'
+  import ObjectiveNotification from '../components/ObjectiveNotification.svelte'
 
   onMount(() => {
     const mission = aiMissionStore.getMission()
@@ -26,3 +27,4 @@
 </script>
 
 <UnifiedGamePad mode="AI_MISSION" difficulty={$gameState.difficulty} />
+<ObjectiveNotification />

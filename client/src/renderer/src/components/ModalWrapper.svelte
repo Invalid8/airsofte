@@ -32,7 +32,7 @@
       out:fly={{ y: -200, duration: 300 }}
     >
       <div
-        class="modal-content pointer-events-auto max-h-[90vh] overflow-auto"
+        class="modal-content pointer-events-auto max-h-[90vh] overflow-auto w-full flex items-center justify-center"
         onclick={handleModalClick}
       >
         {#if $currentModal === 'PAUSE'}

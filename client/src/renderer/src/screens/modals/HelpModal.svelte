@@ -409,9 +409,9 @@
               <h4 class="enemy-title">Boss</h4>
             </div>
             <div class="enemy-stats">
-              <div class="stat-badge hp">3000 HP</div>
+              <div class="stat-badge hp">2000 HP</div>
               <div class="stat-badge speed">Variable Speed</div>
-              <div class="stat-badge points">5000 Points</div>
+              <div class="stat-badge points">3000 Points</div>
             </div>
             <p class="enemy-desc">
               Massive command ship with multiple attack phases. Requires strategy and skill to

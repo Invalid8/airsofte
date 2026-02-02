@@ -1,17 +1,32 @@
 @import './base.css';
 
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
   background-image: url('./bg.png');
   background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   user-select: none;
 }
 
 main {
+  width: 100vw;
+  height: 100vh;
   max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: auto;
 }
 
 .glow-text {
@@ -28,7 +43,7 @@ main {
     0 0 10px #ff2600,
     0 0 12px #ff2600,
     0 0 14px #ff2600;
-    letter-spacing: 4px;
+  letter-spacing: 4px;
 }
 
 .glow-text-green {
@@ -134,4 +149,11 @@ main {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+.center-it {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }

@@ -73,102 +73,134 @@
     }}
   />
 
-  <div class="story-header">
-    <h1 class="title">Story Mode</h1>
-    <p class="subtitle">Complete missions to unlock the next chapter</p>
+  <div class="scroll-container">
+    <div class="story-header">
+      <h1 class="title">Story Mode</h1>
+      <p class="subtitle">Complete missions to unlock the next chapter</p>
 
-    {#if completedCount > 0}
-      <div class="progress-summary">
-        <div class="summary-item">
-          <span class="summary-label">Missions Completed</span>
-          <span class="summary-value hud">{completedCount}/{missions.length}</span>
-        </div>
-        <div class="summary-divider">•</div>
-        <div class="summary-item">
-          <span class="summary-label">Total Stars</span>
-          <span class="summary-value stars hud">
-            {totalStars}/{missions.length * 3} ⭐
-          </span>
-        </div>
-      </div>
-    {/if}
-  </div>
-
-  <div class="missions-container">
-    {#each missions as mission (mission.id)}
-      {@const status = getMissionStatus(mission)}
-      {@const stars = getMissionStars(mission.id)}
-      {@const bestScore = getBestScore(mission.id)}
-      <button
-        class="mission-card col-span-1 size-full"
-        class:unlocked={mission.unlocked}
-        class:completed={mission.completed}
-        class:locked={!mission.unlocked}
-        onclick={() => startMission(mission)}
-        disabled={!mission.unlocked}
-      >
-        <div class="card-header">
-          <div class="mission-number">Mission {mission.id}</div>
-          <div
-            class="mission-status"
-            class:status-green={status.color === 'green'}
-            class:status-cyan={status.color === 'cyan'}
-            class:status-gray={status.color === 'gray'}
-          >
-            <span class="status-icon">{status.icon}</span>
-            <span class="status-text">{status.text}</span>
+      {#if completedCount > 0}
+        <div class="progress-summary">
+          <div class="summary-item">
+            <span class="summary-label">Missions Completed</span>
+            <span class="summary-value hud">{completedCount}/{missions.length}</span>
+          </div>
+          <div class="summary-divider">•</div>
+          <div class="summary-item">
+            <span class="summary-label">Total Stars</span>
+            <span class="summary-value stars hud">
+              {totalStars}/{missions.length * 3} ⭐
+            </span>
           </div>
         </div>
+      {/if}
+    </div>
 
-        <div class="card-body flex-1">
-          <h3 class="mission-name title">{mission.title}</h3>
-          <p class="mission-desc">{mission.description}</p>
+    <div class="missions-container">
+      {#each missions as mission (mission.id)}
+        {@const status = getMissionStatus(mission)}
+        {@const stars = getMissionStars(mission.id)}
+        {@const bestScore = getBestScore(mission.id)}
+        <button
+          class="mission-card"
+          class:unlocked={mission.unlocked}
+          class:completed={mission.completed}
+          class:locked={!mission.unlocked}
+          onclick={() => startMission(mission)}
+          disabled={!mission.unlocked}
+        >
+          <div class="card-header">
+            <div class="mission-number">Mission {mission.id}</div>
+            <div
+              class="mission-status"
+              class:status-green={status.color === 'green'}
+              class:status-cyan={status.color === 'cyan'}
+              class:status-gray={status.color === 'gray'}
+            >
+              <span class="status-icon">{status.icon}</span>
+              <span class="status-text">{status.text}</span>
+            </div>
+          </div>
 
-          <div class="mission-meta">
-            <div class="meta-item">
-              <span class="meta-text">{mission.waves.length} Waves</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-text">{mission.objectives.length} Objectives</span>
-            </div>
-            {#if mission.hasBoss}
-              <div class="meta-item boss">
-                <span class="meta-text">Boss</span>
+          <div class="card-body">
+            <h3 class="mission-name title">{mission.title}</h3>
+            <p class="mission-desc">{mission.description}</p>
+
+            <div class="mission-meta">
+              <div class="meta-item">
+                <span class="meta-text">{mission.waves.length} Waves</span>
               </div>
+              <div class="meta-item">
+                <span class="meta-text">{mission.objectives.length} Objectives</span>
+              </div>
+              {#if mission.hasBoss}
+                <div class="meta-item boss">
+                  <span class="meta-text">Boss</span>
+                </div>
+              {/if}
+            </div>
+
+            {#if stars > 0}
+              <div class="stars-display">
+                {#each Array(3) as _, i (i)}
+                  <span class="star" class:filled={i < stars}>⭐</span>
+                {/each}
+              </div>
+
+              {#if bestScore > 0}
+                <div class="best-score">
+                  <span class="best-score-label">Best:</span>
+                  <span class="best-score-value hud">{bestScore.toLocaleString()}</span>
+                </div>
+              {/if}
             {/if}
           </div>
 
-          {#if stars > 0}
-            <div class="stars-display">
-              {#each Array(3) as _, i (i)}
-                <span class="star" class:filled={i < stars}>⭐</span>
-              {/each}
+          {#if !mission.unlocked}
+            <div class="card-overlay">
+              <div class="overlay-icon">🔒</div>
+              <div class="overlay-text">Complete previous missions</div>
             </div>
-
-            {#if bestScore > 0}
-              <div class="best-score">
-                <span class="best-score-label">Best Score:</span>
-                <span class="best-score-value hud">{bestScore.toLocaleString()}</span>
-              </div>
-            {/if}
           {/if}
-        </div>
-
-        {#if !mission.unlocked}
-          <div class="card-overlay">
-            <div class="overlay-icon">🔒</div>
-            <div class="overlay-text">Complete previous missions</div>
-          </div>
-        {/if}
-      </button>
-    {/each}
+        </button>
+      {/each}
+    </div>
   </div>
 </div>
 
 <style>
   .story-mode-screen {
-    min-height: 100vh;
-    padding: 6rem 2rem 2rem;
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scroll-container {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 6rem 2rem 4rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 170, 255, 0.5) rgba(0, 0, 0, 0.3);
+  }
+
+  .scroll-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scroll-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+
+  .scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 170, 255, 0.5);
+    border-radius: 4px;
+  }
+
+  .scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 170, 255, 0.7);
   }
 
   .story-header {
@@ -177,7 +209,7 @@
   }
 
   .title {
-    font-size: 3.5rem;
+    font-size: clamp(2rem, 5vw, 3.5rem);
     text-transform: uppercase;
     word-spacing: -20px;
     line-height: 110%;
@@ -196,6 +228,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 1.5rem;
     padding: 1.5rem 2rem;
     background: linear-gradient(135deg, rgba(0, 170, 255, 0.1), rgba(0, 255, 136, 0.1));
@@ -237,9 +270,9 @@
     max-width: 80rem;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
     gap: 2rem;
-    padding-bottom: 4rem;
+    padding-bottom: 2rem;
   }
 
   .mission-card {
@@ -253,10 +286,9 @@
     cursor: pointer;
     text-align: left;
     width: 100%;
-    height: 100%;
+    min-height: 280px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
   }
 
   .mission-card.unlocked {
@@ -291,6 +323,7 @@
     padding: 1rem 1.5rem;
     background: rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid rgba(0, 170, 255, 0.2);
+    flex-shrink: 0;
   }
 
   .mission-number {
@@ -328,6 +361,9 @@
 
   .card-body {
     padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   .mission-name {
@@ -341,8 +377,8 @@
     font-size: 0.9375rem;
     opacity: 0.85;
     line-height: 1.5;
-    margin-bottom: 1.5rem;
-    min-height: 3rem;
+    margin-bottom: 1rem;
+    flex: 1;
   }
 
   .mission-meta {
@@ -372,7 +408,7 @@
   .stars-display {
     display: flex;
     gap: 0.5rem;
-    margin: 1rem 0;
+    margin-bottom: 0.75rem;
     font-size: 1.5rem;
   }
 
@@ -442,12 +478,12 @@
   }
 
   @media (max-width: 768px) {
-    .story-mode-screen {
-      padding: 5rem 1rem 2rem;
+    .scroll-container {
+      padding: 5rem 1rem 3rem;
     }
 
     .title {
-      font-size: 2.5rem;
+      font-size: 2rem;
     }
 
     .progress-summary {
@@ -461,7 +497,6 @@
     }
 
     .missions-container {
-      grid-template-columns: 1fr;
       gap: 1.5rem;
     }
   }

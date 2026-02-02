@@ -24,18 +24,20 @@
 </script>
 
 {#if !isComplete}
-  <div
-    class="flex flex-col gap-4 text-center p-6 items-center"
-    out:fly={{ y: -200, duration: 600 }}
-  >
-    <Spaceship />
-    <div class="flex flex-col items-center justify-center gap-5 max-w-md">
-      <img src={Logo} alt="AIRSOFTE" class="title text-5xl object-fill object-center" />
-      <p class="subtitle text-base font-bold tracking-wider title">
-        Take to the skies and dominate the battlefield!
-      </p>
-      <Loader steps={replicateLoadFunctions()} onComplete={handleComplete} delayBetween={200} />
+  <div class="center-it">
+    <div
+      class="flex flex-col gap-4 text-center p-6 items-center"
+      out:fly={{ y: -200, duration: 600 }}
+    >
+      <Spaceship />
+      <div class="flex flex-col items-center justify-center gap-5 max-w-md">
+        <img src={Logo} alt="AIRSOFTE" class="title text-5xl object-fill object-center" />
+        <p class="subtitle text-base font-bold tracking-wider title">
+          Take to the skies and dominate the battlefield!
+        </p>
+        <Loader steps={replicateLoadFunctions()} onComplete={handleComplete} delayBetween={200} />
+      </div>
+      <Spaceship opp />
     </div>
-    <Spaceship opp />
   </div>
 {/if}

@@ -112,9 +112,9 @@ export const ENEMY_CONFIG: Record<
   BOSS: {
     width: 250,
     height: 250,
-    health: 3000,
+    health: 2000,
     speed: 1.5,
-    scoreValue: 5000,
+    scoreValue: 2000,
     shootInterval: 800,
     sprite: 'assets/sprites/boss-1.png'
   }

@@ -114,7 +114,22 @@
 
 <div class="hud fixed top-0 left-0 right-0 pointer-events-none z-50 p-3 sm:p-6">
   <!-- Mobile HUD -->
-  <div class="sm:hidden">
+  <div class="sm:hidden space-y-1">
+    {#if activePowerUps.length > 0}
+      <div class="mt-2 flex flex-col gap-1">
+        {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
+          <div class="powerup-indicator">
+            <div class="powerup-bar">
+              <div
+                class="powerup-fill"
+                style="width: {getPowerUpRemainingProgress(powerUp)}%"
+              ></div>
+            </div>
+            <span class="powerup-time">{formatTime(getPowerUpTimeLeft(powerUp))}</span>
+          </div>
+        {/each}
+      </div>
+    {/if}
     <div
       class="flex items-center justify-between gap-3 bg-black/60 border border-cyan-500/40 rounded-lg px-3 py-2"
     >
@@ -166,21 +181,6 @@
     {/if}
 
     <!-- Power-up indicators (mobile) -->
-    {#if activePowerUps.length > 0}
-      <div class="mt-2 flex flex-col gap-0">
-        {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
-          <div class="powerup-indicator">
-            <div class="powerup-bar">
-              <div
-                class="powerup-fill"
-                style="width: {getPowerUpRemainingProgress(powerUp)}%"
-              ></div>
-            </div>
-            <span class="powerup-time">{formatTime(getPowerUpTimeLeft(powerUp))}</span>
-          </div>
-        {/each}
-      </div>
-    {/if}
   </div>
 
   <!-- Desktop HUD -->

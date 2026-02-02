@@ -42,7 +42,7 @@
 </script>
 
 <DeviceWarning>
-  <main class={$gameState.theme === 'Dark' ? 'dark-theme' : 'light-theme'}>
+  <main class="{$gameState.theme === 'Dark' ? 'dark-theme' : 'light-theme'} app-container">
     {#if showUserSelection}
       <UserSelectionScreen />
     {:else if $gameState.route === 'STARTUP'}
@@ -115,8 +115,16 @@
 </DeviceWarning>
 
 <style>
+  .app-container {
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+  }
+
   .sound-toggle {
-    position: absolute;
+    position: fixed;
     bottom: 30px;
     left: 30px;
     background: none;

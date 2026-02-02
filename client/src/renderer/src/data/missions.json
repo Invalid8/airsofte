@@ -362,9 +362,9 @@
       ],
       "hasBoss": true,
       "bossConfig": {
-        "health": 3000,
+        "health": 2000,
         "pattern": "CIRCLE",
-        "scoreValue": 5000
+        "scoreValue": 3000
       },
       "rewards": {
         "scoreMultiplier": 2.0,

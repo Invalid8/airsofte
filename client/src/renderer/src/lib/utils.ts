@@ -26,17 +26,13 @@ export function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
   const userAgent = navigator.userAgent.toLowerCase()
   const isMobile =
     /iphone|ipod|android.*mobile|windows phone|blackberry|bb10|opera mini|mobile/i.test(userAgent)
-  const isTablet = /ipad|android(?!.*mobile)|tablet|kindle|silk|playbook/i.test(userAgent)
+  // const isTablet = /ipad|android(?!.*mobile)|tablet|kindle|silk|playbook/i.test(userAgent)
 
   // Check screen size as fallback
   const width = window.innerWidth
   const height = window.innerHeight
   const minDimension = Math.min(width, height)
-  const maxDimension = Math.max(width, height)
-
-  if (isTablet || (minDimension >= 450 && maxDimension >= 600)) {
-    return 'tablet'
-  }
+  // const maxDimension = Math.max(width, height)
 
   if (isMobile || minDimension < 450) {
     return 'mobile'

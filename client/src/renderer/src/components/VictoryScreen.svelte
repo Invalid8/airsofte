@@ -7,6 +7,7 @@
   import { formatNumberWithCommas } from '../lib/utils'
   import { progressionSystem } from '../lib/progressionSystem'
   import { aiMissionStore } from '../stores/aiMissionStore'
+  import { storyMissionManager } from '../lib/storyMissionData'
 
   let isHighScore = $state(false)
   let rank = $state(0)
@@ -121,6 +122,11 @@
 
   function handleRestart(): void {
     gameManager.isPlaying = false
+
+    // Reset mission state before restarting
+    if (gameManager.mode === 'STORY_MODE' && $gameState.currentMissionId) {
+      storyMissionManager.resetMission($gameState.currentMissionId)
+    }
 
     gameState.update((state) => ({
       ...state,

@@ -2,12 +2,6 @@ import type { StoryMission, EnemyType, MovementPattern } from '../types/gameType
 
 type DialogueTiming = 'START' | 'MID' | 'END'
 
-type MissionDialogue = {
-  character: string
-  text: string
-  timing: DialogueTiming
-}
-
 type WaveBuilder = {
   enemyType: EnemyType
   count: number
@@ -107,7 +101,7 @@ export class StoryBuilder {
     if (config) {
       this.mission.bossConfig = {
         type: 'BOSS',
-        health: config.health || 3000,
+        health: config.health || 2000,
         phases: [
           {
             healthThreshold: 100,
@@ -278,9 +272,9 @@ export const MissionTemplates = {
         { enemyType: 'SCOUT', count: 3, pattern: 'CIRCLE' }
       ])
       .boss({
-        health: 3000,
+        health: 2000,
         pattern: 'CIRCLE',
-        scoreValue: 5000
+        scoreValue: 3000
       })
       .dialogue('Commander', 'Massive energy signature detected. Prepare yourself!', 'START')
       .dialogue('Commander', 'That is their command ship! Take it down!', 'MID')

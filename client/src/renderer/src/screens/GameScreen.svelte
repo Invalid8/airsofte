@@ -56,23 +56,25 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 text-center p-6 items-center" in:fly={{ y: 200, duration: 500 }}>
-  <div class="flex flex-col items-center justify-center gap-8 max-w-md">
-    {#if !load}
-      <h1 class="title text-5xl uppercase glow-text float">Game Play</h1>
-    {/if}
+<div class="center-it">
+  <div class="flex flex-col gap-4 text-center p-6 items-center" in:fly={{ y: 200, duration: 500 }}>
+    <div class="flex flex-col items-center justify-center gap-8 max-w-md">
+      {#if !load}
+        <h1 class="title text-5xl uppercase glow-text float">Game Play</h1>
+      {/if}
 
-    {#if !load}
-      <Options options={gameOptions} layout="vertical" gap="md" select={handleMenuSelect} />
-    {/if}
+      {#if !load}
+        <Options options={gameOptions} layout="vertical" gap="md" select={handleMenuSelect} />
+      {/if}
 
-    {#if load}
-      <img class="ship float mx-auto my-4" width="350" src={PlayerShip} alt="Player Ship" />
-    {/if}
+      {#if load}
+        <img class="ship float mx-auto my-4" width="350" src={PlayerShip} alt="Player Ship" />
+      {/if}
 
-    {#if load && loadFunction}
-      <Loader steps={replicateLoadFunctions()} onComplete={loadFunction} delayBetween={200} />
-    {/if}
+      {#if load && loadFunction}
+        <Loader steps={replicateLoadFunctions()} onComplete={loadFunction} delayBetween={200} />
+      {/if}
+    </div>
   </div>
 </div>
 
