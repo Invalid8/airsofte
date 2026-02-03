@@ -8,6 +8,7 @@
     gameState
   } from '../../stores/gameStore'
   import { gameEvents } from '../../lib/eventBus'
+  import { gameManager } from '../../lib/gameManager'
 
   let showCombo = $derived(
     $gameState.session?.comboMultiplier && $gameState.session.comboMultiplier > 1
@@ -25,7 +26,9 @@
     RAPID: 'Rapid Fire',
     LASER: 'Laser Beam',
     MISSILE: 'Missiles',
-    CANNON: 'Heavy Cannon'
+    CANNON: 'Heavy Cannon',
+    DOUBLE: 'Twin Shot',
+    TRIPLE: 'Triple Shot'
   }
 
   let weaponDisplayName = $derived(weaponNames[weaponType] || weaponType)
@@ -39,6 +42,8 @@
       duration: number
     }>
   >([])
+
+  let weaponQueue = $state<Array<{ type: string; remainingTime: number }>>([])
 
   let currentTime = $state(Date.now())
   let lastTick = $state(Date.now())
@@ -64,6 +69,7 @@
         const delta = now - lastTick
         currentTime += delta
         activePowerUps = activePowerUps.filter((p) => p.endTime > currentTime)
+        weaponQueue = gameManager.getWeaponQueue()
       }
 
       lastTick = now
@@ -85,6 +91,10 @@
           }
         ]
       }
+    })
+
+    const unsubWeaponQueued = gameEvents.on('WEAPON_QUEUED', () => {
+      weaponQueue = gameManager.getWeaponQueue()
     })
 
     const unsubShieldActivated = gameEvents.on('SHIELD_ACTIVATED', () => {
@@ -111,6 +121,7 @@
 
     return () => {
       unsubWeaponChanged()
+      unsubWeaponQueued()
       unsubShieldActivated()
       unsubSpeedBoost()
     }
@@ -176,8 +187,11 @@
           x{comboMultiplier.toFixed(1)}
         </div>
       {/if}
-      <div class="text-sm hud opacity-80">
-        {weaponDisplayName}
+      <div class="text-sm hud opacity-80 flex flex-col items-end">
+        <span>{weaponDisplayName}</span>
+        {#if weaponQueue.length > 0}
+          <span class="text-xs text-cyan-400 opacity-60">+{weaponQueue.length} queued</span>
+        {/if}
       </div>
     </div>
 
@@ -257,6 +271,20 @@
       <div class="weapon-display">
         <div class="label text-base tracking-wider opacity-70">WEAPON</div>
         <div class="value text-xl font-bold hud">{weaponDisplayName}</div>
+
+        {#if weaponQueue.length > 0}
+          <div class="weapon-queue mt-2 flex flex-col gap-1">
+            {#each weaponQueue as queuedWeapon, i (i)}
+              <div class="queued-weapon text-xs hud opacity-70 flex items-center gap-2">
+                <span class="text-cyan-400">NEXT:</span>
+                <span>{weaponNames[queuedWeapon.type] || queuedWeapon.type}</span>
+                <span class="text-yellow-400"
+                  >({Math.ceil(queuedWeapon.remainingTime / 1000)}s)</span
+                >
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
 
       {#if invincible}

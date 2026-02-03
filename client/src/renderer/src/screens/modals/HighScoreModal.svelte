@@ -88,8 +88,10 @@
   }
 </script>
 
-<div class="high-score-modal w-full min-w-2xl max-w-2xl rounded-xl modal-bg p-6 pt-8">
-  <div class="content flex flex-col items-center justify-center gap-4">
+<div
+  class="high-score-modal w-full min-w-2xl max-w-2xl rounded-xl modal-bg p-6 pt-8 max-h-[80vh] flex flex-col"
+>
+  <div class="content flex flex-col items-center justify-center gap-4 flex-shrink-0">
     <h2 class="title text-2xl uppercase glow-text-2">Global Leaderboard</h2>
 
     <div class="grid w-full gap-4">
@@ -117,7 +119,7 @@
       </div>
 
       <div
-        class="content border p-6 min-h-[400px] rounded-xl bg-black/30 max-h-[calc(100svh_-_440px)] overflow-auto scroll"
+        class="content border p-6 min-h-[200px] rounded-xl bg-black/30 overflow-y-auto scroll flex-1"
       >
         {#if currentScores.length === 0}
           <div class="empty-state flex flex-col items-center justify-center h-full min-h-[350px]">

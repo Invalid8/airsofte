@@ -77,6 +77,7 @@ export class GameManager {
 
   private activePowerUpTimers: Map<string, PowerUpTimer> = new Map()
   private basePlayerSpeed: number = GAME_CONFIG.PLAYER.SPEED
+  private weaponQueue: Array<{ type: PlayerStats['weaponType']; remainingTime: number }> = []
 
   private constructor() {
     this.loadSettings()
@@ -575,6 +576,17 @@ export class GameManager {
   }
 
   changeWeapon(weaponType: PlayerStats['weaponType'], duration: number = 15000): void {
+    if (weaponType === 'SINGLE') return
+
+    if (this.player.weaponType === 'SINGLE') {
+      this.activateWeapon(weaponType, duration)
+    } else {
+      this.weaponQueue.push({ type: weaponType, remainingTime: duration })
+      gameEvents.emit('WEAPON_QUEUED', { weapon: weaponType, queueLength: this.weaponQueue.length })
+    }
+  }
+
+  private activateWeapon(weaponType: PlayerStats['weaponType'], duration: number): void {
     const existingTimer = this.activePowerUpTimers.get('weapon')
     if (existingTimer?.timeoutId) {
       clearTimeout(existingTimer.timeoutId)
@@ -583,29 +595,42 @@ export class GameManager {
 
     const previousWeapon = this.player.weaponType
     this.player.weaponType = weaponType
+    this.player.weaponUpgradeDuration = duration
+    this.player.weaponUpgradeStartTime = Date.now()
 
-    if (weaponType !== 'SINGLE') {
-      this.player.weaponUpgradeDuration = duration
-      this.player.weaponUpgradeStartTime = Date.now()
+    const endTime = Date.now() + duration
+    const timeoutId = window.setTimeout(() => {
+      this.onWeaponExpire()
+    }, duration)
 
-      const endTime = Date.now() + duration
-      const timeoutId = window.setTimeout(() => {
-        this.player.weaponType = 'SINGLE'
-        this.player.weaponUpgradeDuration = 0
-        this.player.weaponUpgradeStartTime = 0
-        this.activePowerUpTimers.delete('weapon')
-        gameEvents.emit('WEAPON_EXPIRED', { weapon: weaponType })
-      }, duration)
-
-      this.activePowerUpTimers.set('weapon', {
-        type: 'weapon',
-        endTime,
-        timeoutId,
-        remainingTime: duration
-      })
-    }
+    this.activePowerUpTimers.set('weapon', {
+      type: 'weapon',
+      endTime,
+      timeoutId,
+      remainingTime: duration
+    })
 
     gameEvents.emit('WEAPON_CHANGED', { from: previousWeapon, to: weaponType })
+  }
+
+  private onWeaponExpire(): void {
+    const expiredWeapon = this.player.weaponType
+
+    this.player.weaponType = 'SINGLE'
+    this.player.weaponUpgradeDuration = 0
+    this.player.weaponUpgradeStartTime = 0
+    this.activePowerUpTimers.delete('weapon')
+
+    gameEvents.emit('WEAPON_EXPIRED', { weapon: expiredWeapon })
+
+    if (this.weaponQueue.length > 0) {
+      const next = this.weaponQueue.shift()!
+      this.activateWeapon(next.type, next.remainingTime)
+    }
+  }
+
+  getWeaponQueue(): Array<{ type: PlayerStats['weaponType']; remainingTime: number }> {
+    return [...this.weaponQueue]
   }
 
   activateSpeedBoost(duration: number = 8000, speedMultiplier: number = 1.5): void {

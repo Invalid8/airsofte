@@ -20,23 +20,19 @@
       const scores = StorageManager.getHighScores(userId)
       const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-      if (scoreList.length < 20) {
+      // Find this user's current high score
+      const userScores = scoreList.filter((s) => s.name === $currentUser.username)
+      const currentUserHighScore =
+        userScores.length > 0 ? Math.max(...userScores.map((s) => s.score)) : 0
+
+      // Only mark as high score if this beats YOUR previous best
+      if (finalScore > currentUserHighScore) {
         isHighScore = true
         const position = scoreList.filter((s) => s.score > finalScore).length
         rank = position + 1
 
         const playerName = $currentUser.username
         gameManager.saveHighScore(playerName, userId)
-      } else {
-        const lowestScore = scoreList[scoreList.length - 1].score
-        if (finalScore > lowestScore) {
-          isHighScore = true
-          const position = scoreList.filter((s) => s.score > finalScore).length
-          rank = position + 1
-
-          const playerName = $currentUser.username
-          gameManager.saveHighScore(playerName, userId)
-        }
       }
     }
   })

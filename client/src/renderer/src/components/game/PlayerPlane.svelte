@@ -330,6 +330,7 @@
 {#each bullets as bullet (bullet.id)}
   <div
     class="bullet absolute pointer-events-none"
+    class:cannon-bullet={bullet.type === 'CANNON'}
     style="left: {bullet.x}px; top: {bullet.y}px; width: {bullet.width}px; height: {bullet.height}px; margin: 0 1px;"
   ></div>
 {/each}
@@ -374,5 +375,32 @@
     border-radius: 50% 50% 0 0;
     box-shadow: 0 0 8px #ff9933;
     transform: translateY(-2px);
+  }
+
+  .bullet.cannon-bullet {
+    width: 12px !important;
+    background: linear-gradient(to top, #00ff88, #00ffff, #ffffff);
+    border-radius: 0;
+    box-shadow:
+      0 0 15px #00ffff,
+      0 0 25px rgba(0, 255, 255, 0.6),
+      inset 0 0 10px rgba(255, 255, 255, 0.8);
+    animation: cannon-beam 0.1s ease-in-out infinite;
+  }
+
+  @keyframes cannon-beam {
+    0%,
+    100% {
+      box-shadow:
+        0 0 15px #00ffff,
+        0 0 25px rgba(0, 255, 255, 0.6),
+        inset 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+    50% {
+      box-shadow:
+        0 0 20px #00ffff,
+        0 0 35px rgba(0, 255, 255, 0.9),
+        inset 0 0 15px rgba(255, 255, 255, 1);
+    }
   }
 </style>

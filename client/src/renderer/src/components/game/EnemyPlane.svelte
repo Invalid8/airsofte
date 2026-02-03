@@ -128,7 +128,7 @@
     }))
 
     const boss = enemies.find((e) => e.type === 'BOSS')
-    if (boss) {
+    if (boss && boss.active && boss.health > 0) {
       gameEvents.emit('BOSS_UPDATE', { enemy: boss })
     }
 
@@ -403,27 +403,28 @@
   }
 
   .cannon-bullet {
-    background: linear-gradient(to bottom, #ff0000, #ff9900);
+    background: linear-gradient(to bottom, #ff0000, #ff6600, #ffaa00);
     box-shadow:
-      0 0 15px #ff0000,
-      0 0 25px rgba(255, 100, 0, 0.5);
-    border-radius: 50%;
-    animation: cannon-pulse 0.3s ease-in-out infinite;
+      0 0 20px #ff0000,
+      0 0 30px rgba(255, 100, 0, 0.8),
+      inset 0 0 8px rgba(255, 255, 255, 0.6);
+    border-radius: 0;
+    animation: boss-cannon-pulse 0.15s ease-in-out infinite;
   }
 
-  @keyframes cannon-pulse {
+  @keyframes boss-cannon-pulse {
     0%,
     100% {
-      transform: scale(1);
-      box-shadow:
-        0 0 15px #ff0000,
-        0 0 25px rgba(255, 100, 0, 0.5);
-    }
-    50% {
-      transform: scale(1.1);
       box-shadow:
         0 0 20px #ff0000,
-        0 0 35px rgba(255, 100, 0, 0.8);
+        0 0 30px rgba(255, 100, 0, 0.8),
+        inset 0 0 8px rgba(255, 255, 255, 0.6);
+    }
+    50% {
+      box-shadow:
+        0 0 25px #ff0000,
+        0 0 40px rgba(255, 100, 0, 1),
+        inset 0 0 12px rgba(255, 255, 255, 0.9);
     }
   }
 </style>
