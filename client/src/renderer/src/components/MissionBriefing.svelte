@@ -52,18 +52,18 @@
         <div class="intel-grid">
           <div class="intel-item">
             <div class="intel-label">Waves</div>
-            <div class="intel-value hud">{mission.waves.length}</div>
+            <div class="intel-value hud">{mission?.waves?.length}</div>
           </div>
           <div class="intel-item">
             <div class="intel-label">Enemy Types</div>
             <div class="intel-value hud">
-              {new Set(mission.waves.flatMap((w) => w.enemies.map((e) => e.type))).size}
+              {new Set(mission?.waves?.flatMap((w) => w.enemies.map((e) => e.type))).size}
             </div>
           </div>
           <div class="intel-item">
             <div class="intel-label">Difficulty</div>
             <div class="intel-value hud">
-              {mission.hasBoss ? 'EXTREME' : mission.waves.length > 3 ? 'HIGH' : 'MEDIUM'}
+              {mission.hasBoss ? 'EXTREME' : mission?.waves?.length > 3 ? 'HIGH' : 'MEDIUM'}
             </div>
           </div>
           <div class="intel-item">

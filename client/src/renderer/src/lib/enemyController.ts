@@ -159,8 +159,8 @@ export class EnemyController {
       }
 
       if (this.shouldShoot(enemy) && enemy.y > 0 && !this.isEnemyTeleporting(enemy)) {
-        const bullet = this.shootBullet(enemy)
-        if (bullet) newBullets.push(bullet)
+        const bullets = this.shootBullet(enemy)
+        newBullets.push(...bullets)
       }
     })
 
@@ -169,7 +169,7 @@ export class EnemyController {
 
       if (enemy.y > bounds.height + 200) {
         enemy.active = false
-        gameManager.onEnemyDestroyed(enemy)
+        gameEvents.emit('ENEMY_ESCAPED', { enemy })
       }
     })
 
@@ -253,7 +253,11 @@ export class EnemyController {
     return now - enemy.lastShot >= enemy.shootInterval
   }
 
-  private shootBullet(enemy: Enemy): Bullet | null {
+  private shootBullet(enemy: Enemy): Bullet[] {
+    if (enemy.type === 'BOSS') {
+      return this.shootBossBullets(enemy)
+    }
+
     const bullet = this.bulletPool!.acquire()
 
     bullet.x = enemy.x + enemy.width / 2 - bullet.width / 2
@@ -267,7 +271,90 @@ export class EnemyController {
 
     audioManager.playSound('enemyShoot')
 
-    return bullet
+    return [bullet]
+  }
+
+  private shootBossBullets(enemy: Enemy): Bullet[] {
+    if (!enemy.patternData) {
+      enemy.patternData = {}
+    }
+
+    if (enemy.patternData.attackCount === undefined) {
+      enemy.patternData.attackCount = 0
+    }
+
+    const cycle = enemy.patternData.attackCount % 10
+
+    let bullets: Bullet[] = []
+
+    if (cycle < 4) {
+      bullets = this.shootBossSideBullets(enemy)
+    } else if (cycle < 8) {
+      bullets = this.shootBossSingleBullet(enemy)
+    } else {
+      bullets = this.shootBossCannonBullet(enemy)
+    }
+
+    enemy.patternData.attackCount++
+    enemy.lastShot = Date.now()
+
+    return bullets
+  }
+
+  private shootBossSideBullets(enemy: Enemy): Bullet[] {
+    const bullets: Bullet[] = []
+
+    const leftBullet = this.bulletPool!.acquire()
+    leftBullet.x = enemy.x + enemy.width * 0.25 - leftBullet.width / 2
+    leftBullet.y = enemy.y + enemy.height
+    leftBullet.active = true
+    leftBullet.damage = GAME_CONFIG.BULLET.ENEMY.DAMAGE * 1.2
+    leftBullet.vx = -2
+    leftBullet.vy = 0
+    bullets.push(leftBullet)
+
+    const rightBullet = this.bulletPool!.acquire()
+    rightBullet.x = enemy.x + enemy.width * 0.75 - rightBullet.width / 2
+    rightBullet.y = enemy.y + enemy.height
+    rightBullet.active = true
+    rightBullet.damage = GAME_CONFIG.BULLET.ENEMY.DAMAGE * 1.2
+    rightBullet.vx = 2
+    rightBullet.vy = 0
+    bullets.push(rightBullet)
+
+    audioManager.playSound('enemyShoot')
+
+    return bullets
+  }
+
+  private shootBossSingleBullet(enemy: Enemy): Bullet[] {
+    const bullet = this.bulletPool!.acquire()
+
+    bullet.x = enemy.x + enemy.width / 2 - bullet.width / 2
+    bullet.y = enemy.y + enemy.height
+    bullet.active = true
+    bullet.damage = GAME_CONFIG.BULLET.ENEMY.DAMAGE * 1.5
+    bullet.vx = 0
+    bullet.vy = 0
+
+    audioManager.playSound('enemyShoot')
+
+    return [bullet]
+  }
+
+  private shootBossCannonBullet(enemy: Enemy): Bullet[] {
+    const bullet = this.bulletPool!.acquire()
+
+    bullet.x = enemy.x + enemy.width / 2 - bullet.width / 2
+    bullet.y = enemy.y + enemy.height
+    bullet.active = true
+    bullet.damage = GAME_CONFIG.BULLET.ENEMY.DAMAGE * 3
+    bullet.vx = 0
+    bullet.vy = 0
+
+    audioManager.playSound('enemyShoot')
+
+    return [bullet]
   }
 
   damageEnemy(enemyId: string, damage: number): boolean {

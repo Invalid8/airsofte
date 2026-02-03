@@ -10,7 +10,7 @@
   import ScorePopup from '../ScorePopup.svelte'
   import DialogueSystem from '../DialogueSystem.svelte'
   import MissionBriefing from '../MissionBriefing.svelte'
-  import ToastNotification from '../ToastNotification.svelte'
+  // import MessageDisplay from '../MessageDisplay.svelte'
   import { gameManager } from '../../lib/gameManager'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import { gameEvents } from '../../lib/eventBus'
@@ -42,23 +42,38 @@
 
     if (event.data?.victory === true && mode === 'STORY_MODE') {
       handleMissionComplete()
-      showVictory = true
+
+      setTimeout(() => {
+        showVictory = true
+      }, 1000)
     } else {
       showVictory = false
       setTimeout(() => {
         navigateTo('GAME_OVER')
-      }, 500)
+      }, 1500)
     }
   }
 
   function handleMissionComplete(): void {
-    if (currentMission) {
-      storyMissionManager.completeMission(currentMission.id)
+    if (!currentMission) return
 
-      const nextMission = storyMissionManager.getMissionById(currentMission.id + 1)
-      if (nextMission) {
-        storyMissionManager.unlockMission(nextMission.id)
-      }
+    const allComplete = objectiveTracker.areAllObjectivesComplete()
+
+    if (allComplete) {
+      gameEvents.emit('SHOW_MESSAGE', {
+        text: '✓ MISSION COMPLETE',
+        color: '#00ff88',
+        duration: 3000
+      })
+
+      setTimeout(() => {
+        storyMissionManager.completeMission(currentMission.id)
+
+        const nextMission = storyMissionManager.getMissionById(currentMission.id + 1)
+        if (nextMission) {
+          storyMissionManager.unlockMission(nextMission.id)
+        }
+      }, 500)
     }
   }
 
@@ -94,6 +109,39 @@
 
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
 
+    const unsubObjectiveCompleted = gameEvents.on('OBJECTIVE_COMPLETED', (event) => {
+      const obj = event.data.objective
+      gameEvents.emit('SHOW_MESSAGE', {
+        text: `✓ ${obj.description}`,
+        color: '#00ff88',
+        duration: 4000
+      })
+    })
+
+    const unsubObjectiveUpdated = gameEvents.on('OBJECTIVE_UPDATED', (event) => {
+      const obj = event.data.objective
+      const progress = event.data.progress
+
+      if (progress >= 100) return
+
+      if (progress >= 50 && progress < 100) {
+        gameEvents.emit('SHOW_MESSAGE', {
+          text: `${obj.description}: ${obj.current}/${obj.target}`,
+          color: '#00aaff',
+          duration: 2000
+        })
+      }
+    })
+
+    const unsubObjectiveFailed = gameEvents.on('OBJECTIVE_FAILED', (event) => {
+      const obj = event.data.objective
+      gameEvents.emit('SHOW_MESSAGE', {
+        text: `✗ ${obj.description} FAILED`,
+        color: '#ff6666',
+        duration: 5000
+      })
+    })
+
     const syncInterval = setInterval(() => {
       if (!gameEnded && missionStarted) {
         syncGameState()
@@ -105,6 +153,9 @@
 
     return () => {
       unsubGameOver()
+      unsubObjectiveCompleted()
+      unsubObjectiveUpdated()
+      unsubObjectiveFailed()
       clearInterval(syncInterval)
     }
   })
@@ -125,7 +176,7 @@
   <VictoryScreen />
 {:else if missionStarted}
   <GameHUD />
-  <ToastNotification />
+  <!-- <MessageDisplay /> -->
 
   {#if mode === 'STORY_MODE' && currentMission}
     <DialogueSystem mission={currentMission} />

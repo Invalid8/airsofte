@@ -96,6 +96,10 @@ export class GameManager {
     gameEvents.on('DISABLE_CONTINUOUS_SPAWN', () => {
       this.disableContinuousSpawn()
     })
+
+    gameEvents.on('ENEMY_ESCAPED', () => {
+      this.onEnemyEscaped()
+    })
   }
 
   private initializeWaveEnemyCount(): void {
@@ -363,7 +367,7 @@ export class GameManager {
     const mission = storyMissionManager.getMissionById(missionId)
     if (!mission) return
 
-    this.waves = mission.waves.map((wave) => ({
+    this.waves = mission?.waves?.map((wave) => ({
       ...wave,
       completed: false
     }))
@@ -407,6 +411,14 @@ export class GameManager {
     this.incrementCombo()
 
     gameEvents.emit('ENEMY_DESTROYED', { enemy })
+
+    if (this.enemiesDestroyedInWave >= this.enemiesSpawned && !this.waveCompleting) {
+      this.completeWave()
+    }
+  }
+
+  onEnemyEscaped(): void {
+    this.enemiesDestroyedInWave++
 
     if (this.enemiesDestroyedInWave >= this.enemiesSpawned && !this.waveCompleting) {
       this.completeWave()

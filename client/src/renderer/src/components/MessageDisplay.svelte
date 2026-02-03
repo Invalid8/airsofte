@@ -68,7 +68,7 @@
   .message {
     position: relative;
     padding: 1.5rem 2rem;
-    background: rgba(0, 0, 0, 0.95);
+    background: rgba(0, 0, 0, 0.459);
     border: 3px solid;
     border-radius: 1rem;
     backdrop-filter: blur(10px);

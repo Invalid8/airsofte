@@ -103,7 +103,7 @@ export class StoryMissionManager {
       accuracy: number
     }
   ): MissionStars {
-    const baseScore = mission.waves.length * 1000
+    const baseScore = mission?.waves?.length * 1000
     const allObjectivesComplete = mission.objectives.every((obj) => obj.current >= obj.target)
 
     if (!allObjectivesComplete) return 0
@@ -151,7 +151,7 @@ export class StoryMissionManager {
     const mission = this.missions.find((m) => m.id === id)
     if (mission) {
       mission.objectives.forEach((obj) => (obj.current = 0))
-      mission.waves.forEach((wave) => (wave.completed = false))
+      mission?.waves?.forEach((wave) => (wave.completed = false))
     }
   }
 

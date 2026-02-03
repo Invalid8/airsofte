@@ -163,7 +163,7 @@ Return a JSON object with this structure:
       throw new Error("Mission must have objectives");
     }
 
-    if (!Array.isArray(mission.waves) || mission.waves.length === 0) {
+    if (!Array.isArray(mission.waves) || mission?.waves?.length === 0) {
       throw new Error("Mission must have waves");
     }
 
@@ -192,7 +192,7 @@ Return a JSON object with this structure:
     ];
     const validTimings = ["START", "MID", "END"];
 
-    mission.waves.forEach((wave: any, waveIndex: number) => {
+    mission?.waves?.forEach((wave: any, waveIndex: number) => {
       if (!Array.isArray(wave.enemies)) {
         throw new Error(`Wave ${waveIndex + 1} must have enemies array`);
       }

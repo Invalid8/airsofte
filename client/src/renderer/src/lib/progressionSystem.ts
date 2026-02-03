@@ -207,7 +207,7 @@ export class ProgressionSystem {
   ): number {
     let stars = 1
 
-    const baseScore = mission.waves.length * 1000
+    const baseScore = mission?.waves?.length * 1000
     if (stats.score >= baseScore * 1.5) stars = 2
     if (stats.score >= baseScore * 2) stars = 3
 

@@ -58,7 +58,7 @@
     })
 
     const unsubWaveComplete = gameEvents.on('WAVE_COMPLETE', (event) => {
-      if (event.data.wave === Math.floor(mission.waves.length / 2)) {
+      if (event.data.wave === Math.floor(mission?.waves?.length / 2)) {
         showDialogueByTiming('MID')
       }
     })

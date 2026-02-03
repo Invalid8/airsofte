@@ -64,6 +64,7 @@ export type Enemy = {
     frequency?: number
     startX?: number
     startY?: number
+    attackCount?: number
     angle?: number
     radius?: number
     opacity?: number

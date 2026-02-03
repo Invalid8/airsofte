@@ -127,7 +127,7 @@
 
             <div class="mission-meta">
               <div class="meta-item">
-                <span class="meta-text">{mission.waves.length} Waves</span>
+                <span class="meta-text">{mission?.waves?.length} Waves</span>
               </div>
               <div class="meta-item">
                 <span class="meta-text">{mission.objectives.length} Objectives</span>

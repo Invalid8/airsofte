@@ -11,6 +11,7 @@
   import { getBoundingBox } from '../../utils/collisionSystem'
   import { enhancedParticles } from '../../lib/enhancedParticles'
   import { viewportCuller } from '../../utils/viewportCuller'
+  import { GAME_CONFIG } from '../../config/gameConstants'
   import EnemyBasic from '../../assets/sprites/enemy-basic.png'
   import EnemyScout from '../../assets/sprites/enemy-scout.png'
   import EnemyBomber from '../../assets/sprites/enemy-bomber.png'
@@ -99,9 +100,16 @@
     enemyBullets = enemyBullets.filter((bullet) => {
       if (!bullet.active) return false
 
-      bullet.y += bullet.speed
+      if (bullet.vx !== undefined && bullet.vx !== 0) {
+        bullet.x += bullet.vx
+      }
+      if (bullet.vy !== undefined && bullet.vy !== 0) {
+        bullet.y += bullet.vy
+      } else {
+        bullet.y += bullet.speed
+      }
 
-      if (bullet.y > bounds.height + 30) {
+      if (bullet.y > bounds.height + 30 || bullet.x < -50 || bullet.x > bounds.width + 50) {
         bullet.active = false
         return false
       }
@@ -120,7 +128,7 @@
     }))
 
     const boss = enemies.find((e) => e.type === 'BOSS')
-    if (boss && boss.health > 0) {
+    if (boss) {
       gameEvents.emit('BOSS_UPDATE', { enemy: boss })
     }
 
@@ -153,7 +161,6 @@
             enemy.y + enemy.height / 2
           )
           ScreenEffects.shake(10, 0.3)
-          gameEvents.emit('BOSS_DEFEATED', { enemy })
         } else {
           particleSystem.createExplosion(
             enemy.x + enemy.width / 2,
@@ -166,14 +173,7 @@
       }
     })
 
-    const playerHitboxW = 80
-    const playerHitboxH = 100
-    const playerBox = getBoundingBox(
-      playerX + (150 - playerHitboxW) / 2,
-      playerY + (150 - playerHitboxH) / 2,
-      playerHitboxW,
-      playerHitboxH
-    )
+    const playerBox = getBoundingBox(playerX, playerY, 150, 150)
     const enemyBulletHits = combatSystem.checkEnemyBulletCollisions(enemyBullets, playerBox)
 
     enemyBulletHits.forEach(({ bulletId, damage }) => {
@@ -329,6 +329,7 @@
 {#each enemyBullets as bullet (bullet.id)}
   <div
     class="enemy-bullet"
+    class:cannon-bullet={bullet.damage >= GAME_CONFIG.BULLET.ENEMY.DAMAGE * 2.5}
     style="left: {bullet.x}px; top: {bullet.y}px; width: {bullet.width}px; height: {bullet.height}px;"
   ></div>
 {/each}
@@ -399,5 +400,30 @@
     background: linear-gradient(to bottom, #ff0000, #ff6600);
     border-radius: 0 0 50% 50%;
     box-shadow: 0 0 6px #ff3333;
+  }
+
+  .cannon-bullet {
+    background: linear-gradient(to bottom, #ff0000, #ff9900);
+    box-shadow:
+      0 0 15px #ff0000,
+      0 0 25px rgba(255, 100, 0, 0.5);
+    border-radius: 50%;
+    animation: cannon-pulse 0.3s ease-in-out infinite;
+  }
+
+  @keyframes cannon-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow:
+        0 0 15px #ff0000,
+        0 0 25px rgba(255, 100, 0, 0.5);
+    }
+    50% {
+      transform: scale(1.1);
+      box-shadow:
+        0 0 20px #ff0000,
+        0 0 35px rgba(255, 100, 0, 0.8);
+    }
   }
 </style>

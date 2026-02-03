@@ -28,6 +28,7 @@
   let animationFrameId: number
   let isFlashing = false
   let keysPressed = $state<Set<string>>(new Set())
+  let showHitEffect = $state(false)
 
   const keys = {
     ArrowUp: () =>
@@ -117,8 +118,7 @@
       duration: 1,
       yoyo: true,
       repeat: -1,
-      ease: 'sine.inOut',
-      onUpdate: () => {}
+      ease: 'sine.inOut'
     })
   }
 
@@ -205,6 +205,7 @@
     if (!ship || isFlashing) return
 
     isFlashing = true
+    showHitEffect = true
     const flashDuration = gameManager.player.invincible ? 2000 : 500
 
     gsap.to(ship, {
@@ -218,6 +219,10 @@
         isFlashing = false
       }
     })
+
+    setTimeout(() => {
+      showHitEffect = false
+    }, 300)
   }
 
   function handlePlayerDeath(): void {
@@ -283,8 +288,7 @@
           duration: 1,
           yoyo: true,
           repeat: -1,
-          ease: 'sine.inOut',
-          onUpdate: () => {}
+          ease: 'sine.inOut'
         })
       }
     })
@@ -319,6 +323,10 @@
   class:invincible={gameManager.player.invincible}
 />
 
+{#if showHitEffect}
+  <div class="hit-effect" style="left: {x}px; top: {y}px;"></div>
+{/if}
+
 {#each bullets as bullet (bullet.id)}
   <div
     class="bullet absolute pointer-events-none"
@@ -335,6 +343,30 @@
 
   img.ship.invincible {
     filter: drop-shadow(0 0 20px rgba(0, 255, 255, 1));
+  }
+
+  .hit-effect {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    pointer-events: none;
+    border: 4px solid rgba(255, 50, 50, 0.8);
+    border-radius: 50%;
+    animation: hit-pulse 0.3s ease-out;
+    z-index: 10;
+  }
+
+  @keyframes hit-pulse {
+    0% {
+      transform: scale(0.8);
+      opacity: 1;
+      box-shadow: 0 0 20px rgba(255, 50, 50, 1);
+    }
+    100% {
+      transform: scale(1.5);
+      opacity: 0;
+      box-shadow: 0 0 40px rgba(255, 50, 50, 0);
+    }
   }
 
   .bullet {
