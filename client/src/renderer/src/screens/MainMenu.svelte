@@ -2,7 +2,13 @@
   import Options from '../components/Options.svelte'
   import Loader from '../components/Loader.svelte'
   import { replicateLoadFunctions } from '../lib/utils'
-  import { navigateTo, toggleExit, toggleHighScore, toggleSettings } from '../stores/gameStore'
+  import {
+    navigateTo,
+    toggleExit,
+    toggleHelp,
+    toggleHighScore,
+    toggleSettings
+  } from '../stores/gameStore'
 
   import UserPill from '../components/UserPill.svelte'
 
@@ -24,11 +30,6 @@
       label: 'Settings',
       value: 'settings',
       onClick: () => toggleSettings()
-    },
-    {
-      label: 'Exit',
-      value: 'exit',
-      onClick: () => toggleExit()
     }
   ]
 
@@ -44,7 +45,27 @@
     <UserPill />
     <h1 class="title text-5xl uppercase glow-text float">Main Menu</h1>
 
-    <Options options={menuOptions} layout="vertical" gap="lg" select={handleMenuSelect} />
+    <Options
+      options={[
+        ...menuOptions,
+        window.electron
+          ? {
+              label: 'Exit',
+              value: 'exit',
+              onClick: () => toggleExit()
+            }
+          : {
+              label: 'Help Me',
+              value: 'help',
+              onClick: () => {
+                toggleHelp()
+              }
+            }
+      ].filter((x) => !!x)}
+      layout="vertical"
+      gap="lg"
+      select={handleMenuSelect}
+    />
 
     {#if load}
       <Loader

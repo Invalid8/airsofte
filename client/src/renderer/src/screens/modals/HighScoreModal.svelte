@@ -89,11 +89,15 @@
 </script>
 
 <div
-  class="high-score-modal w-full min-w-2xl max-w-2xl rounded-xl modal-bg p-6 pt-8 max-h-[80vh] flex flex-col"
+  class="high-score-modal w-full min-w-2xl max-w-2xl rounded-xl modal-bg flex flex-col max-h-[85vh]"
 >
-  <div class="content flex flex-col items-center justify-center gap-4 flex-shrink-0">
-    <h2 class="title text-2xl uppercase glow-text-2">Global Leaderboard</h2>
+  <!-- Fixed header section -->
+  <div class="modal-header flex-shrink-0 p-6 pb-4">
+    <h2 class="title text-2xl uppercase glow-text-2 text-center">Global Leaderboard</h2>
+  </div>
 
+  <!-- Scrollable content section -->
+  <div class="modal-body flex-1 overflow-y-auto px-6 pb-4 scroll">
     <div class="grid w-full gap-4">
       <div class="tab grid grid-cols-2 w-full gap-4">
         <button
@@ -118,11 +122,9 @@
         </button>
       </div>
 
-      <div
-        class="content border p-6 min-h-[200px] rounded-xl bg-black/30 overflow-y-auto scroll flex-1"
-      >
+      <div class="content border p-6 min-h-[200px] rounded-xl bg-black/30">
         {#if currentScores.length === 0}
-          <div class="empty-state flex flex-col items-center justify-center h-full min-h-[350px]">
+          <div class="empty-state flex flex-col items-center justify-center h-full min-h-[300px]">
             <div class="text-6xl mb-4 opacity-50">🏆</div>
             <p class="text-xl opacity-70">No high scores yet!</p>
             <p class="text-sm opacity-50 mt-2">Play some games to set records</p>
@@ -130,7 +132,7 @@
         {:else}
           <div class="scores-table">
             <div
-              class="table-header grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 pb-3 border-b-2 border-cyan-500/30 mb-4 font-bold text-sm"
+              class="table-header grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 pb-3 border-b-2 border-cyan-500/30 mb-4 font-bold text-sm sticky top-0 bg-black/50 backdrop-blur-sm z-10"
             >
               <div class="text-center">Rank</div>
               <div>Player</div>
@@ -178,7 +180,10 @@
         {/if}
       </div>
     </div>
+  </div>
 
+  <!-- Fixed footer section -->
+  <div class="modal-footer flex-shrink-0 p-6 pt-4">
     <Options options={modalOptions} layout="horizontal" gap="md" select={handleSelect} />
   </div>
 </div>
@@ -200,6 +205,25 @@
     box-shadow:
       0 0 40px rgba(0, 170, 255, 0.4),
       inset 0 0 60px rgba(0, 100, 200, 0.1);
+  }
+
+  /* Ensure scrollbar styling */
+  .modal-body::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .modal-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+
+  .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 170, 255, 0.5);
+    border-radius: 4px;
+  }
+
+  .modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 170, 255, 0.7);
   }
 
   .top-score {
