@@ -11,6 +11,38 @@ export type TacticalHintParams = {
   waveNumber: number
 }
 
+export type EnhancedTacticalHintParams = {
+  playerHealth: number
+  enemyTypes: string[]
+  playerWeapon: string
+  waveNumber: number
+  comboMultiplier?: number
+  activePowerUps?: string[]
+  sessionId: string
+}
+
+export type GameCommentaryParams = {
+  eventType:
+    | 'COMBO'
+    | 'NEAR_DEATH'
+    | 'BOSS_SPAWN'
+    | 'BOSS_DEFEAT'
+    | 'EPIC_KILL'
+    | 'WAVE_COMPLETE'
+    | 'POWER_UP'
+    | 'PERFECT_WAVE'
+  context: {
+    playerHealth?: number
+    comboMultiplier?: number
+    enemiesDefeated?: number
+    bossName?: string
+    waveNumber?: number
+    powerUpType?: string
+    streak?: number
+  }
+  sessionId: string
+}
+
 export type MissionReportParams = {
   missionName: string
   outcome: 'victory' | 'defeat'
@@ -97,6 +129,54 @@ export class GeminiApiClient {
     }
   }
 
+  async getEnhancedTacticalHint(params: EnhancedTacticalHintParams): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/tactical-hint`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params)
+      })
+
+      if (!response.ok) {
+        const error = (await response.json()) as ApiErrorResponse
+        throw new Error(error.error || 'Failed to get hint')
+      }
+
+      const result = (await response.json()) as TacticalHintResponse
+      return result.data.hint
+    } catch (error) {
+      console.error('Enhanced tactical hint error:', error)
+      return ''
+    }
+  }
+
+  async getGameCommentary(params: GameCommentaryParams): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/commentary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params)
+      })
+
+      if (!response.ok) {
+        const error = (await response.json()) as ApiErrorResponse
+        throw new Error(error.error || 'Failed to get commentary')
+      }
+
+      const result = (await response.json()) as {
+        data: { commentary: string; throttled?: boolean }
+      }
+      return result.data.throttled ? '' : result.data.commentary
+    } catch (error) {
+      console.error('Game commentary error:', error)
+      return ''
+    }
+  }
+
   async generateMissionReport(params: MissionReportParams): Promise<string> {
     try {
       const response = await fetch(`${this.baseUrl}/api/mission-report`, {
@@ -126,6 +206,18 @@ export class GeminiApiClient {
       const response = await fetch(`${this.baseUrl}/health`)
       return response.ok
     } catch {
+      return false
+    }
+  }
+
+  async cleanupSession(sessionId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/session/${sessionId}`, {
+        method: 'DELETE'
+      })
+      return response.ok
+    } catch (error) {
+      console.error('Session cleanup error:', error)
       return false
     }
   }

@@ -17,6 +17,8 @@
   import { objectiveTracker } from '../../lib/objectiveTracker'
   import { syncGameState, navigateTo, gameState } from '../../stores/gameStore'
   import type { Bullet, StoryMission } from '../../types/gameTypes'
+  import TacticalHints from '../TacticalHints.svelte'
+  import GameCommentary from '../GameCommentary.svelte'
 
   let {
     mode = 'QUICK_PLAY',
@@ -180,6 +182,11 @@
 
   {#if mode === 'STORY_MODE' && currentMission}
     <DialogueSystem mission={currentMission} />
+  {/if}
+
+  {#if mode === 'AI_MISSION' && currentMission}
+    <TacticalHints sessionId={'me'} />
+    <GameCommentary sessionId={'me'} />
   {/if}
 
   <div class="game-wrapper">
