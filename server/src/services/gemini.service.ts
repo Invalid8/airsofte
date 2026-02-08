@@ -25,7 +25,7 @@ export class GeminiService {
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.9,
         topK: 40,
@@ -322,17 +322,13 @@ Examples:
         const result = await this.model.generateContent(prompt);
         const response = result.response.text().trim();
 
-        if (response.length > 100) {
-          throw new Error("Hint too long, regenerating");
-        }
-
         context.recentEvents.push(`Hint given: ${response}`);
         if (context.recentEvents.length > 10) {
           context.recentEvents.shift();
         }
         context.lastActivity = Date.now();
 
-        return response;
+        return response.substring(0, 100);
       });
 
       return hint;
@@ -392,10 +388,6 @@ Examples:
         const result = await this.model.generateContent(prompt);
         const response = result.response.text().trim();
 
-        if (response.length > 120) {
-          throw new Error("Commentary too long, regenerating");
-        }
-
         sessionContext.recentEvents.push(`${eventType}: ${response}`);
         if (sessionContext.recentEvents.length > 8) {
           sessionContext.recentEvents.shift();
@@ -405,7 +397,7 @@ Examples:
 
         this.updatePlayerStyle(sessionContext, eventType, context);
 
-        return response;
+        return response.substring(0, 120);
       });
 
       return commentary;
@@ -526,11 +518,7 @@ Requirements:
       const result = await this.model.generateContent(prompt);
       const report = result.response.text().trim();
 
-      if (report.length > 500) {
-        throw new Error("Report too long, regenerating");
-      }
-
-      return report;
+      return report.substring(0, 500);
     } catch (error: any) {
       throw new Error(`Failed to generate report: ${error.message}`);
     }
