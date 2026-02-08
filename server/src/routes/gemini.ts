@@ -2,8 +2,9 @@ import { Router, Request, Response } from "express";
 import { GeminiService } from "../services/gemini.service";
 import type {
   GenerateMissionRequest,
-  TacticalHintRequest,
+  EnhancedTacticalHintRequest,
   MissionReportRequest,
+  GameEventCommentaryRequest,
   ApiResponse,
 } from "../types";
 
@@ -41,8 +42,6 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
         return;
       }
 
-      console.log("Generating mission:", params);
-
       const mission = await geminiService.generateMission(params);
 
       res.json({
@@ -51,7 +50,6 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
         timestamp: Date.now(),
       } as ApiResponse);
     } catch (error: any) {
-      console.error("Mission generation error:", error);
       res.status(500).json({
         success: false,
         error: error.message || "Failed to generate mission",
@@ -62,13 +60,14 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
 
   router.post("/tactical-hint", async (req: Request, res: Response) => {
     try {
-      const params: TacticalHintRequest = req.body;
+      const params: EnhancedTacticalHintRequest = req.body;
 
       if (
         typeof params.playerHealth !== "number" ||
         !Array.isArray(params.enemyTypes) ||
         !params.playerWeapon ||
-        typeof params.waveNumber !== "number"
+        typeof params.waveNumber !== "number" ||
+        !params.sessionId
       ) {
         res.status(400).json({
           success: false,
@@ -78,9 +77,7 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
         return;
       }
 
-      console.log("Generating tactical hint:", params);
-
-      const hint = await geminiService.getTacticalHint(params);
+      const hint = await geminiService.getEnhancedTacticalHint(params);
 
       res.json({
         success: true,
@@ -88,10 +85,70 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
         timestamp: Date.now(),
       } as ApiResponse);
     } catch (error: any) {
-      console.error("Tactical hint error:", error);
       res.status(500).json({
         success: false,
         error: error.message || "Failed to generate hint",
+        timestamp: Date.now(),
+      } as ApiResponse);
+    }
+  });
+
+  router.post("/commentary", async (req: Request, res: Response) => {
+    try {
+      const params: GameEventCommentaryRequest = req.body;
+
+      if (!params.eventType || !params.context || !params.sessionId) {
+        res.status(400).json({
+          success: false,
+          error: "Missing required parameters: eventType, context, sessionId",
+          timestamp: Date.now(),
+        } as ApiResponse);
+        return;
+      }
+
+      const validEvents = [
+        "COMBO",
+        "NEAR_DEATH",
+        "BOSS_SPAWN",
+        "BOSS_DEFEAT",
+        "EPIC_KILL",
+        "WAVE_COMPLETE",
+        "POWER_UP",
+        "PERFECT_WAVE",
+      ];
+
+      if (!validEvents.includes(params.eventType)) {
+        res.status(400).json({
+          success: false,
+          error: `Invalid eventType. Must be one of: ${validEvents.join(", ")}`,
+          timestamp: Date.now(),
+        } as ApiResponse);
+        return;
+      }
+
+      try {
+        const commentary = await geminiService.generateGameCommentary(params);
+
+        res.json({
+          success: true,
+          data: { commentary },
+          timestamp: Date.now(),
+        } as ApiResponse);
+      } catch (error: any) {
+        if (error.message === "THROTTLED") {
+          res.json({
+            success: true,
+            data: { commentary: "", throttled: true },
+            timestamp: Date.now(),
+          } as ApiResponse);
+          return;
+        }
+        throw error;
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || "Failed to generate commentary",
         timestamp: Date.now(),
       } as ApiResponse);
     }
@@ -125,12 +182,6 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
         return;
       }
 
-      console.log(
-        "Generating mission report:",
-        params.missionName,
-        params.outcome,
-      );
-
       const report = await geminiService.generateMissionReport(params);
 
       res.json({
@@ -139,10 +190,47 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
         timestamp: Date.now(),
       } as ApiResponse);
     } catch (error: any) {
-      console.error("Mission report error:", error);
       res.status(500).json({
         success: false,
         error: error.message || "Failed to generate report",
+        timestamp: Date.now(),
+      } as ApiResponse);
+    }
+  });
+
+  router.delete("/session/:sessionId", async (req: Request, res: Response) => {
+    try {
+      const { sessionId } = req.params;
+
+      if (!sessionId || typeof sessionId !== "string") {
+        res.status(400).json({
+          success: false,
+          error: "sessionId is required",
+          timestamp: Date.now(),
+        } as ApiResponse);
+        return;
+      }
+
+      if (!geminiService.hasSession(sessionId)) {
+        res.status(404).json({
+          success: false,
+          error: "Session not found",
+          timestamp: Date.now(),
+        } as ApiResponse);
+        return;
+      }
+
+      geminiService.cleanupSession(sessionId);
+
+      res.json({
+        success: true,
+        data: { message: "Session cleaned up" },
+        timestamp: Date.now(),
+      } as ApiResponse);
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: error.message || "Failed to cleanup session",
         timestamp: Date.now(),
       } as ApiResponse);
     }

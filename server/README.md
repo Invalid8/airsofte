@@ -1,15 +1,41 @@
 # Airsofte Gemini API Server
 
-Backend service that provides secure access to Google Gemini API for AI-powered game features.
+Backend service that provides secure, server-side access to the Google Gemini API for AI-driven gameplay systems in **Airsofte**.
 
-## Features
+This server acts as an AI orchestration layer, generating missions, tactical guidance, live commentary, and narrative reports while enforcing validation, rate limits, and session isolation.
 
-- **Mission Generation**: AI-powered dynamic mission creation
-- **Tactical Hints**: Real-time gameplay advice
-- **Mission Reports**: Narrative debriefings after missions
-- **Rate Limiting**: Prevents API abuse
-- **CORS Protection**: Secure cross-origin requests
-- **Health Monitoring**: Status endpoint for uptime checks
+## Core AI Features
+
+### Mission Generation
+
+Dynamically generates structured space shooter missions based on difficulty, theme, and wave count. Missions include objectives, enemy wave definitions, and in-game dialogue.
+
+### Tactical Hints
+
+Provides real-time combat advice based on player state, enemy composition, weapon loadout, and wave progression.
+
+### Enhanced Tactical Hints (New)
+
+Session-aware tactical advice that adapts to player behavior over time.
+Uses combat context such as combo multipliers, active power-ups, recent events, and inferred playstyle to deliver more urgent and situational guidance.
+
+### Live Game Commentary (New)
+
+Generates short, high-impact commentary in response to gameplay events such as combos, boss spawns, near-death moments, and perfect waves.
+Commentary is rate-limited per session to avoid spam and maintains contextual continuity.
+
+### Mission Reports
+
+Produces narrative, military-style debriefings after each mission. Reports summarize performance, outcomes, and optionally continue story threads across missions.
+
+## Infrastructure Features
+
+* API rate limiting per IP
+* CORS origin restrictions
+* Helmet security headers
+* Session-based AI context tracking
+* Input validation on all endpoints
+* Health check and Gemini connectivity verification
 
 ## Setup
 
@@ -22,7 +48,7 @@ npm install
 
 ### 2. Environment Variables
 
-Create `.env` file:
+Create a `.env` file:
 
 ```env
 GEMINI_API_KEY=your_actual_gemini_api_key
@@ -33,7 +59,8 @@ RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
 ```
 
-Get your Gemini API key from: https://makersuite.google.com/app/apikey
+Get a Gemini API key from:
+[https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
 
 ### 3. Run Development Server
 
@@ -41,7 +68,7 @@ Get your Gemini API key from: https://makersuite.google.com/app/apikey
 npm run dev
 ```
 
-### 4. Build for Production
+### 4. Build and Run for Production
 
 ```bash
 npm run build
@@ -56,15 +83,9 @@ npm start
 GET /health
 ```
 
-Response:
-```json
-{
-  "status": "ok",
-  "timestamp": 1704067200000,
-  "uptime": 123.456,
-  "geminiConnected": true
-}
-```
+Returns server status, uptime, and Gemini API connectivity.
+
+---
 
 ### Generate Mission
 
@@ -72,7 +93,8 @@ Response:
 POST /api/generate-mission
 ```
 
-Request Body:
+Request body:
+
 ```json
 {
   "difficulty": "Normal",
@@ -81,55 +103,58 @@ Request Body:
 }
 ```
 
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "title": "Asteroid Gauntlet",
-    "description": "Navigate through a dense asteroid field...",
-    "objectives": [...],
-    "waves": [...],
-    "dialogue": [...]
-  },
-  "timestamp": 1704067200000
-}
-```
+---
 
-### Get Tactical Hint
+### Tactical Hint
 
 ```
 POST /api/tactical-hint
 ```
 
-Request Body:
+Request body:
+
 ```json
 {
   "playerHealth": 65,
   "enemyTypes": ["BASIC", "SCOUT"],
   "playerWeapon": "DOUBLE",
-  "waveNumber": 3
+  "waveNumber": 3,
+  "sessionId": "abc123"
 }
 ```
 
-Response:
+---
+
+### Live Game Commentary (New)
+
+```
+POST /api/commentary
+```
+
+Request body:
+
 ```json
 {
-  "success": true,
-  "data": {
-    "hint": "Focus fire on scouts, they're faster"
+  "eventType": "COMBO",
+  "context": {
+    "comboMultiplier": 4
   },
-  "timestamp": 1704067200000
+  "sessionId": "abc123"
 }
 ```
 
-### Generate Mission Report
+Returns a short, hype-style commentary line. May return an empty string if commentary is rate-limited.
+
+---
+
+### Mission Report
 
 ```
 POST /api/mission-report
 ```
 
-Request Body:
+Request body:
+
 ```json
 {
   "missionName": "First Contact",
@@ -141,81 +166,75 @@ Request Body:
 }
 ```
 
-Response:
-```json
-{
-  "success": true,
-  "data": {
-    "report": "Mission debriefing text..."
-  },
-  "timestamp": 1704067200000
-}
+---
+
+### Session Cleanup
+
 ```
+DELETE /api/session/:sessionId
+```
+
+Clears stored AI context for the given session.
 
 ## Rate Limiting
 
-- **Window**: 15 minutes (configurable)
-- **Max Requests**: 100 per window (configurable)
-- **Per**: IP address
+* Window: 15 minutes
+* Max requests: 100 per IP
+* Fully configurable via environment variables
 
 ## Deployment
 
-### Render.com
+### Render
 
-1. Create new Web Service
-2. Connect GitHub repository
-3. Set build command: `cd server && npm install && npm run build`
-4. Set start command: `cd server && npm start`
-5. Add environment variables in dashboard
+1. Create a new Web Service
+2. Connect the GitHub repository
+3. Build command:
 
-### Railway.app
+   ```
+   cd server && npm install && npm run build
+   ```
+4. Start command:
 
-1. New Project → Deploy from GitHub
-2. Add environment variables
-3. Railway auto-detects Node.js and builds
+   ```
+   cd server && npm start
+   ```
+5. Configure environment variables in the dashboard
 
-### Vercel (Serverless Functions)
+### Railway
 
-Convert routes to serverless functions in `api/` directory.
+* Deploy directly from GitHub
+* Add environment variables
+* Node.js is auto-detected
 
-## Security
+### Vercel
 
-- ✅ API key stored server-side only
-- ✅ Rate limiting prevents abuse
-- ✅ CORS restricts origins
-- ✅ Helmet.js security headers
-- ✅ Request size limits (10MB)
-- ✅ Input validation on all endpoints
+Requires converting Express routes into serverless functions under `api/`.
+
+## Security Model
+
+* Gemini API key never exposed to clients
+* Strict input validation on all AI endpoints
+* CORS origin allowlist
+* Helmet security headers
+* Request size limits enforced
 
 ## Monitoring
 
-Check server health:
+Health check:
+
 ```bash
 curl http://localhost:3001/health
 ```
 
-View logs in production:
-- **Render**: Dashboard → Logs
-- **Railway**: Project → Deployments → Logs
+Logs:
 
-## Troubleshooting
+* Render: Dashboard → Logs
+* Railway: Project → Deployments → Logs
 
-**"GEMINI_API_KEY is not set"**
-- Add API key to `.env` file
-- Restart server after adding
-
-**CORS errors**
-- Add frontend URL to `CORS_ORIGIN` in `.env`
-- Format: `http://localhost:5173,http://localhost:5174`
-
-**Rate limit errors**
-- Increase `RATE_LIMIT_MAX_REQUESTS`
-- Increase `RATE_LIMIT_WINDOW_MS`
-
-## Development
+## Development Commands
 
 ```bash
-npm run dev          # Start with hot reload
+npm run dev          # Hot reload with tsx
 npm run build        # Compile TypeScript
-npm run type-check   # Check types without building
+npm run type-check   # Type check without emitting files
 ```

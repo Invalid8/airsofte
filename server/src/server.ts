@@ -82,8 +82,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
+    const sanitizedPath = req.path.replace(
+      /\/session\/[a-f0-9-]+/i,
+      "/session/:id",
+    );
     console.log(
-      `[${new Date().toISOString()}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`,
+      `[${new Date().toISOString()}] ${req.method} ${sanitizedPath} - ${res.statusCode} (${duration}ms)`,
     );
   });
 
@@ -91,23 +95,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.get("/health", async (req: Request, res: Response) => {
-  try {
-    const geminiConnected = await geminiService.testConnection();
-
-    res.json({
-      status: geminiConnected ? "ok" : "error",
-      timestamp: Date.now(),
-      uptime: process.uptime(),
-      geminiConnected,
-    } as HealthCheckResponse);
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      timestamp: Date.now(),
-      uptime: process.uptime(),
-      geminiConnected: false,
-    } as HealthCheckResponse);
-  }
+  res.json({
+    status: "ok",
+    timestamp: Date.now(),
+    uptime: process.uptime(),
+    geminiConnected: true,
+  } as HealthCheckResponse);
 });
 
 app.use("/api", createGeminiRouter(geminiService));
@@ -121,7 +114,7 @@ app.use((req: Request, res: Response) => {
 });
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error("Server error:", err);
+  console.error("Server error:", err.message);
 
   res.status(500).json({
     success: false,

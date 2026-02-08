@@ -62,6 +62,16 @@ export interface TacticalHintRequest {
   waveNumber: number;
 }
 
+export interface EnhancedTacticalHintRequest {
+  playerHealth: number;
+  enemyTypes: string[];
+  playerWeapon: string;
+  waveNumber: number;
+  comboMultiplier?: number;
+  activePowerUps?: string[];
+  sessionId: string;
+}
+
 export interface MissionReportRequest {
   missionName: string;
   outcome: "victory" | "defeat";
@@ -69,6 +79,28 @@ export interface MissionReportRequest {
   enemiesDefeated: number;
   damageTaken: number;
   previousReports?: string[];
+}
+
+export interface GameEventCommentaryRequest {
+  eventType:
+    | "COMBO"
+    | "NEAR_DEATH"
+    | "BOSS_SPAWN"
+    | "BOSS_DEFEAT"
+    | "EPIC_KILL"
+    | "WAVE_COMPLETE"
+    | "POWER_UP"
+    | "PERFECT_WAVE";
+  context: {
+    playerHealth?: number;
+    comboMultiplier?: number;
+    enemiesDefeated?: number;
+    bossName?: string;
+    waveNumber?: number;
+    powerUpType?: string;
+    streak?: number;
+  };
+  sessionId: string;
 }
 
 export interface ApiResponse<T = any> {
