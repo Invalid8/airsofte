@@ -3,9 +3,12 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import dotenv from "dotenv";
+import swaggerUi from "swagger-ui-express";
 import { GeminiService } from "./services/gemini.service";
 import { createGeminiRouter } from "./routes/gemini";
-import type { HealthCheckResponse, ApiResponse } from "./types";
+import { createHealthRouter } from "./routes/health";
+import { swaggerSpec } from "./config/swagger";
+import type { ApiResponse } from "./types";
 
 dotenv.config();
 
@@ -40,6 +43,8 @@ app.use(
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
@@ -94,15 +99,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-app.get("/health", async (req: Request, res: Response) => {
-  res.json({
-    status: "ok",
-    timestamp: Date.now(),
-    uptime: process.uptime(),
-    geminiConnected: true,
-  } as HealthCheckResponse);
-});
-
+app.use("/", createHealthRouter());
 app.use("/api", createGeminiRouter(geminiService));
 
 app.use((req: Request, res: Response) => {
@@ -136,4 +133,5 @@ app.listen(PORT, () => {
   console.log("✅ Server is ready to accept requests");
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`📍 API endpoint: http://localhost:${PORT}/api/*`);
+  console.log(`📚 API docs: http://localhost:${PORT}/api-docs`);
 });

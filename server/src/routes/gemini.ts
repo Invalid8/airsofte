@@ -11,6 +11,40 @@ import type {
 export function createGeminiRouter(geminiService: GeminiService): Router {
   const router = Router();
 
+  /**
+   * @openapi
+   * /api/generate-mission:
+   *   post:
+   *     tags:
+   *       - Mission
+   *     summary: Generate a new mission
+   *     description: Creates a procedurally generated space shooter mission with waves, enemies, objectives, and dialogue
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/GenerateMissionRequest'
+   *     responses:
+   *       200:
+   *         description: Mission generated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   $ref: '#/components/schemas/GeneratedMission'
+   *                 timestamp:
+   *                   type: number
+   *       400:
+   *         description: Invalid parameters
+   *       500:
+   *         description: Generation failed
+   */
   router.post("/generate-mission", async (req: Request, res: Response) => {
     try {
       const params: GenerateMissionRequest = req.body;
@@ -58,6 +92,44 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
     }
   });
 
+  /**
+   * @openapi
+   * /api/tactical-hint:
+   *   post:
+   *     tags:
+   *       - Gameplay
+   *     summary: Get tactical hint
+   *     description: Generates context-aware tactical advice based on current game state
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/TacticalHintRequest'
+   *     responses:
+   *       200:
+   *         description: Hint generated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     hint:
+   *                       type: string
+   *                       example: "Focus fire on scouts first, they're fast!"
+   *                 timestamp:
+   *                   type: number
+   *       400:
+   *         description: Invalid parameters
+   *       500:
+   *         description: Generation failed
+   */
   router.post("/tactical-hint", async (req: Request, res: Response) => {
     try {
       const params: EnhancedTacticalHintRequest = req.body;
@@ -93,6 +165,47 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
     }
   });
 
+  /**
+   * @openapi
+   * /api/commentary:
+   *   post:
+   *     tags:
+   *       - Gameplay
+   *     summary: Generate game commentary
+   *     description: Creates dynamic commentary for gameplay events (combos, near-death, boss encounters, etc.)
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/CommentaryRequest'
+   *     responses:
+   *       200:
+   *         description: Commentary generated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     commentary:
+   *                       type: string
+   *                       example: "INSANE! Five enemies eliminated in three seconds! 🔥"
+   *                     throttled:
+   *                       type: boolean
+   *                       example: false
+   *                 timestamp:
+   *                   type: number
+   *       400:
+   *         description: Invalid parameters
+   *       500:
+   *         description: Generation failed
+   */
   router.post("/commentary", async (req: Request, res: Response) => {
     try {
       const params: GameEventCommentaryRequest = req.body;
@@ -154,6 +267,44 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
     }
   });
 
+  /**
+   * @openapi
+   * /api/mission-report:
+   *   post:
+   *     tags:
+   *       - Mission
+   *     summary: Generate mission report
+   *     description: Creates a military-style debriefing report based on mission outcome
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/MissionReportRequest'
+   *     responses:
+   *       200:
+   *         description: Report generated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     report:
+   *                       type: string
+   *                       example: "Mission Operation Starfall concluded with decisive victory..."
+   *                 timestamp:
+   *                   type: number
+   *       400:
+   *         description: Invalid parameters
+   *       500:
+   *         description: Generation failed
+   */
   router.post("/mission-report", async (req: Request, res: Response) => {
     try {
       const params: MissionReportRequest = req.body;
@@ -198,6 +349,47 @@ export function createGeminiRouter(geminiService: GeminiService): Router {
     }
   });
 
+  /**
+   * @openapi
+   * /api/session/{sessionId}:
+   *   delete:
+   *     tags:
+   *       - Session
+   *     summary: Delete session
+   *     description: Cleans up session context and frees memory
+   *     parameters:
+   *       - in: path
+   *         name: sessionId
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Session identifier
+   *     responses:
+   *       200:
+   *         description: Session deleted successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 data:
+   *                   type: object
+   *                   properties:
+   *                     message:
+   *                       type: string
+   *                       example: "Session cleaned up"
+   *                 timestamp:
+   *                   type: number
+   *       400:
+   *         description: Invalid session ID
+   *       404:
+   *         description: Session not found
+   *       500:
+   *         description: Cleanup failed
+   */
   router.delete("/session/:sessionId", async (req: Request, res: Response) => {
     try {
       const { sessionId } = req.params;
