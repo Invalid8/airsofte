@@ -38,6 +38,8 @@
   let showBriefing = $state(false)
   let missionStarted = $state(false)
 
+  let sessionId = $state('')
+
   function handleGameOver(event): void {
     if (gameEnded) return
     gameEnded = true
@@ -94,6 +96,7 @@
   }
 
   onMount(() => {
+    sessionId = crypto.randomUUID()
     if (mode === 'STORY_MODE') {
       const missionId = $gameState.currentMissionId || 1
       currentMission = storyMissionManager.getMissionById(missionId)
@@ -184,11 +187,6 @@
     <DialogueSystem mission={currentMission} />
   {/if}
 
-  {#if mode === 'AI_MISSION' && currentMission}
-    <TacticalHints sessionId={'me'} />
-    <GameCommentary sessionId={'me'} />
-  {/if}
-
   <div class="game-wrapper">
     <div class="game-container" bind:this={game_pad}>
       {#if game_pad}
@@ -198,6 +196,8 @@
         <ScorePopup />
         <PlayerPlane {game_pad} bind:bullets={playerBullets} bind:x={playerX} bind:y={playerY} />
         <EnemyPlane {game_pad} bind:playerBullets {playerX} {playerY} />
+        <TacticalHints {sessionId} />
+        <GameCommentary {sessionId} />
       {/if}
     </div>
   </div>

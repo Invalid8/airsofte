@@ -143,7 +143,7 @@
     out:fade={{ duration: 300 }}
   >
     <div
-      class="commentary-card bg-black/95 border-2 border-yellow-500 rounded-lg p-6 shadow-2xl text-center"
+      class="commentary-card bg-black/60 border-2 border-yellow-500 rounded-lg p-6 shadow-2xl text-center"
     >
       <div class="commentary-text text-2xl font-bold leading-tight">
         {currentCommentary}

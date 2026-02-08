@@ -6,10 +6,14 @@
   import { StorageManager } from '../utils/storageManager'
   import { currentUser } from '../utils/userManager'
   import { formatNumberWithCommas } from '../lib/utils'
+  import MissionReport from '../components/MissionReport.svelte'
 
   let isHighScore = $state(false)
   let rank = $state(0)
   let stats = $derived($gameState.session)
+
+  let showMissionReport = $state(true)
+  let previousReports = $state<string[]>([])
 
   onMount(() => {
     const finalScore = $gameState.score
@@ -20,12 +24,10 @@
       const scores = StorageManager.getHighScores(userId)
       const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
 
-      // Find this user's current high score
       const userScores = scoreList.filter((s) => s.name === $currentUser.username)
       const currentUserHighScore =
         userScores.length > 0 ? Math.max(...userScores.map((s) => s.score)) : 0
 
-      // Only mark as high score if this beats YOUR previous best
       if (finalScore > currentUserHighScore) {
         isHighScore = true
         const position = scoreList.filter((s) => s.score > finalScore).length
@@ -35,7 +37,20 @@
         gameManager.saveHighScore(playerName, userId)
       }
     }
+
+    const stored = localStorage.getItem('missionReports')
+    if (stored) {
+      try {
+        previousReports = JSON.parse(stored)
+      } catch (e) {
+        previousReports = []
+      }
+    }
   })
+
+  function handleReportClose() {
+    showMissionReport = false
+  }
 
   function handleRestart(): void {
     gameManager.isPlaying = false
@@ -89,6 +104,10 @@
     const seconds = Math.floor((milliseconds % 60000) / 1000)
     return `${minutes}:${String(seconds).padStart(2, '0')}`
   }
+
+  const missionName = $derived('Mission ' + ($gameState.currentMissionId || 1))
+  const isVictory = $derived((stats?.currentWave ?? 0) >= 10)
+  const damageTaken = $derived(100 - (gameManager.player?.health || 0))
 </script>
 
 <div
@@ -140,6 +159,18 @@
     <Options options={gameOverOptions} layout="horizontal" gap="md" select={handleSelect} />
   </div>
 </div>
+
+{#if showMissionReport}
+  <MissionReport
+    {missionName}
+    outcome={isVictory ? 'victory' : 'defeat'}
+    score={$gameState.score}
+    enemiesDefeated={stats?.enemiesDefeated ?? 0}
+    {damageTaken}
+    {previousReports}
+    onClose={handleReportClose}
+  />
+{/if}
 
 <style>
   .gameover-screen {
