@@ -72,7 +72,7 @@
 </script>
 
 <DeviceWarning>
-  <main class="{$gameState.theme === 'Dark' ? 'dark-theme' : 'light-theme'} app-container">
+  <main class="{$gameState.theme === 'Dark' ? 'dark-theme' : 'light-theme'} app-container scroll">
     {#if showUserSelection}
       <UserSelectionScreen />
     {:else if $gameState.route === 'STARTUP'}

@@ -1,4 +1,5 @@
 import type { StoryMission, WeaponType } from '../types/gameTypes'
+import { storyMissionManager } from './storyMissionData'
 
 export type Achievement = {
   id: string
@@ -193,6 +194,9 @@ export class ProgressionSystem {
       this.unlockWeapon(mission.rewards.unlockWeapon)
     }
 
+    storyMissionManager.completeMission(mission.id, stars)
+    storyMissionManager.unlockMission(mission.id + 1)
+
     this.checkAchievements(mission, stats, stars)
     this.saveProgression()
   }
@@ -235,6 +239,7 @@ export class ProgressionSystem {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private checkAchievements(mission: StoryMission, stats: any, stars: number): void {
     // const achievements = this.progression.achievements
 

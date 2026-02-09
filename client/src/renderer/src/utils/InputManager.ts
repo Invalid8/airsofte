@@ -97,7 +97,11 @@ class InputManager {
       return
     }
 
-    if (this.currentRoute === 'QUICK_PLAY' || this.currentRoute === 'STORY_MODE_PLAY') {
+    if (
+      this.currentRoute === 'QUICK_PLAY' ||
+      this.currentRoute === 'STORY_MODE_PLAY' ||
+      this.currentRoute === 'AI_MISSION_PLAY'
+    ) {
       if (gameManager.isPlaying && !gameManager.isPaused) {
         gameManager.pauseGame()
         gameState.update((state) => ({

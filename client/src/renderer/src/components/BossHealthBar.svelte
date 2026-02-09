@@ -21,9 +21,7 @@
   }
 
   function handleBossDefeated(): void {
-    setTimeout(() => {
-      bossEnemy = null
-    }, 2000)
+    bossEnemy = null
   }
 
   let unsubSpawn: (() => void) | null = null

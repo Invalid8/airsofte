@@ -700,7 +700,7 @@ export class GameManager {
     setTimeout(() => {
       this.waveCompleting = false
       this.nextWave()
-    }, 2500)
+    }, 3000)
   }
 
   private nextWave(): void {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
   import { geminiApiClient } from '../utils/geminiApiClient'
   import Button from '../components/Button.svelte'
   import { navigateTo } from '../stores/gameStore'
@@ -7,25 +8,71 @@
   import { fly } from 'svelte/transition'
   import BackBtn from '../components/BackBtn.svelte'
 
+  const MAX_GENERATIONS_PER_HOUR = 5
+  const RATE_LIMIT_KEY = 'ai_mission_generation_history'
+
+  type GenerationRecord = {
+    timestamp: number
+  }
+
   let difficulty = $state<'Easy' | 'Normal' | 'Hard'>('Normal')
   let theme = $state('')
   let waveCount = $state(3)
   let isGenerating = $state(false)
   let error = $state<string | null>(null)
   let generatedMission = $state<StoryMission | null>(null)
+  let remainingGenerations = $state(MAX_GENERATIONS_PER_HOUR)
+
+  function getGenerationHistory(): GenerationRecord[] {
+    const stored = localStorage.getItem(RATE_LIMIT_KEY)
+    if (!stored) return []
+    try {
+      const history = JSON.parse(stored) as GenerationRecord[]
+      const oneHourAgo = Date.now() - 60 * 60 * 1000
+      return history.filter((record) => record.timestamp > oneHourAgo)
+    } catch {
+      return []
+    }
+  }
+
+  function saveGenerationHistory(history: GenerationRecord[]): void {
+    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(history))
+  }
+
+  function canGenerate(): boolean {
+    const history = getGenerationHistory()
+    return history.length < MAX_GENERATIONS_PER_HOUR
+  }
+
+  function recordGeneration(): void {
+    const history = getGenerationHistory()
+    history.push({ timestamp: Date.now() })
+    saveGenerationHistory(history)
+    updateRemainingGenerations()
+  }
+
+  function updateRemainingGenerations(): void {
+    const history = getGenerationHistory()
+    remainingGenerations = MAX_GENERATIONS_PER_HOUR - history.length
+  }
 
   async function handleGenerate() {
+    if (!canGenerate()) {
+      error = `Rate limit reached. You can generate ${MAX_GENERATIONS_PER_HOUR} missions per hour. Please try again later.`
+      return
+    }
+
     if (isGenerating) return
     isGenerating = true
     error = null
     generatedMission = null
 
     try {
-      const missionData = await geminiApiClient.generateMission({
+      const missionData = (await geminiApiClient.generateMission({
         difficulty,
         theme: theme || undefined,
         waveCount
-      })
+      })) as StoryMission
 
       const nextId = 1000 + Date.now()
 
@@ -48,6 +95,8 @@
         dialogue: missionData.dialogue,
         hasBoss: false
       }
+
+      recordGeneration()
     } catch (err: any) {
       error = err.message
     } finally {
@@ -62,6 +111,10 @@
 
     navigateTo('AI_MISSION_PLAY')
   }
+
+  onMount(() => {
+    updateRemainingGenerations()
+  })
 </script>
 
 <div class="mission-creator-screen">
@@ -71,6 +124,9 @@
     <div class="header">
       <h1 class="title">AI Mission Generator</h1>
       <p class="subtitle">Create custom missions powered by AI</p>
+      <div class="rate-limit-info">
+        {remainingGenerations} / {MAX_GENERATIONS_PER_HOUR} generations remaining this hour
+      </div>
     </div>
 
     <div class="generator-section">
@@ -205,9 +261,13 @@
 
         <div class="generate-action">
           <Button
-            label={isGenerating ? 'Generating Mission...' : 'Generate Mission'}
+            label={isGenerating
+              ? 'Generating Mission...'
+              : canGenerate()
+                ? 'Generate Mission'
+                : 'Rate Limit Reached'}
             onClick={handleGenerate}
-            disabled={isGenerating}
+            disabled={isGenerating || !canGenerate()}
             isFirst={true}
           />
         </div>
@@ -929,5 +989,16 @@
       width: 40px;
       height: 40px;
     }
+  }
+
+  .rate-limit-info {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    opacity: 0.7;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 170, 255, 0.1);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0, 170, 255, 0.3);
+    text-align: center;
   }
 </style>

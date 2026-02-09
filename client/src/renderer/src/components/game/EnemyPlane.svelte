@@ -198,7 +198,24 @@
       const lastCollision = enemyCollisionCooldowns.get(enemyId) || 0
       if (now - lastCollision < 500) return
 
-      if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
+      if (gameManager.player.shieldActive) {
+        gameManager.player.shieldActive = false
+        gameManager.player.shieldDuration = 0
+        gameManager.player.shieldStartTime = 0
+        gameEvents.emit('SHIELD_BLOCKED_HIT', { damage: 0 })
+
+        const timer = gameManager['activePowerUpTimers']?.get('shield')
+        if (timer?.timeoutId) {
+          clearTimeout(timer.timeoutId)
+        }
+        gameManager['activePowerUpTimers']?.delete('shield')
+
+        particleSystem.createExplosion(playerX + 75, playerY + 75, 20, '#0088ff')
+        ScreenEffects.flash('rgba(0, 136, 255, 0.3)', 0.15)
+        return
+      }
+
+      if (!gameManager.player.invincible) {
         enemyCollisionCooldowns.set(enemyId, now)
 
         if (isBoss) {

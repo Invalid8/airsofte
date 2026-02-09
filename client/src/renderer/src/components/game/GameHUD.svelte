@@ -263,8 +263,11 @@
         class:timer-low={isTimerLow}
         class:timer-critical={isTimerCritical}
       >
-        <div class="timer-label">TIME REMAINING</div>
-        <div class="timer-value hud">{formatSurviveTime(surviveTimeRemaining)}</div>
+        <div class="timer-icon">⏱️</div>
+        <div class="timer-content">
+          <div class="timer-label">Survival Time</div>
+          <div class="timer-value hud">{formatSurviveTime(surviveTimeRemaining)}</div>
+        </div>
       </div>
     {/if}
 
@@ -376,49 +379,89 @@
   }
 
   .timer-display-desktop {
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid rgba(0, 170, 255, 0.6);
-    border-radius: 8px;
-    padding: 12px 24px;
-    text-align: center;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid rgba(0, 170, 255, 0.7);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    backdrop-filter: blur(12px);
+    box-shadow:
+      0 0 25px rgba(0, 170, 255, 0.4),
+      inset 0 0 20px rgba(0, 170, 255, 0.1);
+  }
+
+  .timer-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 8px rgba(0, 170, 255, 0.8));
+  }
+
+  .timer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
   }
 
   .timer-label {
     font-family: 'Orbitron', sans-serif;
     font-size: 0.75rem;
-    opacity: 0.7;
+    opacity: 0.8;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     color: #00aaff;
-    margin-bottom: 0.25rem;
   }
 
   .timer-value {
     font-size: 2rem;
     font-weight: bold;
     color: #00aaff;
+    letter-spacing: 2px;
   }
 
   .timer-display-desktop.timer-low {
-    border-color: rgba(255, 165, 0, 0.8);
-    animation: pulse-orange 1s ease-in-out infinite;
+    border-color: rgba(255, 165, 0, 0.9);
+    box-shadow:
+      0 0 30px rgba(255, 165, 0, 0.5),
+      inset 0 0 25px rgba(255, 165, 0, 0.15);
   }
 
   .timer-display-desktop.timer-low .timer-value,
-  .timer-display-desktop.timer-low .timer-label {
+  .timer-display-desktop.timer-low .timer-label,
+  .timer-display-desktop.timer-low .timer-icon {
     color: #ffa500;
+    filter: drop-shadow(0 0 8px rgba(255, 165, 0, 0.8));
   }
 
   .timer-display-desktop.timer-critical {
     border-color: rgba(255, 0, 0, 1);
-    animation: pulse-red 0.5s ease-in-out infinite;
+    animation: critical-pulse 0.5s ease-in-out infinite;
+    box-shadow:
+      0 0 40px rgba(255, 0, 0, 0.7),
+      inset 0 0 30px rgba(255, 0, 0, 0.2);
   }
 
   .timer-display-desktop.timer-critical .timer-value,
-  .timer-display-desktop.timer-critical .timer-label {
+  .timer-display-desktop.timer-critical .timer-label,
+  .timer-display-desktop.timer-critical .timer-icon {
     color: #ff0000;
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 1));
+  }
+
+  @keyframes critical-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow:
+        0 0 40px rgba(255, 0, 0, 0.7),
+        inset 0 0 30px rgba(255, 0, 0, 0.2);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow:
+        0 0 50px rgba(255, 0, 0, 0.9),
+        inset 0 0 40px rgba(255, 0, 0, 0.3);
+    }
   }
 
   .timer-display-mobile {

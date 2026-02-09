@@ -18,6 +18,7 @@
   import { objectiveTracker } from '../../lib/objectiveTracker'
   import { syncGameState, navigateTo, gameState } from '../../stores/gameStore'
   import type { Bullet, StoryMission } from '../../types/gameTypes'
+  import ShieldEffect from './ShieldEffect.svelte'
 
   let {
     mode = 'QUICK_PLAY',
@@ -236,6 +237,7 @@
         <PowerUps {game_pad} {playerX} {playerY} />
         <ScorePopup />
         <PlayerPlane {game_pad} bind:bullets={playerBullets} bind:x={playerX} bind:y={playerY} />
+        <ShieldEffect x={playerX + 75} y={playerY + 75} />
         <EnemyPlane {game_pad} bind:playerBullets {playerX} {playerY} />
       {/if}
     </div>
