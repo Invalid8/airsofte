@@ -10,7 +10,7 @@ import { gameEvents } from './eventBus'
 import { storyMissionManager } from './storyMissionData'
 import { aiMissionStore } from '../stores/aiMissionStore'
 
-type GameMode = 'QUICK_PLAY' | 'STORY_MODE' | 'AI_MISSION'
+type GameMode = 'QUICK_PLAY' | 'STORY_MODE' | 'AI_MISSION_PLAY'
 
 type PowerUpTimer = {
   type: 'shield' | 'weapon' | 'speed'
@@ -123,12 +123,12 @@ export class GameManager {
     this.resetSession()
     this.resetPlayer()
 
-    if (mode === 'STORY_MODE' || mode === 'AI_MISSION') {
+    if (mode === 'STORY_MODE' || mode === 'AI_MISSION_PLAY') {
       if (!missionId) {
         throw new Error('Mission ID required for story/AI missions')
       }
 
-      if (mode === 'AI_MISSION') {
+      if (mode === 'AI_MISSION_PLAY') {
         const mission = aiMissionStore.getMission()
         if (mission) {
           if (mission?.objectives.some((obj) => obj.type === 'SURVIVE')) {

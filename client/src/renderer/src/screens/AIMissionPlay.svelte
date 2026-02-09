@@ -9,7 +9,7 @@
     const mission = aiMissionStore.getMission()
 
     if (!mission) {
-      navigateTo('AI_MISSIONS')
+      navigateTo('AI_MISSION')
       return null
     }
 

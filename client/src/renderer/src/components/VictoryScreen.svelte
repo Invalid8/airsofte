@@ -48,7 +48,7 @@
       calculateMissionStars()
     }
 
-    if ($currentUser && mode !== 'AI_MISSION') {
+    if ($currentUser && mode !== 'AI_MISSION_PLAY') {
       const userId = $currentUser.id
       const scores = StorageManager.getHighScores(userId)
       const scoreList = mode === 'QUICK_PLAY' ? scores.quickPlay : scores.storyMode
@@ -112,9 +112,9 @@
 
     if (gameManager.mode === 'STORY_MODE') {
       navigateTo('STORY_MODE_MENU')
-    } else if (gameManager.mode === 'AI_MISSION') {
+    } else if (gameManager.mode === 'AI_MISSION_PLAY') {
       aiMissionStore.clear()
-      navigateTo('AI_MISSIONS')
+      navigateTo('AI_MISSION')
     } else {
       navigateTo('MAIN_MENU')
     }
@@ -142,11 +142,11 @@
         setTimeout(() => {
           gameManager.startGame('STORY_MODE', gameManager.difficulty, missionId)
         }, 100)
-      } else if (gameManager.mode === 'AI_MISSION') {
+      } else if (gameManager.mode === 'AI_MISSION_PLAY') {
         navigateTo('AI_MISSION_PLAY')
         setTimeout(() => {
           const missionId = $gameState.currentMissionId || Date.now()
-          gameManager.startGame('AI_MISSION', gameManager.difficulty, missionId)
+          gameManager.startGame('AI_MISSION_PLAY', gameManager.difficulty, missionId)
         }, 100)
       } else {
         navigateTo('QUICK_PLAY')
@@ -190,7 +190,7 @@
           ]
     }
 
-    if (mode === 'AI_MISSION') {
+    if (mode === 'AI_MISSION_PLAY') {
       return [
         {
           label: 'New Mission',

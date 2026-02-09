@@ -85,7 +85,7 @@
       <GameScreen />
     {:else if $gameState.route === 'QUICK_PLAY'}
       <QuickPlay />
-    {:else if $gameState.route === 'AI_MISSIONS'}
+    {:else if $gameState.route === 'AI_MISSION'}
       <GeminiMissionCreator />
     {:else if $gameState.route === 'AI_MISSION_PLAY'}
       <AIMissionPlay />

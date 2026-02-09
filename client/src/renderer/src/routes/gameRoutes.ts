@@ -12,7 +12,7 @@ export type GameRoute =
   | 'STORY_MODE_PLAY'
   | 'DEBUG'
   | 'EXIT'
-  | 'AI_MISSIONS'
+  | 'AI_MISSION'
   | 'AI_MISSION_PLAY'
 
 export type GameDifficulty = 'Easy' | 'Normal' | 'Hard'

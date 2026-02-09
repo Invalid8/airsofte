@@ -28,11 +28,11 @@
       }
     },
     {
-      label: 'AI Missions',
-      value: 'ai_missions',
+      label: 'AI Mission',
+      value: 'ai_mission',
       onClick: () => {
         load = true
-        loadFunction = () => navigateTo('AI_MISSIONS')
+        loadFunction = () => navigateTo('AI_MISSION')
       }
     },
     {

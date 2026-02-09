@@ -144,7 +144,7 @@ export type HighScore = {
   wave: number
   difficulty: GameDifficulty
   date: number
-  mode: 'QUICK_PLAY' | 'STORY_MODE' | 'AI_MISSION'
+  mode: 'QUICK_PLAY' | 'STORY_MODE' | 'AI_MISSION_PLAY'
 }
 
 export type MissionStars = 0 | 1 | 2 | 3 | number

@@ -27,7 +27,7 @@ export class GeminiService {
     this.genAI = new GoogleGenerativeAI(apiKey);
 
     this.model = this.genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-",
       generationConfig: {
         temperature: 0.9,
         topK: 40,
@@ -38,7 +38,7 @@ export class GeminiService {
     });
 
     this.textModel = this.genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-",
       generationConfig: {
         temperature: 0.9,
         topK: 40,
@@ -72,25 +72,38 @@ export class GeminiService {
   ): Promise<GeneratedMission> {
     const { difficulty, theme, waveCount } = params;
 
+    const enemyRanges = {
+      Easy: { min: 4, max: 6 },
+      Normal: { min: 7, max: 10 },
+      Hard: { min: 11, max: 15 }
+    };
+    const range = enemyRanges[difficulty];
+
     const prompt = `Generate a space shooter mission with these parameters:
 - Difficulty: ${difficulty}
 - Theme: ${theme || "generic space combat"}
 - Number of waves: ${waveCount}
 
-Generate a mission following this exact structure with these rules:
-
-CONSTRAINTS:
+CRITICAL CONSTRAINTS:
 - Enemy types: BASIC, SCOUT, BOMBER only (NO BOSS)
 - Patterns: STRAIGHT, WAVE, ZIGZAG, CIRCLE, CHASE, TELEPORT only
 - Objective types: DESTROY, SURVIVE, COLLECT, COMBO only
 - Dialogue timing: START, MID, END
 - Wave count must be exactly ${waveCount}
-- For ${difficulty}: Easy = 4-6 total enemies per wave, Normal = 7-10 total enemies per wave, Hard = 11-15 total enemies per wave
 - spawnDelay: 500-1200ms
 - spawnInterval: 800-1500ms
 - Include 2-3 objectives
 - Include exactly 3 dialogue entries (one START, one MID, one END)
 - Make the mission thematic and engaging based on "${theme || "space combat"}"
+
+ENEMY COUNT PER WAVE (MOST IMPORTANT):
+For difficulty ${difficulty}, EACH wave must have between ${range.min} and ${range.max} TOTAL enemies.
+This is the sum of ALL enemy counts in a wave.
+Example for ${difficulty}:
+- Wave with 3 BASIC (count: 2) + 2 SCOUT (count: 3) = 5 TOTAL (INVALID if < ${range.min})
+- Wave with 2 BASIC (count: 3) + 1 SCOUT (count: 5) = 8 TOTAL (VALID for ${difficulty})
+- Wave with 1 BASIC (count: ${range.min}) = ${range.min} TOTAL (VALID)
+DO NOT exceed ${range.max} total enemies per wave!
 
 Return a JSON object with this structure:
 {
@@ -498,35 +511,44 @@ Examples:
       previousReports,
     } = params;
 
-    const prompt = `Write a military-style mission debriefing report.
+    const now = new Date();
+    const timestamp = now.toISOString().replace('T', ' ').substring(0, 19);
+    const callsign = `ALPHA-${Math.floor(Math.random() * 900 + 100)}`;
 
-Mission Details:
-- Mission: ${missionName}
-- Outcome: ${outcome.toUpperCase()}
-- Score: ${score.toLocaleString()}
+    const prompt = `Write a military-style mission debriefing report for a space combat simulator.
+
+MISSION DATA:
+- Name: ${missionName}
+- Result: ${outcome.toUpperCase()}
+- Final Score: ${score.toLocaleString()} points
 - Enemies Neutralized: ${enemiesDefeated}
-- Damage Sustained: ${damageTaken} HP
+- Hull Damage: ${damageTaken} HP
+- Timestamp: ${timestamp}
+- Pilot Callsign: ${callsign}
 
 ${
   previousReports && previousReports.length > 0
-    ? `
-Previous Mission Context:
-${previousReports.slice(-2).join("\n\n")}
-
-Continue the narrative thread from previous missions.
-`
-    : "This is the pilot's first mission."
+    ? `PREVIOUS OPERATIONS:\n${previousReports.slice(-2).join("\n\n")}\n\nNote: Continue the ongoing narrative. Reference the pilot's progression.`
+    : "Note: This is the pilot's first combat sortie."
 }
 
-Requirements:
-- 80-120 words maximum
-- Military sci-fi style (formal but engaging)
-- Include tactical assessment
-- Reference pilot's performance
-- ${outcome === "victory" ? "Commend success and hint at future challenges" : "Acknowledge setback and encourage improvement"}
-- Make it immersive and story-driven
-- Return ONLY the report text as plain text, no JSON, no code blocks, no formatting
-- Do not wrap the response in quotes or any markers`;
+INSTRUCTIONS:
+- Write 120-160 words
+- Use the actual timestamp: ${timestamp}
+- Use the actual callsign: ${callsign}
+- Structure: 
+  1. Mission header with actual name and outcome
+  2. Performance summary with actual stats
+  3. Tactical assessment (2-3 sentences)
+  4. ${outcome === "victory" ? "Commendation and next steps" : "Constructive feedback and encouragement"}
+  5. Proper military closing
+
+- Style: Formal military report, engaging and immersive
+- Tone: ${outcome === "victory" ? "Professional with subtle pride" : "Professional and constructive"}
+- Use military terms: sortie, engagement, neutralized, sustained, operational period
+- End with: COMMAND OUT
+
+CRITICAL: Return ONLY the complete report text. No JSON, no code blocks, no markdown, no quotes. Use the actual values provided above, not placeholders. The report must be COMPLETE with proper ending.`;
 
     try {
       const result = await this.textModel.generateContent(prompt);
@@ -548,7 +570,7 @@ Requirements:
         cleanReport = cleanReport.slice(1, -1);
       }
 
-      return cleanReport.substring(0, 500);
+      return cleanReport.substring(0, 1000);
     } catch (error: any) {
       throw new Error(`Failed to generate report: ${error.message}`);
     }
