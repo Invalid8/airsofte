@@ -10,15 +10,14 @@
   import ScorePopup from '../ScorePopup.svelte'
   import DialogueSystem from '../DialogueSystem.svelte'
   import MissionBriefing from '../MissionBriefing.svelte'
-  // import MessageDisplay from '../MessageDisplay.svelte'
+  import TacticalHints from '../TacticalHints.svelte'
+  import GameCommentary from '../GameCommentary.svelte'
   import { gameManager } from '../../lib/gameManager'
   import { storyMissionManager } from '../../lib/storyMissionData'
   import { gameEvents } from '../../lib/eventBus'
   import { objectiveTracker } from '../../lib/objectiveTracker'
   import { syncGameState, navigateTo, gameState } from '../../stores/gameStore'
   import type { Bullet, StoryMission } from '../../types/gameTypes'
-  import TacticalHints from '../TacticalHints.svelte'
-  import GameCommentary from '../GameCommentary.svelte'
 
   let {
     mode = 'QUICK_PLAY',
@@ -37,8 +36,8 @@
   let currentMission = $state<StoryMission | null>(null)
   let showBriefing = $state(false)
   let missionStarted = $state(false)
-
   let sessionId = $state('')
+  let cleanupPhaseActive = $state(false)
 
   function handleGameOver(event): void {
     if (gameEnded) return
@@ -81,6 +80,21 @@
     }
   }
 
+  function handleSurviveObjectiveComplete(): void {
+    cleanupPhaseActive = true
+
+    setTimeout(() => {
+      cleanupPhaseActive = false
+      gameManager.endGame(true)
+    }, 5000)
+  }
+
+  function startCleanupPhase(onComplete: () => void) {
+    setTimeout(() => {
+      onComplete()
+    }, 5000)
+  }
+
   function startMission(): void {
     if (!currentMission) return
 
@@ -97,6 +111,7 @@
 
   onMount(() => {
     sessionId = crypto.randomUUID()
+
     if (mode === 'STORY_MODE') {
       const missionId = $gameState.currentMissionId || 1
       currentMission = storyMissionManager.getMissionById(missionId)
@@ -113,6 +128,11 @@
     }
 
     const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
+
+    const unsubSurviveComplete = gameEvents.on(
+      'SURVIVE_OBJECTIVE_COMPLETE',
+      handleSurviveObjectiveComplete
+    )
 
     const unsubObjectiveCompleted = gameEvents.on('OBJECTIVE_COMPLETED', (event) => {
       const obj = event.data.objective
@@ -147,6 +167,25 @@
       })
     })
 
+    const unsubWaveComplete = gameEvents.on('WAVE_COMPLETE', (event) => {
+      if (cleanupPhaseActive) return
+
+      const { wave } = event.data
+      const mission = currentMission
+
+      if (objectiveTracker.hasSurviveObjective() && objectiveTracker.isSurviveTimerActive()) {
+        return
+      }
+
+      if (mission && wave >= mission.waves.length) {
+        cleanupPhaseActive = true
+        startCleanupPhase(() => {
+          cleanupPhaseActive = false
+          gameManager.endGame(true)
+        })
+      }
+    })
+
     const syncInterval = setInterval(() => {
       if (!gameEnded && missionStarted) {
         syncGameState()
@@ -158,9 +197,11 @@
 
     return () => {
       unsubGameOver()
+      unsubSurviveComplete()
       unsubObjectiveCompleted()
       unsubObjectiveUpdated()
       unsubObjectiveFailed()
+      unsubWaveComplete()
       clearInterval(syncInterval)
     }
   })
@@ -172,6 +213,7 @@
     objectiveTracker.reset()
     gameEnded = false
     showVictory = false
+    cleanupPhaseActive = false
   })
 </script>
 
@@ -181,7 +223,6 @@
   <VictoryScreen />
 {:else if missionStarted}
   <GameHUD />
-  <!-- <MessageDisplay /> -->
 
   {#if mode === 'STORY_MODE' && currentMission}
     <DialogueSystem mission={currentMission} />
@@ -196,11 +237,13 @@
         <ScorePopup />
         <PlayerPlane {game_pad} bind:bullets={playerBullets} bind:x={playerX} bind:y={playerY} />
         <EnemyPlane {game_pad} bind:playerBullets {playerX} {playerY} />
-        <TacticalHints {sessionId} />
-        <GameCommentary {sessionId} />
       {/if}
     </div>
   </div>
+  {#if game_pad}
+    <TacticalHints {sessionId} />
+    <GameCommentary {sessionId} />
+  {/if}
 {/if}
 
 <style>

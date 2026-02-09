@@ -138,14 +138,12 @@
 
 {#if showCommentary && currentCommentary}
   <div
-    class="game-commentary fixed top-32 right-1/2 translate-x-1/2 z-50 max-w-2xl px-4"
-    in:fly={{ y: -50, duration: 400 }}
+    class="game-commentary fixed bottom-5 left-5 z-50 max-w-md"
+    in:fly={{ x: -300, duration: 400 }}
     out:fade={{ duration: 300 }}
   >
-    <div
-      class="commentary-card bg-black/60 border-2 border-yellow-500 rounded-lg p-6 shadow-2xl text-center"
-    >
-      <div class="commentary-text text-2xl font-bold leading-tight">
+    <div class="commentary-card bg-black/80 border-2 border-yellow-500 rounded-lg p-4 shadow-2xl">
+      <div class="commentary-text text-lg font-bold leading-snug">
         {currentCommentary}
       </div>
     </div>
@@ -175,13 +173,13 @@
     color: #ffd700;
     text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
     word-spacing: -5px;
-    line-height: 1.8;
+    line-height: 1.6;
   }
 
   @media (max-width: 768px) {
     .commentary-text {
-      font-size: 1.25rem;
-      line-height: 1.6;
+      font-size: 1rem;
+      line-height: 1.5;
     }
   }
 </style>

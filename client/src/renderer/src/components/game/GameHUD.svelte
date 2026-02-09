@@ -9,6 +9,7 @@
   } from '../../stores/gameStore'
   import { gameEvents } from '../../lib/eventBus'
   import { gameManager } from '../../lib/gameManager'
+  import { objectiveTracker } from '../../lib/objectiveTracker'
 
   let showCombo = $derived(
     $gameState.session?.comboMultiplier && $gameState.session.comboMultiplier > 1
@@ -48,8 +49,18 @@
   let currentTime = $state(Date.now())
   let lastTick = $state(Date.now())
 
+  let surviveTimeRemaining = $state(0)
+  let showSurviveTimer = $state(false)
+
   function formatTime(ms: number): string {
     return `${Math.ceil(ms / 1000)}s`
+  }
+
+  function formatSurviveTime(ms: number): string {
+    const totalSeconds = Math.ceil(ms / 1000)
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes}:${String(seconds).padStart(2, '0')}`
   }
 
   function getPowerUpRemainingProgress(powerUp: (typeof activePowerUps)[0]): number {
@@ -61,6 +72,9 @@
     return Math.max(0, powerUp.endTime - currentTime)
   }
 
+  const isTimerLow = $derived(surviveTimeRemaining < 30000 && surviveTimeRemaining > 0)
+  const isTimerCritical = $derived(surviveTimeRemaining < 10000 && surviveTimeRemaining > 0)
+
   $effect(() => {
     const interval = setInterval(() => {
       const now = Date.now()
@@ -70,6 +84,11 @@
         currentTime += delta
         activePowerUps = activePowerUps.filter((p) => p.endTime > currentTime)
         weaponQueue = gameManager.getWeaponQueue()
+
+        showSurviveTimer = objectiveTracker.isSurviveTimerActive()
+        if (showSurviveTimer) {
+          surviveTimeRemaining = objectiveTracker.getSurviveTimeRemaining()
+        }
       }
 
       lastTick = now
@@ -131,6 +150,17 @@
 <div class="hud fixed top-0 left-0 right-0 pointer-events-none z-50 p-3 sm:p-6">
   <!-- Mobile HUD -->
   <div class="sm:hidden space-y-1">
+    {#if showSurviveTimer}
+      <div
+        class="timer-display-mobile"
+        class:timer-low={isTimerLow}
+        class:timer-critical={isTimerCritical}
+      >
+        <div class="timer-label-mobile">TIME</div>
+        <div class="timer-value-mobile hud">{formatSurviveTime(surviveTimeRemaining)}</div>
+      </div>
+    {/if}
+
     {#if activePowerUps.length > 0}
       <div class="mt-2 flex flex-col gap-1">
         {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
@@ -198,8 +228,6 @@
     {#if invincible}
       <div class="text-center text-sm text-cyan-400 animate-pulse hud mt-1">INVINCIBLE</div>
     {/if}
-
-    <!-- Power-up indicators (mobile) -->
   </div>
 
   <!-- Desktop HUD -->
@@ -228,6 +256,17 @@
         </div>
       {/if}
     </div>
+
+    {#if showSurviveTimer}
+      <div
+        class="timer-display-desktop"
+        class:timer-low={isTimerLow}
+        class:timer-critical={isTimerCritical}
+      >
+        <div class="timer-label">TIME REMAINING</div>
+        <div class="timer-value hud">{formatSurviveTime(surviveTimeRemaining)}</div>
+      </div>
+    {/if}
 
     <div class="right-panel text-right">
       <div class="lives-display flex items-center justify-end gap-2">
@@ -295,7 +334,6 @@
         </div>
       {/if}
 
-      <!-- Power-up progress bars (desktop) -->
       {#if activePowerUps.length > 0}
         <div class="powerups-container mt-4">
           {#each activePowerUps as powerUp (powerUp.type + powerUp.endTime)}
@@ -335,6 +373,127 @@
     border-radius: 8px;
     padding: 8px 10px;
     min-width: 100px;
+  }
+
+  .timer-display-desktop {
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(0, 170, 255, 0.6);
+    border-radius: 8px;
+    padding: 12px 24px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
+  }
+
+  .timer-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #00aaff;
+    margin-bottom: 0.25rem;
+  }
+
+  .timer-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #00aaff;
+  }
+
+  .timer-display-desktop.timer-low {
+    border-color: rgba(255, 165, 0, 0.8);
+    animation: pulse-orange 1s ease-in-out infinite;
+  }
+
+  .timer-display-desktop.timer-low .timer-value,
+  .timer-display-desktop.timer-low .timer-label {
+    color: #ffa500;
+  }
+
+  .timer-display-desktop.timer-critical {
+    border-color: rgba(255, 0, 0, 1);
+    animation: pulse-red 0.5s ease-in-out infinite;
+  }
+
+  .timer-display-desktop.timer-critical .timer-value,
+  .timer-display-desktop.timer-critical .timer-label {
+    color: #ff0000;
+  }
+
+  .timer-display-mobile {
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid rgba(0, 170, 255, 0.5);
+    border-radius: 6px;
+    padding: 6px 12px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .timer-label-mobile {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .timer-value-mobile {
+    font-size: 1.25rem;
+    font-weight: bold;
+  }
+
+  .timer-display-mobile.timer-low {
+    border-color: rgba(255, 165, 0, 0.8);
+  }
+
+  .timer-display-mobile.timer-low .timer-value-mobile,
+  .timer-display-mobile.timer-low .timer-label-mobile {
+    color: #ffa500;
+  }
+
+  .timer-display-mobile.timer-critical {
+    border-color: rgba(255, 0, 0, 1);
+    animation: pulse-mobile 0.5s ease-in-out infinite;
+  }
+
+  .timer-display-mobile.timer-critical .timer-value-mobile,
+  .timer-display-mobile.timer-critical .timer-label-mobile {
+    color: #ff0000;
+  }
+
+  @keyframes pulse-orange {
+    0%,
+    100% {
+      box-shadow: 0 0 20px rgba(255, 165, 0, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(255, 165, 0, 0.7);
+    }
+  }
+
+  @keyframes pulse-red {
+    0%,
+    100% {
+      box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(255, 0, 0, 0.9);
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes pulse-mobile {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
   }
 
   .health-bar {

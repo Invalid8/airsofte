@@ -17,6 +17,7 @@ type SessionContext = {
 export class GeminiService {
   private genAI: GoogleGenerativeAI;
   private model: any;
+  private textModel: any;
   private readonly MAX_RETRIES = 3;
   private readonly INITIAL_RETRY_DELAY = 1000;
   private readonly SESSION_TIMEOUT = 30 * 60 * 1000;
@@ -24,6 +25,7 @@ export class GeminiService {
 
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
+
     this.model = this.genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       generationConfig: {
@@ -32,6 +34,17 @@ export class GeminiService {
         topP: 0.95,
         maxOutputTokens: 8192,
         responseMimeType: "application/json",
+      },
+    });
+
+    this.textModel = this.genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.9,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 2048,
+        responseMimeType: "text/plain",
       },
     });
 
@@ -319,7 +332,7 @@ Examples:
 
     try {
       const hint = await this.retryWithBackoff(async () => {
-        const result = await this.model.generateContent(prompt);
+        const result = await this.textModel.generateContent(prompt);
         const response = result.response.text().trim();
 
         context.recentEvents.push(`Hint given: ${response}`);
@@ -385,7 +398,7 @@ Examples:
 
     try {
       const commentary = await this.retryWithBackoff(async () => {
-        const result = await this.model.generateContent(prompt);
+        const result = await this.textModel.generateContent(prompt);
         const response = result.response.text().trim();
 
         sessionContext.recentEvents.push(`${eventType}: ${response}`);
@@ -512,13 +525,30 @@ Requirements:
 - Reference pilot's performance
 - ${outcome === "victory" ? "Commend success and hint at future challenges" : "Acknowledge setback and encourage improvement"}
 - Make it immersive and story-driven
-- Return ONLY the report text, no title, no formatting`;
+- Return ONLY the report text as plain text, no JSON, no code blocks, no formatting
+- Do not wrap the response in quotes or any markers`;
 
     try {
-      const result = await this.model.generateContent(prompt);
+      const result = await this.textModel.generateContent(prompt);
       const report = result.response.text().trim();
 
-      return report.substring(0, 500);
+      let cleanReport = report;
+
+      if (cleanReport.includes("```")) {
+        cleanReport = cleanReport
+          .replace(/```[a-z]*\n?/g, "")
+          .replace(/```/g, "")
+          .trim();
+      }
+
+      if (
+        (cleanReport.startsWith('"') && cleanReport.endsWith('"')) ||
+        (cleanReport.startsWith("'") && cleanReport.endsWith("'"))
+      ) {
+        cleanReport = cleanReport.slice(1, -1);
+      }
+
+      return cleanReport.substring(0, 500);
     } catch (error: any) {
       throw new Error(`Failed to generate report: ${error.message}`);
     }

@@ -94,7 +94,7 @@
 
 {#if showHint && currentHint}
   <div
-    class="tactical-hint fixed bottom-20 right-6 z-50 max-w-md"
+    class="tactical-hint fixed bottom-5 right-5 z-50 max-w-md"
     in:fly={{ x: 300, duration: 300 }}
     out:fade={{ duration: 200 }}
   >

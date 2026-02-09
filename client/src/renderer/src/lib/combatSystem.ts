@@ -1,6 +1,7 @@
 import type { Bullet, Enemy, BoundingBox } from '../types/gameTypes'
 import { checkCollision, getBoundingBox } from '../utils/collisionSystem'
 import type { PlayerController } from './playerController'
+import { gameManager } from './gameManager'
 
 export class CombatSystem {
   checkPlayerBulletCollisions(
@@ -36,6 +37,10 @@ export class CombatSystem {
     enemyBullets: Bullet[],
     playerBox: BoundingBox
   ): Array<{ bulletId: string; damage: number }> {
+    if (gameManager.player.shieldActive) {
+      return []
+    }
+
     const collisions: Array<{ bulletId: string; damage: number }> = []
 
     enemyBullets.forEach((bullet) => {

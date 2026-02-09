@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import Options from '../components/Options.svelte'
+  import MissionReport from './MissionReport.svelte'
   import { gameManager } from '../lib/gameManager'
   import { navigateTo, gameState } from '../stores/gameStore'
   import { StorageManager } from '../utils/storageManager'
   import { currentUser } from '../utils/userManager'
   import { formatNumberWithCommas } from '../lib/utils'
-  import MissionReport from '../components/MissionReport.svelte'
 
   let isHighScore = $state(false)
   let rank = $state(0)
@@ -160,6 +160,8 @@
   </div>
 </div>
 
+<!-- MISSION REPORT INTEGRATION -->
+<!-- This overlay appears on top of the game over screen -->
 {#if showMissionReport}
   <MissionReport
     {missionName}
