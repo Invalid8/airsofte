@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { onMount, onDestroy } from 'svelte'
   import { gameState, toggleSound } from './stores/gameStore'
   import { currentUser } from './utils/userManager'
   import { audioManager } from './utils/AudioManager'
+
   import StartupScreen from './screens/StartupScreen.svelte'
   import UserSelectionScreen from './screens/UserSelectionScreen.svelte'
   import MainMenu from './screens/MainMenu.svelte'
@@ -11,39 +13,21 @@
   import QuickPlay from './screens/QuickPlay.svelte'
   import StoryModeMenu from './screens/story-mode/StoryModeMenu.svelte'
   import StoryModePlay from './screens/story-mode/StoryModePlay.svelte'
+  import GeminiMissionCreator from './screens/GeminiMissionCreator.svelte'
+  import AIMissionPlay from './screens/AIMissionPlay.svelte'
   import ModalWrapper from './components/ModalWrapper.svelte'
-  import { onDestroy, onMount } from 'svelte'
   import GamePadIndicator from './components/GamePadIndicator.svelte'
   import UserPill from './components/UserPill.svelte'
-  import GeminiMissionCreator from './screens/GeminiMissionCreator.svelte'
   import DeviceWarning from './components/DeviceWarning.svelte'
-  import AIMissionPlay from './screens/AIMissionPlay.svelte'
-  import { useRegisterSW } from 'virtual:pwa-register/svelte'
 
   const SAFE_ROUTES = ['STARTUP', 'MAIN_MENU', 'GAME_OVER']
 
-  const { needRefresh, updateServiceWorker } = useRegisterSW()
+  let needRefresh: import('svelte/store').Writable<boolean>
+  let updateServiceWorker = () => {}
 
-  let pendingUpdate = $state(false)
-
-  $effect(() => {
-    if (!$needRefresh) return
-
-    if (SAFE_ROUTES.includes($gameState.route)) {
-      updateServiceWorker(true)
-    } else {
-      pendingUpdate = true
-    }
-  })
-
-  $effect(() => {
-    if (pendingUpdate && SAFE_ROUTES.includes($gameState.route)) {
-      location.reload()
-    }
-  })
-
+  let pendingUpdate = false
   let audioInitialized = false
-  let showUserSelection = $derived(!$currentUser && $gameState.route !== 'STARTUP')
+  let showUserSelection = false
 
   function initializeAudio(): void {
     if (!audioInitialized) {
@@ -53,9 +37,35 @@
   }
 
   onMount(async () => {
+    if (!import.meta.env.__ELECTRON__) {
+      console.log('object')
+      try {
+        const { useRegisterSW } = await import('virtual:pwa-register/svelte')
+        const sw = useRegisterSW()
+        needRefresh = sw.needRefresh
+        updateServiceWorker = sw.updateServiceWorker
+      } catch (err) {
+        console.warn('PWA SW not available', err)
+      }
+    }
+
     document.addEventListener('click', initializeAudio, { once: true })
     document.addEventListener('keydown', initializeAudio, { once: true })
   })
+
+  $: showUserSelection = !$currentUser && $gameState.route !== 'STARTUP'
+
+  $: if (needRefresh && $needRefresh) {
+    if (SAFE_ROUTES.includes($gameState.route)) {
+      updateServiceWorker()
+    } else {
+      pendingUpdate = true
+    }
+  }
+
+  $: if (pendingUpdate && SAFE_ROUTES.includes($gameState.route)) {
+    location.reload()
+  }
 
   onDestroy(() => {
     audioManager.stopAll()
@@ -63,6 +73,7 @@
     document.removeEventListener('keydown', initializeAudio)
   })
 </script>
+
 
 <DeviceWarning>
   <main class="{$gameState.theme === 'Dark' ? 'dark-theme' : 'light-theme'} app-container">
