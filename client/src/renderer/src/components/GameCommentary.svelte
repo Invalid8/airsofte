@@ -15,9 +15,22 @@
   let currentCommentary = $state<string>('')
   let showCommentary = $state(false)
   let isOnline = $state(true)
+  let lastCommentaryTime = $state(0)
+  let commentaryCooldown = 15000
+  let lastEventType = $state<string>('')
 
   async function requestCommentary(params: Omit<GameCommentaryParams, 'sessionId'>) {
+    const now = Date.now()
+
+    if (now - lastCommentaryTime < commentaryCooldown) return
+
     if (!isOnline) return
+
+    const eventKey = `${params.eventType}-${JSON.stringify(params.context)}`
+    if (eventKey === lastEventType) return
+
+    lastCommentaryTime = now
+    lastEventType = eventKey
 
     try {
       const commentary = await geminiApiClient.getGameCommentary({
@@ -40,7 +53,7 @@
 
   function handleComboUpdate(event: any) {
     const multiplier = event.data?.multiplier || 1
-    if (multiplier >= 3) {
+    if (multiplier >= 5) {
       requestCommentary({
         eventType: 'COMBO',
         context: {
@@ -52,7 +65,7 @@
   }
 
   function handlePlayerHit() {
-    if (gameManager.player.health < 30) {
+    if (gameManager.player.health < 20) {
       requestCommentary({
         eventType: 'NEAR_DEATH',
         context: {
@@ -83,23 +96,32 @@
   }
 
   function handleWaveComplete(event: any) {
-    requestCommentary({
-      eventType: 'WAVE_COMPLETE',
-      context: {
-        waveNumber: event.data.wave,
-        enemiesDefeated: gameManager.session.enemiesDefeated
-      }
-    })
+    const waveNum = event.data.wave
+    if (waveNum % 3 === 0) {
+      requestCommentary({
+        eventType: 'WAVE_COMPLETE',
+        context: {
+          waveNumber: waveNum,
+          enemiesDefeated: gameManager.session.enemiesDefeated
+        }
+      })
+    }
   }
 
   function handlePowerUpCollected(event: any) {
-    requestCommentary({
-      eventType: 'POWER_UP',
-      context: {
-        powerUpType: event.data.type,
-        playerHealth: gameManager.player.health
-      }
-    })
+    console.log(event)
+    // Skip power-up commentary - least important event
+    // Uncomment below if you want selective power-up commentary
+    // const importantPowerUps = ['SHIELD', 'HEALTH', 'WEAPON_UPGRADE']
+    // if (importantPowerUps.includes(event.data.type)) {
+    //   requestCommentary({
+    //     eventType: 'POWER_UP',
+    //     context: {
+    //       powerUpType: event.data.type,
+    //       playerHealth: gameManager.player.health
+    //     }
+    //   })
+    // }
   }
 
   let unsubCombo: (() => void) | null = null

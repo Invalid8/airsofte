@@ -16,14 +16,21 @@
   let showHint = $state(false)
   let isOnline = $state(true)
   let lastHintTime = $state(0)
-  let hintCooldown = 15000
+  let hintCooldown = 20000
+
+  let lastHintContext = $state<string>('')
 
   async function requestHint(playerHealth: number, enemyTypes: string[], waveNumber: number) {
     const now = Date.now()
+
     if (now - lastHintTime < hintCooldown) return
     if (!isOnline) return
 
+    const contextHash = `${playerHealth}-${enemyTypes.join(',')}-${waveNumber}`
+    if (contextHash === lastHintContext) return // Same context, skip request
+
     lastHintTime = now
+    lastHintContext = contextHash
 
     const params: EnhancedTacticalHintParams = {
       playerHealth,
@@ -57,15 +64,18 @@
   }
 
   function handlePlayerHit() {
-    if (gameManager.player.health < 30) {
+    if (gameManager.player.health < 25) {
       const enemies = gameManager.currentWave?.enemies.map((e) => e.type) || []
       requestHint(gameManager.player.health, enemies, gameManager.session.currentWave)
     }
   }
 
   function handleWaveStart(event: any) {
-    const enemies = gameManager.currentWave?.enemies.map((e) => e.type) || []
-    requestHint(gameManager.player.health, enemies, event.data.wave)
+    const waveNum = event.data.wave
+    if (waveNum % 3 === 0 || event.data.hasBoss) {
+      const enemies = gameManager.currentWave?.enemies.map((e) => e.type) || []
+      requestHint(gameManager.player.health, enemies, waveNum)
+    }
   }
 
   let unsubHit: (() => void) | null = null
@@ -94,7 +104,7 @@
 
 {#if showHint && currentHint}
   <div
-    class="tactical-hint fixed bottom-5 right-5 z-50 max-w-md"
+    class="tactical-hint fixed bottom-20 right-6 z-50 max-w-md"
     in:fly={{ x: 300, duration: 300 }}
     out:fade={{ duration: 200 }}
   >

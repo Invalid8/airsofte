@@ -586,6 +586,19 @@ export class GameManager {
     }
   }
 
+  handlePlaneCollisionWithShield(enemyId: string, scoreReduction: number): void {
+    if (this.player.shieldActive) {
+      this.deactivateShield()
+      gameEvents.emit('SHIELD_BLOCKED_PLANE_HIT', {
+        enemyId,
+        scoreReductionPrevented: scoreReduction
+      })
+    } else {
+      this.session.score = Math.max(0, this.session.score - scoreReduction)
+      gameEvents.emit('SCORE_REDUCED', { amount: scoreReduction })
+    }
+  }
+
   private activateWeapon(weaponType: PlayerStats['weaponType'], duration: number): void {
     const existingTimer = this.activePowerUpTimers.get('weapon')
     if (existingTimer?.timeoutId) {

@@ -37,10 +37,6 @@ export class CombatSystem {
     enemyBullets: Bullet[],
     playerBox: BoundingBox
   ): Array<{ bulletId: string; damage: number }> {
-    if (gameManager.player.shieldActive) {
-      return []
-    }
-
     const collisions: Array<{ bulletId: string; damage: number }> = []
 
     enemyBullets.forEach((bullet) => {
@@ -49,10 +45,18 @@ export class CombatSystem {
       const bulletBox = getBoundingBox(bullet.x, bullet.y, bullet.width, bullet.height)
 
       if (checkCollision(bulletBox, playerBox)) {
-        collisions.push({
-          bulletId: bullet.id,
-          damage: bullet.damage
-        })
+        // FIXED: Shield blocks bullets completely - mark bullet inactive with 0 damage
+        if (gameManager.player.shieldActive) {
+          collisions.push({
+            bulletId: bullet.id,
+            damage: 0
+          })
+        } else {
+          collisions.push({
+            bulletId: bullet.id,
+            damage: bullet.damage
+          })
+        }
       }
     })
 
