@@ -22,12 +22,26 @@ export class GeminiService {
   private readonly INITIAL_RETRY_DELAY = 1000;
   private readonly SESSION_TIMEOUT = 30 * 60 * 1000;
   private sessionContexts: Map<string, SessionContext> = new Map();
+  private readonly PRIMARY_MODEL: string;
+  private readonly FALLBACK_MODELS: string[];
+  private readonly TEXT_MODEL: string;
+  private readonly TEXT_FALLBACK_MODELS: string[];
 
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
 
+    this.PRIMARY_MODEL = process.env.GEMINI_PRIMARY_MODEL || "gemini-2.5-flash";
+    this.FALLBACK_MODELS = process.env.GEMINI_FALLBACK_MODELS
+      ? process.env.GEMINI_FALLBACK_MODELS.split(",")
+      : ["gemini-2.5-flash-lite", "gemini-2.5-pro"];
+
+    this.TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash";
+    this.TEXT_FALLBACK_MODELS = process.env.GEMINI_TEXT_FALLBACK_MODELS
+      ? process.env.GEMINI_TEXT_FALLBACK_MODELS.split(",")
+      : ["gemini-2.5-flash-lite"];
+
     this.model = this.genAI.getGenerativeModel({
-      model: "gemini-2.5-",
+      model: this.PRIMARY_MODEL,
       generationConfig: {
         temperature: 0.9,
         topK: 40,
@@ -38,7 +52,7 @@ export class GeminiService {
     });
 
     this.textModel = this.genAI.getGenerativeModel({
-      model: "gemini-2.5-",
+      model: this.TEXT_MODEL,
       generationConfig: {
         temperature: 0.9,
         topK: 40,
@@ -65,6 +79,50 @@ export class GeminiService {
       }
       throw error;
     }
+  }
+
+  private async executeWithFallback<T>(
+    operation: (model: any) => Promise<T>,
+    modelType: "json" | "text" = "json",
+  ): Promise<T> {
+    const models = modelType === "json" 
+      ? [this.PRIMARY_MODEL, ...this.FALLBACK_MODELS]
+      : [this.TEXT_MODEL, ...this.TEXT_FALLBACK_MODELS];
+
+    let lastError: Error | null = null;
+
+    for (let i = 0; i < models.length; i++) {
+      try {
+        const model = this.genAI.getGenerativeModel({
+          model: models[i],
+          generationConfig: modelType === "json" 
+            ? {
+                temperature: 0.9,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 8192,
+                responseMimeType: "application/json",
+              }
+            : {
+                temperature: 0.9,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 2048,
+                responseMimeType: "text/plain",
+              },
+        });
+
+        return await operation(model);
+      } catch (error: any) {
+        lastError = error;
+        if (i < models.length - 1) {
+          console.warn(`Model ${models[i]} failed, trying ${models[i + 1]}...`);
+          continue;
+        }
+      }
+    }
+
+    throw lastError || new Error("All models failed");
   }
 
   async generateMission(
@@ -140,36 +198,38 @@ Return a JSON object with this structure:
 
     try {
       const mission = await this.retryWithBackoff(async () => {
-        const result = await this.model.generateContent(prompt);
-        const response = result.response.text();
+        return await this.executeWithFallback(async (model) => {
+          const result = await model.generateContent(prompt);
+          const response = result.response.text();
 
-        let cleanResponse = response.trim();
+          let cleanResponse = response.trim();
 
-        if (cleanResponse.startsWith("```")) {
-          cleanResponse = cleanResponse
-            .replace(/```json\n?|\n?```/g, "")
-            .replace(/```\n?|\n?```/g, "")
-            .trim();
-        }
+          if (cleanResponse.startsWith("```")) {
+            cleanResponse = cleanResponse
+              .replace(/```json\n?|\n?```/g, "")
+              .replace(/```\n?|\n?```/g, "")
+              .trim();
+          }
 
-        const firstBrace = cleanResponse.indexOf("{");
-        const lastBrace = cleanResponse.lastIndexOf("}");
-        if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
-          cleanResponse = cleanResponse.substring(firstBrace, lastBrace + 1);
-        }
+          const firstBrace = cleanResponse.indexOf("{");
+          const lastBrace = cleanResponse.lastIndexOf("}");
+          if (firstBrace !== -1 && lastBrace !== -1 && firstBrace < lastBrace) {
+            cleanResponse = cleanResponse.substring(firstBrace, lastBrace + 1);
+          }
 
-        let parsedMission;
-        try {
-          parsedMission = JSON.parse(cleanResponse);
-        } catch (parseError: any) {
-          throw new Error(
-            `Invalid JSON from AI: ${parseError.message}. The response may have been truncated. Please try again.`,
-          );
-        }
+          let parsedMission;
+          try {
+            parsedMission = JSON.parse(cleanResponse);
+          } catch (parseError: any) {
+            throw new Error(
+              `Invalid JSON from AI: ${parseError.message}. The response may have been truncated. Please try again.`,
+            );
+          }
 
-        this.validateMission(parsedMission, params);
+          this.validateMission(parsedMission, params);
 
-        return parsedMission;
+          return parsedMission;
+        }, "json");
       });
 
       return mission;
@@ -345,16 +405,18 @@ Examples:
 
     try {
       const hint = await this.retryWithBackoff(async () => {
-        const result = await this.textModel.generateContent(prompt);
-        const response = result.response.text().trim();
+        return await this.executeWithFallback(async (model) => {
+          const result = await model.generateContent(prompt);
+          const response = result.response.text().trim();
 
-        context.recentEvents.push(`Hint given: ${response}`);
-        if (context.recentEvents.length > 10) {
-          context.recentEvents.shift();
-        }
-        context.lastActivity = Date.now();
+          context.recentEvents.push(`Hint given: ${response}`);
+          if (context.recentEvents.length > 10) {
+            context.recentEvents.shift();
+          }
+          context.lastActivity = Date.now();
 
-        return response.substring(0, 100);
+          return response.substring(0, 100);
+        }, "text");
       });
 
       return hint;
@@ -411,19 +473,21 @@ Examples:
 
     try {
       const commentary = await this.retryWithBackoff(async () => {
-        const result = await this.textModel.generateContent(prompt);
-        const response = result.response.text().trim();
+        return await this.executeWithFallback(async (model) => {
+          const result = await model.generateContent(prompt);
+          const response = result.response.text().trim();
 
-        sessionContext.recentEvents.push(`${eventType}: ${response}`);
-        if (sessionContext.recentEvents.length > 8) {
-          sessionContext.recentEvents.shift();
-        }
-        sessionContext.lastCommentaryTime = now;
-        sessionContext.lastActivity = now;
+          sessionContext.recentEvents.push(`${eventType}: ${response}`);
+          if (sessionContext.recentEvents.length > 8) {
+            sessionContext.recentEvents.shift();
+          }
+          sessionContext.lastCommentaryTime = now;
+          sessionContext.lastActivity = now;
 
-        this.updatePlayerStyle(sessionContext, eventType, context);
+          this.updatePlayerStyle(sessionContext, eventType, context);
 
-        return response.substring(0, 120);
+          return response.substring(0, 120);
+        }, "text");
       });
 
       return commentary;
@@ -551,26 +615,30 @@ INSTRUCTIONS:
 CRITICAL: Return ONLY the complete report text. No JSON, no code blocks, no markdown, no quotes. Use the actual values provided above, not placeholders. The report must be COMPLETE with proper ending.`;
 
     try {
-      const result = await this.textModel.generateContent(prompt);
-      const report = result.response.text().trim();
+      const report = await this.executeWithFallback(async (model) => {
+        const result = await model.generateContent(prompt);
+        const response = result.response.text().trim();
 
-      let cleanReport = report;
+        let cleanReport = response;
 
-      if (cleanReport.includes("```")) {
-        cleanReport = cleanReport
-          .replace(/```[a-z]*\n?/g, "")
-          .replace(/```/g, "")
-          .trim();
-      }
+        if (cleanReport.includes("```")) {
+          cleanReport = cleanReport
+            .replace(/```[a-z]*\n?/g, "")
+            .replace(/```/g, "")
+            .trim();
+        }
 
-      if (
-        (cleanReport.startsWith('"') && cleanReport.endsWith('"')) ||
-        (cleanReport.startsWith("'") && cleanReport.endsWith("'"))
-      ) {
-        cleanReport = cleanReport.slice(1, -1);
-      }
+        if (
+          (cleanReport.startsWith('"') && cleanReport.endsWith('"')) ||
+          (cleanReport.startsWith("'") && cleanReport.endsWith("'"))
+        ) {
+          cleanReport = cleanReport.slice(1, -1);
+        }
 
-      return cleanReport.substring(0, 1000);
+        return cleanReport.substring(0, 1000);
+      }, "text");
+
+      return report;
     } catch (error: any) {
       throw new Error(`Failed to generate report: ${error.message}`);
     }
