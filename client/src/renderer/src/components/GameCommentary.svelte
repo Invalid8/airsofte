@@ -160,7 +160,7 @@
 
 {#if showCommentary && currentCommentary}
   <div
-    class="game-commentary fixed bottom-5 left-5 z-50 max-w-md"
+    class="game-commentary fixed bottom-6 left-6 z-50 max-w-md"
     in:fly={{ x: -300, duration: 400 }}
     out:fade={{ duration: 300 }}
   >
