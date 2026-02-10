@@ -30,15 +30,15 @@ export class GeminiService {
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
 
-    this.PRIMARY_MODEL = process.env.GEMINI_PRIMARY_MODEL || "gemini-2.5-flash";
+    this.PRIMARY_MODEL = process.env.GEMINI_PRIMARY_MODEL || "gemini-3-flash-preview";
     this.FALLBACK_MODELS = process.env.GEMINI_FALLBACK_MODELS
       ? process.env.GEMINI_FALLBACK_MODELS.split(",")
-      : ["gemini-2.5-flash-lite", "gemini-2.5-pro"];
+      : ["gemini-3-pro-preview"];
 
-    this.TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash";
+    this.TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-3-flash-preview";
     this.TEXT_FALLBACK_MODELS = process.env.GEMINI_TEXT_FALLBACK_MODELS
       ? process.env.GEMINI_TEXT_FALLBACK_MODELS.split(",")
-      : ["gemini-2.5-flash-lite"];
+      : ["gemini-3-pro-preview"];
 
     this.model = this.genAI.getGenerativeModel({
       model: this.PRIMARY_MODEL,
@@ -85,9 +85,10 @@ export class GeminiService {
     operation: (model: any) => Promise<T>,
     modelType: "json" | "text" = "json",
   ): Promise<T> {
-    const models = modelType === "json" 
-      ? [this.PRIMARY_MODEL, ...this.FALLBACK_MODELS]
-      : [this.TEXT_MODEL, ...this.TEXT_FALLBACK_MODELS];
+    const models =
+      modelType === "json"
+        ? [this.PRIMARY_MODEL, ...this.FALLBACK_MODELS]
+        : [this.TEXT_MODEL, ...this.TEXT_FALLBACK_MODELS];
 
     let lastError: Error | null = null;
 
@@ -95,21 +96,22 @@ export class GeminiService {
       try {
         const model = this.genAI.getGenerativeModel({
           model: models[i],
-          generationConfig: modelType === "json" 
-            ? {
-                temperature: 0.9,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 8192,
-                responseMimeType: "application/json",
-              }
-            : {
-                temperature: 0.9,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 2048,
-                responseMimeType: "text/plain",
-              },
+          generationConfig:
+            modelType === "json"
+              ? {
+                  temperature: 0.9,
+                  topK: 40,
+                  topP: 0.95,
+                  maxOutputTokens: 8192,
+                  responseMimeType: "application/json",
+                }
+              : {
+                  temperature: 0.9,
+                  topK: 40,
+                  topP: 0.95,
+                  maxOutputTokens: 2048,
+                  responseMimeType: "text/plain",
+                },
         });
 
         return await operation(model);
@@ -133,7 +135,7 @@ export class GeminiService {
     const enemyRanges = {
       Easy: { min: 4, max: 6 },
       Normal: { min: 7, max: 10 },
-      Hard: { min: 11, max: 15 }
+      Hard: { min: 11, max: 15 },
     };
     const range = enemyRanges[difficulty];
 
@@ -576,7 +578,7 @@ Examples:
     } = params;
 
     const now = new Date();
-    const timestamp = now.toISOString().replace('T', ' ').substring(0, 19);
+    const timestamp = now.toISOString().replace("T", " ").substring(0, 19);
     const callsign = `ALPHA-${Math.floor(Math.random() * 900 + 100)}`;
 
     const prompt = `Write a military-style mission debriefing report for a space combat simulator.
