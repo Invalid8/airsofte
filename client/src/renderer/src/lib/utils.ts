@@ -135,15 +135,15 @@ export function throttle<T extends (...args: any[]) => any>(
 export function replicateLoadFunctions(): (() => Promise<void>)[] {
   return [
     async (): Promise<void> => {
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 50))
       console.log('Initializing systems...')
     },
     async (): Promise<void> => {
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 50))
       console.log('Calibrating sensors...')
     },
     async (): Promise<void> => {
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 50))
       console.log('Preparing launch sequence...')
     }
   ]
