@@ -1,51 +1,51 @@
 import type { Bullet, Enemy, BoundingBox } from '$lib/types/gameTypes'
-import { checkCollision, getBoundingBox, SpatialGrid } from '$lib/utils/collisionSystem'
+
+export type PlayerBulletCollision = {
+  bullet: Bullet
+  enemy: Enemy
+  damage: number
+}
+
+export type EnemyBulletCollision = {
+  bullet: Bullet
+  damage: number
+}
+
+export type PlayerEnemyCollision = {
+  enemy: Enemy
+  isBoss: boolean
+}
 
 export class CombatSystem {
+  private playerBulletCollisions: PlayerBulletCollision[] = []
+  private enemyBulletCollisions: EnemyBulletCollision[] = []
+  private playerEnemyCollisions: PlayerEnemyCollision[] = []
+
   checkPlayerBulletCollisions(
     playerBullets: Bullet[],
     enemies: Enemy[]
-  ): Array<{ bulletId: string; enemyId: string; damage: number }> {
-    const collisions: Array<{ bulletId: string; enemyId: string; damage: number }> = []
-    const activeEnemies = enemies.filter((enemy) => enemy.active)
+  ): PlayerBulletCollision[] {
+    const collisions = this.playerBulletCollisions
+    collisions.length = 0
 
-    if (activeEnemies.length === 0) {
+    if (enemies.length === 0 || playerBullets.length === 0) {
       return collisions
     }
 
-    let maxX = 1
-    let maxY = 1
-    const enemyById = new Map<string, Enemy>()
+    for (const bullet of playerBullets) {
+      if (!bullet.active || bullet.owner !== 'PLAYER') continue
 
-    activeEnemies.forEach((enemy) => {
-      maxX = Math.max(maxX, enemy.x + enemy.width)
-      maxY = Math.max(maxY, enemy.y + enemy.height)
-      enemyById.set(enemy.id, enemy)
-    })
+      for (const enemy of enemies) {
+        if (!enemy.active) continue
 
-    const grid = new SpatialGrid(maxX, maxY, 160)
-
-    activeEnemies.forEach((enemy) => {
-      grid.insert(enemy.id, getBoundingBox(enemy.x, enemy.y, enemy.width, enemy.height), 'ENEMY')
-    })
-
-    playerBullets.forEach((bullet) => {
-      if (!bullet.active || bullet.owner !== 'PLAYER') return
-
-      const bulletBox = getBoundingBox(bullet.x, bullet.y, bullet.width, bullet.height)
-      const nearbyEnemies = grid.queryCollisions(bulletBox)
-
-      nearbyEnemies.forEach(({ id }) => {
-        const enemy = enemyById.get(id)
-        if (!enemy) return
-
+        if (!this.overlaps(bullet, enemy)) continue
         collisions.push({
-          bulletId: bullet.id,
-          enemyId: enemy.id,
+          bullet,
+          enemy,
           damage: bullet.damage
         })
-      })
-    })
+      }
+    }
 
     return collisions
   }
@@ -53,21 +53,20 @@ export class CombatSystem {
   checkEnemyBulletCollisions(
     enemyBullets: Bullet[],
     playerBox: BoundingBox
-  ): Array<{ bulletId: string; damage: number }> {
-    const collisions: Array<{ bulletId: string; damage: number }> = []
+  ): EnemyBulletCollision[] {
+    const collisions = this.enemyBulletCollisions
+    collisions.length = 0
 
-    enemyBullets.forEach((bullet) => {
-      if (!bullet.active || bullet.owner !== 'ENEMY') return
+    for (const bullet of enemyBullets) {
+      if (!bullet.active || bullet.owner !== 'ENEMY') continue
 
-      const bulletBox = getBoundingBox(bullet.x, bullet.y, bullet.width, bullet.height)
-
-      if (checkCollision(bulletBox, playerBox)) {
+      if (this.overlapsBox(bullet, playerBox)) {
         collisions.push({
-          bulletId: bullet.id,
+          bullet,
           damage: bullet.damage
         })
       }
-    })
+    }
 
     return collisions
   }
@@ -75,23 +74,46 @@ export class CombatSystem {
   checkPlayerEnemyCollisions(
     playerBox: BoundingBox,
     enemies: Enemy[]
-  ): Array<{ enemyId: string; isBoss: boolean }> {
-    const collisions: Array<{ enemyId: string; isBoss: boolean }> = []
+  ): PlayerEnemyCollision[] {
+    const collisions = this.playerEnemyCollisions
+    collisions.length = 0
 
-    enemies.forEach((enemy) => {
-      if (!enemy.active) return
+    for (const enemy of enemies) {
+      if (!enemy.active) continue
 
-      const enemyBox = getBoundingBox(enemy.x, enemy.y, enemy.width, enemy.height)
-
-      if (checkCollision(playerBox, enemyBox)) {
+      if (this.overlapsBox(enemy, playerBox)) {
         collisions.push({
-          enemyId: enemy.id,
+          enemy,
           isBoss: enemy.type === 'BOSS'
         })
       }
-    })
+    }
 
     return collisions
+  }
+
+  private overlaps(
+    source: { x: number; y: number; width: number; height: number },
+    target: { x: number; y: number; width: number; height: number }
+  ): boolean {
+    return (
+      source.x < target.x + target.width &&
+      source.x + source.width > target.x &&
+      source.y < target.y + target.height &&
+      source.y + source.height > target.y
+    )
+  }
+
+  private overlapsBox(
+    source: { x: number; y: number; width: number; height: number },
+    target: BoundingBox
+  ): boolean {
+    return (
+      source.x < target.x + target.width &&
+      source.x + source.width > target.x &&
+      source.y < target.y + target.height &&
+      source.y + source.height > target.y
+    )
   }
 }
 

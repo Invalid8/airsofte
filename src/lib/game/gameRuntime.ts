@@ -73,6 +73,7 @@ export class GameRuntime {
   private playerBullets: Bullet[] = []
   private enemyBullets: Bullet[] = []
   private enemies: Enemy[] = []
+  private visibleEnemies: Enemy[] = []
   private powerUps: PowerUp[] = []
   private keysPressed = new Set<string>()
   private animationFrameId = 0
@@ -321,30 +322,23 @@ export class GameRuntime {
 
   private checkCollisions(): void {
     const boundsHeight = this.gamePad.clientHeight
-    const visibleEnemies: Enemy[] = []
-    const enemyById = new Map<string, Enemy>()
-    const playerBulletById = new Map<string, Bullet>()
-    const enemyBulletById = new Map<string, Bullet>()
+    const visibleEnemies = this.visibleEnemies
+    visibleEnemies.length = 0
 
     for (const enemy of this.enemies) {
-      enemyById.set(enemy.id, enemy)
       if (enemy.y >= -100 && enemy.y <= boundsHeight + 100) visibleEnemies.push(enemy)
     }
-    for (const bullet of this.playerBullets) playerBulletById.set(bullet.id, bullet)
-    for (const bullet of this.enemyBullets) enemyBulletById.set(bullet.id, bullet)
 
-    for (const { bulletId, enemyId, damage } of combatSystem.checkPlayerBulletCollisions(
+    for (const { bullet, enemy, damage } of combatSystem.checkPlayerBulletCollisions(
       this.playerBullets,
       visibleEnemies
     )) {
-      const bullet = playerBulletById.get(bulletId)
       if (!bullet || !bullet.active) continue
 
-      const enemy = enemyById.get(enemyId)
       if (!enemy || !enemy.active) continue
 
       particleSystem.createHitEffect(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 4)
-      const killed = this.enemyController.damageEnemy(enemyId, damage)
+      const killed = this.enemyController.damageEnemy(enemy.id, damage)
       bullet.active = false
 
       if (killed) {
@@ -359,11 +353,10 @@ export class GameRuntime {
 
     const playerBox = this.playerController.getBoundingBox()
 
-    for (const { bulletId, damage } of combatSystem.checkEnemyBulletCollisions(
+    for (const { bullet, damage } of combatSystem.checkEnemyBulletCollisions(
       this.enemyBullets,
       playerBox
     )) {
-      const bullet = enemyBulletById.get(bulletId)
       if (!bullet || !bullet.active) continue
 
       gameManager.damagePlayer(damage)
@@ -373,8 +366,7 @@ export class GameRuntime {
       ScreenEffects.flash('rgba(255, 0, 0, 0.25)', 0.12)
     }
 
-    for (const { enemyId } of combatSystem.checkPlayerEnemyCollisions(playerBox, this.enemies)) {
-      const enemy = enemyById.get(enemyId)
+    for (const { enemy } of combatSystem.checkPlayerEnemyCollisions(playerBox, this.enemies)) {
       if (!enemy || !enemy.active) continue
 
       if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
@@ -384,7 +376,7 @@ export class GameRuntime {
         ScreenEffects.flash('rgba(255, 0, 0, 0.42)', 0.16)
       }
 
-      this.enemyController.damageEnemy(enemyId, enemy.maxHealth)
+      this.enemyController.damageEnemy(enemy.id, enemy.maxHealth)
     }
   }
 
