@@ -1,9 +1,18 @@
 {
-  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
-  "include": ["electron.vite.config.*", "src/main/**/*", "src/preload/**/*"],
   "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
     "composite": true,
-    "types": ["electron-vite/node"],
-    "moduleResolution": "bundler"
-  }
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "types": ["node"]
+  },
+  "include": ["eslint.config.mjs", "svelte.config.js", "vite.config.ts", "vite.web.config.ts"],
+  "exclude": ["node_modules", "dist", "build", "src-tauri/target"]
 }

@@ -1,22 +1,15 @@
 {
-  "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
-  "include": [
-    "src/renderer/src/env.d.ts",
-    "src/renderer/src/**/*",
-    "src/renderer/src/**/*.svelte",
-    "src/preload/*.d.ts"
-  ],
+  "extends": "./.svelte-kit/tsconfig.json",
   "compilerOptions": {
-    "verbatimModuleSyntax": true,
+    "moduleResolution": "bundler",
     "useDefineForClassFields": true,
-    "strict": false,
     "allowJs": true,
     "checkJs": true,
-    "lib": [
-      "ESNext",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "composite": true
+    "composite": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "isolatedModules": true
   },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "build", "src-tauri/target"]
 }

@@ -1,7 +1,5 @@
 {
   "rewrites": [
-    { "source": "/assets/:path*", "destination": "/assets/:path*" },
-    { "source": "/icons/:path*", "destination": "/icons/:path*" },
     { "source": "/registerSW.js", "destination": "/registerSW.js" },
     { "source": "/:path*", "destination": "/index.html" }
   ]

@@ -6,7 +6,7 @@
 ## 📋 Project Overview
 
 **Airsofte** is a retro-style top-down space shooter game built with:
-- **Electron** - Desktop application framework
+- **Tauri** - Desktop application framework
 - **Svelte 5** - Modern reactive UI framework (using runes)
 - **TypeScript** - Type-safe development
 - **Tailwind CSS v4** - Utility-first styling
@@ -56,132 +56,23 @@
 ```
 airsofte/
 ├── src/
-│   ├── main/                      # Electron main process
-│   │   ├── index.ts              # Main entry point
-│   │   └── lib/
-│   │       └── utils.ts          # Main process utilities
-│   │
-│   ├── preload/                   # Electron preload scripts
-│   │   ├── index.ts
-│   │   └── index.d.ts
-│   │
-│   ├── renderer/                  # Svelte application
-│   │   ├── src/
-│   │   │   ├── types/
-│   │   │   │   └── gameTypes.ts           # All TypeScript interfaces
-│   │   │   │
-│   │   │   ├── config/
-│   │   │   │   └── gameConstants.ts       # Game configuration & constants
-│   │   │   │
-│   │   │   ├── lib/
-│   │   │   │   ├── eventBus.ts            # Event system
-│   │   │   │   ├── gameManager.ts         # Core game state manager
-│   │   │   │   ├── playerController.ts    # Player logic
-│   │   │   │   ├── enemyController.ts     # Enemy logic
-│   │   │   │   ├── enemySpawner.ts        # Wave spawning
-│   │   │   │   ├── combatSystem.ts        # Collision & damage
-│   │   │   │   ├── particleSystem.ts      # Particle effects
-│   │   │   │   ├── enhancedParticles.ts   # Advanced effects
-│   │   │   │   ├── powerUpSystem.ts       # Power-ups
-│   │   │   │   ├── screenEffects.ts       # Screen shake/flash
-│   │   │   │   ├── storyMissionData.ts    # Mission definitions
-│   │   │   │   ├── soundManager.ts        # Audio management
-│   │   │   │   ├── audioIntegration.ts    # Event-driven audio
-│   │   │   │   ├── sounds.ts              # Sound utilities
-│   │   │   │   └── utils.ts               # Helper functions
-│   │   │   │
-│   │   │   ├── utils/
-│   │   │   │   ├── collisionSystem.ts     # AABB & spatial grid
-│   │   │   │   ├── storageManager.ts      # LocalStorage wrapper
-│   │   │   │   ├── objectPool.ts          # Object pooling
-│   │   │   │   ├── keyboardNavigation.ts  # Menu navigation
-│   │   │   │   └── audioPlaceholderGenerator.js
-│   │   │   │
-│   │   │   ├── stores/
-│   │   │   │   └── gameStore.ts           # Svelte store (enhanced)
-│   │   │   │
-│   │   │   ├── routes/
-│   │   │   │   └── gameRoutes.ts          # Route definitions
-│   │   │   │
-│   │   │   ├── components/
-│   │   │   │   ├── Button.svelte          # Retro game button
-│   │   │   │   ├── Loader.svelte          # Loading bar
-│   │   │   │   ├── Options.svelte         # Menu options
-│   │   │   │   ├── Spaceship.svelte       # Animated ship
-│   │   │   │   ├── Versions.svelte        # Version display
-│   │   │   │   ├── WaveTransition.svelte  # Wave announcements
-│   │   │   │   ├── DialogueSystem.svelte  # Story dialogue
-│   │   │   │   ├── MissionBriefing.svelte # Pre-mission screen
-│   │   │   │   ├── ParallaxBackground.svelte
-│   │   │   │   ├── BossHealthBar.svelte
-│   │   │   │   ├── VictoryScreen.svelte
-│   │   │   │   └── game/
-│   │   │   │       ├── PlayerPlane.svelte
-│   │   │   │       ├── EnemyPlane.svelte
-│   │   │   │       ├── GameHUD.svelte
-│   │   │   │       ├── Particles.svelte
-│   │   │   │       └── PowerUps.svelte
-│   │   │   │
-│   │   │   ├── screens/
-│   │   │   │   ├── StartupScreen.svelte
-│   │   │   │   ├── MainMenu.svelte
-│   │   │   │   ├── GameScreen.svelte
-│   │   │   │   ├── QuickPlay.svelte
-│   │   │   │   ├── GameOverScreen.svelte
-│   │   │   │   ├── DebugTools.svelte
-│   │   │   │   ├── modals/
-│   │   │   │   │   ├── PauseModal.svelte
-│   │   │   │   │   ├── SettingsModal.svelte
-│   │   │   │   │   ├── HighScoreModal.svelte
-│   │   │   │   │   ├── HelpModal.svelte
-│   │   │   │   │   └── ExitModal.svelte
-│   │   │   │   └── story-mode/
-│   │   │   │       ├── StoryModeMenu.svelte
-│   │   │   │       └── StoryModePlay.svelte
-│   │   │   │
-│   │   │   ├── assets/
-│   │   │   │   ├── main.css
-│   │   │   │   ├── base.css
-│   │   │   │   ├── font.css
-│   │   │   │   ├── fonts/              # Press Start 2P, VT323, Orbitron
-│   │   │   │   ├── sprites/            # Game graphics
-│   │   │   │   │   ├── player-ship-i.png
-│   │   │   │   │   ├── enemy-basic.png
-│   │   │   │   │   ├── enemy-scout.png
-│   │   │   │   │   ├── enemy-bomber.png
-│   │   │   │   │   ├── boss-1.png
-│   │   │   │   │   ├── powerup-health.png
-│   │   │   │   │   ├── powerup-weapon.png
-│   │   │   │   │   ├── powerup-shield.png
-│   │   │   │   │   └── powerup-speed.png
-│   │   │   │   └── sounds/             # Audio files
-│   │   │   │       ├── shoot1.mp3
-│   │   │   │       ├── enemy-shoot.mp3
-│   │   │   │       ├── explosion-1.mp3
-│   │   │   │       ├── explosion-2.mp3
-│   │   │   │       ├── explosion-3.mp3
-│   │   │   │       ├── player-hit.mp3
-│   │   │   │       ├── powerup.mp3
-│   │   │   │       ├── boss-warning.mp3
-│   │   │   │       ├── boss-battle.mp3
-│   │   │   │       ├── victory.mp3
-│   │   │   │       ├── game-over.mp3
-│   │   │   │       ├── sound1.mp3
-│   │   │   │       ├── fly.mp3
-│   │   │   │       └── bg1.mp3
-│   │   │   │
-│   │   │   ├── App.svelte             # Root component
-│   │   │   └── main.ts                # Renderer entry
-│   │   │
-│   │   └── index.html
-│   │
-│   └── shared/
-│       └── sharedUtils.ts
-│
-├── resources/                         # App resources
-├── build/                             # Build assets
-├── electron.vite.config.ts
-├── svelte.config.mjs
+│   ├── lib/
+│   │   ├── assets/                    # Game sprites, sounds, and images
+│   │   ├── components/                # Shared Svelte UI and game render layers
+│   │   ├── config/                    # Game constants and route types
+│   │   ├── game/                      # Core gameplay systems
+│   │   ├── screens/                   # Menu, game, story, and modal screens
+│   │   ├── stores/                    # Svelte game state
+│   │   ├── types/                     # TypeScript game types
+│   │   └── utils/                     # Input, audio, storage, pooling, collision
+│   └── routes/                        # SvelteKit SPA route
+├── src-tauri/                         # Tauri desktop shell and capabilities
+├── static/                            # Static web assets
+├── resources/                         # App resources and source icons
+├── build/                             # Static build output
+├── svelte.config.js
+├── vite.config.ts
+├── vite.web.config.ts
 ├── tsconfig.json
 ├── package.json
 └── README.md
@@ -476,7 +367,7 @@ npm run build:linux  # Linux
 ## 🎓 Learning Resources
 
 ### Technologies Used
-- [Electron Documentation](https://www.electronjs.org/docs)
+- [Tauri Documentation](https://v2.tauri.app/)
 - [Svelte 5 Documentation](https://svelte.dev/docs)
 - [GSAP Documentation](https://greensock.com/docs/)
 - [Howler.js Documentation](https://howlerjs.com/)
@@ -487,7 +378,7 @@ npm run build:linux  # Linux
 ## 📄 License & Credits
 
 **Airsofte** - A retro space shooter game
-Built with Electron, Svelte 5, and TypeScript
+Built with Tauri, Svelte 5, and TypeScript
 
 Development completed in stages:
 1. Data Architecture

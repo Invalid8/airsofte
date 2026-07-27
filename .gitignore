@@ -1,8 +1,15 @@
 node_modules
 dist
 out
+target
 .DS_Store
 .eslintcache
 *.log*
 
 .svelte-kit
+
+.build
+build/**
+.env
+src-tauri/gen/**
+src-tauri/target/**
