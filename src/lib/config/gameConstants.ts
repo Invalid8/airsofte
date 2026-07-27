@@ -3,7 +3,8 @@ import type {
   WeaponType,
   PowerUpType,
   GameDifficulty,
-  WaveTemplate
+  WaveTemplate,
+  BossAttackPreset
 } from '$lib/types/gameTypes'
 
 export const GAME_CONFIG = {
@@ -53,8 +54,45 @@ export const GAME_CONFIG = {
     ENEMIES: 50,
     PARTICLES: 640,
     POWERUPS: 20
+  },
+
+  LIMITS: {
+    PLAYER_BULLETS: 120,
+    ENEMY_BULLETS: 180,
+    BOSS_BULLETS_PER_VOLLEY: 7,
+    PARTICLES: 640
   }
 } as const
+
+export const BOSS_ATTACK_PRESETS: readonly BossAttackPreset[] = [
+  {
+    id: 'boss-wide-pressure',
+    healthThreshold: 0.66,
+    bulletCount: 3,
+    spread: 28,
+    intervalMultiplier: 1,
+    speedMultiplier: 1,
+    aimed: false
+  },
+  {
+    id: 'boss-aimed-burst',
+    healthThreshold: 0.33,
+    bulletCount: 5,
+    spread: 36,
+    intervalMultiplier: 0.85,
+    speedMultiplier: 1.12,
+    aimed: true
+  },
+  {
+    id: 'boss-final-pattern',
+    healthThreshold: 0,
+    bulletCount: 7,
+    spread: 54,
+    intervalMultiplier: 0.72,
+    speedMultiplier: 1.22,
+    aimed: true
+  }
+] as const
 
 export const ENEMY_CONFIG: Record<
   EnemyType,

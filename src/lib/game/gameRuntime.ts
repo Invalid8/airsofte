@@ -10,7 +10,14 @@ import { particleSystem } from '$lib/game/particleSystem'
 import { PlayerController } from '$lib/game/playerController'
 import { powerUpSystem } from '$lib/game/powerUpSystem'
 import { ScreenEffects } from '$lib/game/screenEffects'
-import type { Bullet, Enemy, GameEvent, PowerUp } from '$lib/types/gameTypes'
+import type {
+  Bullet,
+  Enemy,
+  EnemyType,
+  GameEvent,
+  MovementPattern,
+  PowerUp
+} from '$lib/types/gameTypes'
 import { getBoundingBox } from '$lib/utils/collisionSystem'
 
 export type GameRuntimeState = {
@@ -105,8 +112,7 @@ export class GameRuntime {
     this.tweens.forEach((tween) => tween.kill())
     this.tweens = []
     this.enemySpawner.stop()
-    this.enemyBullets.forEach((bullet) => this.enemyController.releaseBullet(bullet))
-    this.enemyBullets = []
+    this.clearEnemyBullets()
     this.playerBullets.forEach((bullet) => this.playerController.releaseBullet(bullet))
     this.playerBullets = []
     powerUpSystem.clearAll()
@@ -122,7 +128,10 @@ export class GameRuntime {
       gameEvents.on('PLAYER_RESPAWN', this.handlePlayerRespawn),
       gameEvents.on('WAVE_START', this.handleWaveStart),
       gameEvents.on('GAME_START', this.handleGameStart),
-      gameEvents.on('ENEMY_DESTROYED', this.handleEnemyDestroyed)
+      gameEvents.on('ENEMY_DESTROYED', this.handleEnemyDestroyed),
+      gameEvents.on('CLEAR_ENEMY_BULLETS', this.handleClearEnemyBullets),
+      gameEvents.on('SPAWN_REINFORCEMENTS', this.handleSpawnReinforcements),
+      gameEvents.on('ENEMY_RETREAT', this.handleEnemyRetreat)
     ]
   }
 
@@ -166,8 +175,14 @@ export class GameRuntime {
     if (this.starting) return
 
     if (this.keysPressed.has(' ') || this.keysPressed.has('Space')) {
-      const newBullets = this.playerController.shoot()
-      if (newBullets.length > 0) this.playerBullets.push(...newBullets)
+      const availableSlots = GAME_CONFIG.LIMITS.PLAYER_BULLETS - this.playerBullets.length
+      const newBullets = availableSlots > 0 ? this.playerController.shoot() : []
+      if (newBullets.length > 0) {
+        const acceptedBullets = newBullets.slice(0, availableSlots)
+        const overflowBullets = newBullets.slice(availableSlots)
+        overflowBullets.forEach((bullet) => this.playerController.releaseBullet(bullet))
+        this.playerBullets.push(...acceptedBullets)
+      }
     }
 
     let inputX = 0
@@ -209,11 +224,16 @@ export class GameRuntime {
 
   private updateEnemies(deltaMs: number, deltaScale: number): void {
     const bounds = getBoundingBox(0, 0, this.gamePad.clientWidth, this.gamePad.clientHeight)
+    const availableEnemyBulletSlots = Math.max(
+      0,
+      GAME_CONFIG.LIMITS.ENEMY_BULLETS - this.enemyBullets.length
+    )
     const newBullets = this.enemyController.updateEnemies(
       deltaMs,
       bounds,
       this.playerController.x,
-      this.playerController.y
+      this.playerController.y,
+      availableEnemyBulletSlots
     )
 
     if (newBullets.length > 0) this.enemyBullets.push(...newBullets)
@@ -491,8 +511,7 @@ export class GameRuntime {
   private handleGameStart = (): void => {
     this.enemyController.clearAllEnemies()
     this.enemies = []
-    this.enemyBullets.forEach((bullet) => this.enemyController.releaseBullet(bullet))
-    this.enemyBullets = []
+    this.clearEnemyBullets()
     this.publishState()
   }
 
@@ -504,5 +523,41 @@ export class GameRuntime {
       enemy.x + enemy.width / 2 - 20,
       enemy.y + enemy.height / 2 - 20
     )
+  }
+
+  private handleClearEnemyBullets = (): void => {
+    this.clearEnemyBullets()
+    this.publishState()
+  }
+
+  private handleSpawnReinforcements = (event: GameEvent): void => {
+    const enemyType = (event.data?.enemyType ?? 'BASIC') as EnemyType
+    const pattern = (event.data?.pattern ?? 'STRAIGHT') as MovementPattern
+    const count = Math.max(1, Math.min(8, Number(event.data?.count ?? 3)))
+    const laneWidth = Math.max(80, this.gamePad.clientWidth / (count + 1))
+
+    for (let i = 0; i < count; i++) {
+      this.enemyController.spawnEnemy(enemyType, laneWidth * (i + 1) - 40, -80 - i * 24, pattern)
+    }
+
+    this.enemies = this.enemyController.getActiveEnemies()
+    this.publishState()
+  }
+
+  private handleEnemyRetreat = (event: GameEvent): void => {
+    if (event.data?.clearAll) {
+      for (const enemy of this.enemies) {
+        if (enemy.type !== 'BOSS') enemy.active = false
+      }
+      this.enemies = this.enemyController.getActiveEnemies()
+    }
+
+    this.clearEnemyBullets()
+    this.publishState()
+  }
+
+  private clearEnemyBullets(): void {
+    this.enemyBullets.forEach((bullet) => this.enemyController.releaseBullet(bullet))
+    this.enemyBullets = []
   }
 }

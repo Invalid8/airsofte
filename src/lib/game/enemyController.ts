@@ -1,5 +1,17 @@
-import type { Enemy, EnemyType, MovementPattern, Bullet, BoundingBox } from '$lib/types/gameTypes'
-import { ENEMY_CONFIG, GAME_CONFIG, DIFFICULTY_MODIFIERS } from '$lib/config/gameConstants'
+import type {
+  BossAttackPreset,
+  Enemy,
+  EnemyType,
+  MovementPattern,
+  Bullet,
+  BoundingBox
+} from '$lib/types/gameTypes'
+import {
+  BOSS_ATTACK_PRESETS,
+  ENEMY_CONFIG,
+  GAME_CONFIG,
+  DIFFICULTY_MODIFIERS
+} from '$lib/config/gameConstants'
 import { gameManager } from '$lib/game/gameManager'
 import { audioManager } from '$lib/utils/AudioManager'
 import { getBoundingBox } from '$lib/utils/collisionSystem'
@@ -143,7 +155,8 @@ export class EnemyController {
     deltaTime: number,
     bounds: BoundingBox,
     playerX?: number,
-    playerY?: number
+    playerY?: number,
+    maxNewBullets = Number.POSITIVE_INFINITY
   ): Bullet[] {
     const newBullets: Bullet[] = []
 
@@ -152,9 +165,15 @@ export class EnemyController {
 
       this.updateEnemyPosition(enemy, deltaTime, playerX, playerY, bounds)
 
-      if (this.shouldShoot(enemy) && enemy.y > 0 && !this.isEnemyTeleporting(enemy)) {
-        const bullet = this.shootBullet(enemy)
-        if (bullet) newBullets.push(bullet)
+      if (
+        newBullets.length < maxNewBullets &&
+        this.shouldShoot(enemy) &&
+        enemy.y > 0 &&
+        !this.isEnemyTeleporting(enemy)
+      ) {
+        newBullets.push(
+          ...this.shootBullets(enemy, playerX, playerY, maxNewBullets - newBullets.length)
+        )
       }
     })
 
@@ -245,24 +264,98 @@ export class EnemyController {
 
   private shouldShoot(enemy: Enemy): boolean {
     const now = Date.now()
-    return now - enemy.lastShot >= enemy.shootInterval
+    return now - enemy.lastShot >= this.getShootInterval(enemy)
   }
 
-  private shootBullet(enemy: Enemy): Bullet | null {
+  private getShootInterval(enemy: Enemy): number {
+    if (enemy.type !== 'BOSS') return enemy.shootInterval
+
+    const preset = this.getBossAttackPreset(enemy)
+    return Math.max(120, enemy.shootInterval * preset.intervalMultiplier)
+  }
+
+  private getBossAttackPreset(enemy: Enemy): BossAttackPreset {
+    const healthPercent = Math.max(0, enemy.health / enemy.maxHealth)
+    return (
+      BOSS_ATTACK_PRESETS.find((preset) => healthPercent > preset.healthThreshold) ??
+      BOSS_ATTACK_PRESETS[BOSS_ATTACK_PRESETS.length - 1]
+    )
+  }
+
+  private shootBullets(
+    enemy: Enemy,
+    playerX?: number,
+    playerY?: number,
+    maxBullets = Number.POSITIVE_INFINITY
+  ): Bullet[] {
+    const bullets: Bullet[] = []
+
+    if (enemy.type !== 'BOSS') {
+      const bullet = this.createBullet(enemy, 0, 1)
+      if (bullet) bullets.push(bullet)
+    } else {
+      const preset = this.getBossAttackPreset(enemy)
+      const bulletCount = Math.min(
+        preset.bulletCount,
+        GAME_CONFIG.LIMITS.BOSS_BULLETS_PER_VOLLEY,
+        maxBullets
+      )
+      const centerIndex = (bulletCount - 1) / 2
+      const baseAngle = preset.aimed
+        ? this.getAngleToPlayer(enemy, playerX, playerY)
+        : Math.PI / 2
+      const spreadStep = bulletCount > 1 ? preset.spread / (bulletCount - 1) : 0
+
+      for (let i = 0; i < bulletCount; i++) {
+        const angleOffset = ((i - centerIndex) * spreadStep * Math.PI) / 180
+        const angle = baseAngle + angleOffset
+        const bullet = this.createBullet(
+          enemy,
+          Math.cos(angle),
+          Math.sin(angle),
+          preset.speedMultiplier
+        )
+        if (bullet) bullets.push(bullet)
+      }
+    }
+
+    if (bullets.length > 0) {
+      enemy.lastShot = Date.now()
+      audioManager.playSound('enemyShoot')
+    }
+
+    return bullets
+  }
+
+  private getAngleToPlayer(enemy: Enemy, playerX?: number, playerY?: number): number {
+    if (playerX === undefined || playerY === undefined) return Math.PI / 2
+
+    const enemyCenterX = enemy.x + enemy.width / 2
+    const enemyCenterY = enemy.y + enemy.height
+    const playerCenterX = playerX + GAME_CONFIG.PLAYER.WIDTH / 2
+    const playerCenterY = playerY + GAME_CONFIG.PLAYER.HEIGHT / 2
+
+    return Math.atan2(playerCenterY - enemyCenterY, playerCenterX - enemyCenterX)
+  }
+
+  private createBullet(
+    enemy: Enemy,
+    directionX: number,
+    directionY: number,
+    speedMultiplier = 1
+  ): Bullet | null {
     const bullet = this.bulletPool!.acquire()
+    const directionMagnitude = Math.hypot(directionX, directionY) || 1
+    const speed = bullet.speed * speedMultiplier
 
     bullet.x = enemy.x + enemy.width / 2 - bullet.width / 2
     bullet.y = enemy.y + enemy.height
     bullet.active = true
-    bullet.vx = 0
-    bullet.vy = bullet.speed
+    bullet.vx = (directionX / directionMagnitude) * speed
+    bullet.vy = (directionY / directionMagnitude) * speed
     bullet.damage =
       GAME_CONFIG.BULLET.ENEMY.DAMAGE *
       DIFFICULTY_MODIFIERS[gameManager.difficulty].enemyDamageMultiplier
-
-    enemy.lastShot = Date.now()
-
-    audioManager.playSound('enemyShoot')
 
     return bullet
   }

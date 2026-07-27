@@ -17,7 +17,7 @@ export type Particle = {
 export class ParticleSystem {
   private particles: Particle[] = []
   private particlePool = poolManager.getPool<Particle>('particles')
-  private readonly maxActiveParticles = GAME_CONFIG.POOL_SIZES.PARTICLES
+  private readonly maxActiveParticles = GAME_CONFIG.LIMITS.PARTICLES
 
   constructor() {
     this.initializePool()

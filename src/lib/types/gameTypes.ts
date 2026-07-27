@@ -178,6 +178,16 @@ export type BossConfig = {
   scoreValue: number
 }
 
+export type BossAttackPreset = {
+  id: string
+  healthThreshold: number
+  bulletCount: number
+  spread: number
+  intervalMultiplier: number
+  speedMultiplier: number
+  aimed: boolean
+}
+
 export type SaveGame = {
   playerProgress: {
     storyMissions: StoryMission[]
@@ -240,6 +250,9 @@ export type GameEvent = {
     | 'ADD_BONUS_OBJECTIVE'
     | 'COMBO_UPDATED'
     | 'SHOW_MESSAGE'
+    | 'SPAWN_REINFORCEMENTS'
+    | 'CLEAR_ENEMY_BULLETS'
+    | 'ENEMY_RETREAT'
   data?: any
   timestamp: number
 }

@@ -4,6 +4,12 @@ const APP_URL = process.env.APP_URL ?? 'http://127.0.0.1:1420/'
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(message)
+  }
+}
+
 async function getPageWebSocketUrl() {
   const pages = await fetch(`http://${CDP_HOST}:${CDP_PORT}/json`).then((response) =>
     response.json()
@@ -149,7 +155,7 @@ async function main() {
     `(async () => {
       const { gameManager } = await import('/src/lib/game/gameManager.ts')
       const { gameEvents } = await import('/src/lib/game/eventBus.ts')
-      const { ENEMY_CONFIG } = await import('/src/lib/config/gameConstants.ts')
+      const { BOSS_ATTACK_PRESETS, ENEMY_CONFIG, GAME_CONFIG } = await import('/src/lib/config/gameConstants.ts')
 
       ENEMY_CONFIG.BOSS.shootInterval = 80
       ENEMY_CONFIG.BOSS.health = 900
@@ -183,7 +189,10 @@ async function main() {
         playing: gameManager.isPlaying,
         wave: gameManager.session.currentWave,
         lives: gameManager.player.lives,
-        health: gameManager.player.health
+        health: gameManager.player.health,
+        bossPresetCount: BOSS_ATTACK_PRESETS.length,
+        enemyBulletLimit: GAME_CONFIG.LIMITS.ENEMY_BULLETS,
+        playerBulletLimit: GAME_CONFIG.LIMITS.PLAYER_BULLETS
       }
     })()`
   )
@@ -232,6 +241,57 @@ async function main() {
     })()`
   )
 
+  const stabilityAssertions = await evaluate(
+    client,
+    `(async () => {
+      const { gameManager } = await import('/src/lib/game/gameManager.ts')
+
+      if (gameManager.invincibilityTimeoutId) {
+        clearTimeout(gameManager.invincibilityTimeoutId)
+        gameManager.invincibilityTimeoutId = null
+      }
+
+      gameManager.isPlaying = true
+      gameManager.playerDown = false
+      gameManager.player.health = 100
+      gameManager.player.lives = 3
+      gameManager.player.invincible = false
+      gameManager.player.shieldActive = true
+      gameManager.damagePlayer(20)
+      gameManager.damagePlayer(20)
+
+      const shieldBlocksStackedDamage =
+        gameManager.player.health === 100 &&
+        gameManager.player.lives === 3 &&
+        gameManager.player.shieldActive === false &&
+        gameManager.player.invincible === true
+
+      if (gameManager.invincibilityTimeoutId) {
+        clearTimeout(gameManager.invincibilityTimeoutId)
+        gameManager.invincibilityTimeoutId = null
+      }
+
+      gameManager.playerDown = false
+      gameManager.player.health = 10
+      gameManager.player.lives = 3
+      gameManager.player.invincible = false
+      gameManager.player.shieldActive = false
+      gameManager.damagePlayer(30)
+      gameManager.damagePlayer(30)
+
+      const lifeDropsOnce =
+        gameManager.player.lives === 2 &&
+        gameManager.player.health === 0 &&
+        gameManager.playerDown === true
+
+      return {
+        shieldBlocksStackedDamage,
+        lifeDropsOnce,
+        livesAfterStackedDeath: gameManager.player.lives
+      }
+    })()`
+  )
+
   const runtimeErrors = client.events
     .filter(
       (event) =>
@@ -240,12 +300,29 @@ async function main() {
     )
     .map((event) => event.params)
 
+  assert(bossResult.playing === true, 'Expected game to be playing during stress wave')
+  assert(bossResult.wave === 99, 'Expected forced stress wave 99')
+  assert(bossResult.bossPresetCount >= 3, 'Expected boss attack presets to be configured')
+  assert(bossResult.enemyBulletLimit > 0, 'Expected enemy bullet limit to be configured')
+  assert(bossResult.playerBulletLimit > 0, 'Expected player bullet limit to be configured')
+  assert(postStressState.playing === true, 'Expected game to survive stress wave')
+  assert(postStressState.lives >= 1, 'Expected player to survive stress wave')
+  assert(frameStats.canvas === true, 'Expected game canvas to render')
+  assert(frameStats.p95Ms <= 35, `Expected p95 frame time <= 35ms, got ${frameStats.p95Ms}`)
+  assert(runtimeErrors.length === 0, `Expected 0 runtime errors, got ${runtimeErrors.length}`)
+  assert(
+    stabilityAssertions.shieldBlocksStackedDamage === true,
+    'Expected shield/invincibility to block stacked damage'
+  )
+  assert(stabilityAssertions.lifeDropsOnce === true, 'Expected one life loss per death')
+
   console.log(
     JSON.stringify(
       {
         bossResult,
         postStressState,
         frameStats,
+        stabilityAssertions,
         runtimeErrorCount: runtimeErrors.length,
         runtimeErrors: runtimeErrors.slice(0, 5)
       },
