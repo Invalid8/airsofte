@@ -8,6 +8,7 @@ import { WAVE_TEMPLATES } from '$lib/game/presets'
 import { StorageManager } from '$lib/utils/storageManager'
 import { gameEvents } from './eventBus'
 import { storyMissionManager } from './storyMissionData'
+import { StatusEffectSystem } from './statusEffectSystem'
 
 type GameMode = 'QUICK_PLAY' | 'STORY_MODE'
 
@@ -50,7 +51,7 @@ export class GameManager {
   private currentWaveIndex: number = 0
 
   private comboTimeoutId: number | null = null
-  private invincibilityTimeoutId: number | null = null
+  private statusEffects = new StatusEffectSystem()
   private waveCompleting = false
   private playerDown = false
 
@@ -127,10 +128,7 @@ export class GameManager {
     this.enemiesDestroyedInWave = 0
     this.waveCompleting = false
     this.playerDown = false
-    if (this.invincibilityTimeoutId) {
-      clearTimeout(this.invincibilityTimeoutId)
-      this.invincibilityTimeoutId = null
-    }
+    this.statusEffects.clearAll()
   }
 
   private resetPlayer(): void {
@@ -311,6 +309,7 @@ export class GameManager {
 
     if (this.player.invincible || this.player.shieldActive) {
       if (this.player.shieldActive) {
+        this.statusEffects.clear('shield')
         this.player.shieldActive = false
         gameEvents.emit('SHIELD_BROKEN')
         this.setInvincibility(350)
@@ -336,10 +335,7 @@ export class GameManager {
     this.playerDown = true
     this.player.invincible = true
     this.player.invincibleUntil = Number.POSITIVE_INFINITY
-    if (this.invincibilityTimeoutId) {
-      clearTimeout(this.invincibilityTimeoutId)
-      this.invincibilityTimeoutId = null
-    }
+    this.statusEffects.clear('invincibility')
     this.player.lives = Math.max(0, this.player.lives - 1)
     gameEvents.emit('PLAYER_DEATH', { lives: this.player.lives })
 
@@ -362,22 +358,16 @@ export class GameManager {
   }
 
   private setInvincibility(duration: number): void {
-    if (this.invincibilityTimeoutId) {
-      clearTimeout(this.invincibilityTimeoutId)
-      this.invincibilityTimeoutId = null
-    }
-
     this.player.invincible = true
     this.player.invincibleUntil = performance.now() + duration
     this.emitPlayerStateChanged()
 
-    this.invincibilityTimeoutId = window.setTimeout(() => {
-      this.invincibilityTimeoutId = null
+    this.statusEffects.start('invincibility', duration, () => {
       if (this.playerDown) return
       this.player.invincible = false
       this.player.invincibleUntil = 0
       this.emitPlayerStateChanged()
-    }, duration)
+    })
   }
 
   healPlayer(amount: number): void {
@@ -397,11 +387,11 @@ export class GameManager {
     gameEvents.emit('SHIELD_ACTIVATED')
     this.emitPlayerStateChanged()
 
-    setTimeout(() => {
+    this.statusEffects.start('shield', duration, () => {
       this.player.shieldActive = false
       gameEvents.emit('SHIELD_DEACTIVATED')
       this.emitPlayerStateChanged()
-    }, duration)
+    })
   }
 
   changeWeapon(weaponType: PlayerStats['weaponType'], duration?: number): void {
@@ -411,12 +401,36 @@ export class GameManager {
     this.emitPlayerStateChanged()
 
     if (duration) {
-      setTimeout(() => {
+      this.statusEffects.start('weapon', duration, () => {
         this.player.weaponType = 'SINGLE'
         gameEvents.emit('WEAPON_EXPIRED', { weapon: weaponType })
         this.emitPlayerStateChanged()
-      }, duration)
+      })
     }
+  }
+
+  activateSpeedBoost(multiplier: number, duration: number): void {
+    this.statusEffects.clear('speed')
+
+    this.player.speed = GAME_CONFIG.PLAYER.SPEED * multiplier
+    gameEvents.emit('SPEED_BOOST_ACTIVATED', { multiplier, speed: this.player.speed })
+    this.emitPlayerStateChanged()
+
+    this.statusEffects.start('speed', duration, () => {
+      this.player.speed = GAME_CONFIG.PLAYER.SPEED
+      gameEvents.emit('SPEED_BOOST_EXPIRED')
+      this.emitPlayerStateChanged()
+    })
+  }
+
+  clearTimedStatusEffects(): void {
+    this.statusEffects.clearAll()
+    this.player.invincible = false
+    this.player.invincibleUntil = 0
+    this.player.shieldActive = false
+    this.player.weaponType = 'SINGLE'
+    this.player.speed = GAME_CONFIG.PLAYER.SPEED
+    this.emitPlayerStateChanged()
   }
 
   completeWave(): void {

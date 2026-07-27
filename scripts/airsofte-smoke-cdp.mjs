@@ -324,10 +324,7 @@ async function main() {
       const { gameManager } = await import('/src/lib/game/gameManager.ts')
       const { gameRuntimeState } = await import('/src/lib/game/gameRuntime.ts')
 
-      if (gameManager.invincibilityTimeoutId) {
-        clearTimeout(gameManager.invincibilityTimeoutId)
-        gameManager.invincibilityTimeoutId = null
-      }
+      gameManager.clearTimedStatusEffects()
 
       gameEvents.emit('ENEMY_RETREAT', { clearAll: true })
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
@@ -382,10 +379,7 @@ async function main() {
     `(async () => {
       const { gameManager } = await import('/src/lib/game/gameManager.ts')
 
-      if (gameManager.invincibilityTimeoutId) {
-        clearTimeout(gameManager.invincibilityTimeoutId)
-        gameManager.invincibilityTimeoutId = null
-      }
+      gameManager.clearTimedStatusEffects()
 
       gameManager.isPlaying = true
       gameManager.playerDown = false
@@ -402,10 +396,7 @@ async function main() {
         gameManager.player.shieldActive === false &&
         gameManager.player.invincible === true
 
-      if (gameManager.invincibilityTimeoutId) {
-        clearTimeout(gameManager.invincibilityTimeoutId)
-        gameManager.invincibilityTimeoutId = null
-      }
+      gameManager.clearTimedStatusEffects()
 
       gameManager.playerDown = false
       gameManager.player.health = 10
@@ -495,6 +486,20 @@ async function main() {
         activePowerUpsAfterPickup: powerUpSystem.getActivePowerUps().length
       }
 
+      let speedExpiredEvent = false
+      const unsubSpeedExpired = gameEvents.on('SPEED_BOOST_EXPIRED', () => {
+        speedExpiredEvent = true
+      })
+      gameManager.activateSpeedBoost(1.5, 120)
+      const speedDuringBoost = gameManager.player.speed
+      await new Promise((resolve) => setTimeout(resolve, 180))
+      unsubSpeedExpired()
+      const speedBoost = {
+        speedDuringBoost,
+        speedAfterExpiry: gameManager.player.speed,
+        expiredEvent: speedExpiredEvent
+      }
+
       let bossDefeatedEvent = null
       const unsubBossDefeated = gameEvents.on('BOSS_DEFEATED', (event) => {
         bossDefeatedEvent = event.data
@@ -549,6 +554,7 @@ async function main() {
       return {
         playerShooting,
         powerUpPickup,
+        speedBoost,
         bossDefeat,
         storyMissionCompletion,
         gameOver
@@ -638,6 +644,9 @@ async function main() {
     deterministicSystemAssertions.powerUpPickup.activePowerUpsAfterPickup === 0,
     'Expected collected power-up to leave active pool'
   )
+  assert(deterministicSystemAssertions.speedBoost.speedDuringBoost > 20, 'Expected speed boost to increase player speed')
+  assert(deterministicSystemAssertions.speedBoost.speedAfterExpiry === 20, 'Expected speed boost to expire to base speed')
+  assert(deterministicSystemAssertions.speedBoost.expiredEvent === true, 'Expected speed boost expiry event')
   assert(deterministicSystemAssertions.bossDefeat.bossKilled === true, 'Expected boss defeat damage to kill boss')
   assert(deterministicSystemAssertions.bossDefeat.eventEnemyType === 'BOSS', 'Expected boss defeat event')
   assert(deterministicSystemAssertions.bossDefeat.bossActiveAfterDefeat === false, 'Expected boss inactive after defeat')
