@@ -45,11 +45,9 @@
     gamepadConnected = gamepadManager.isConnected()
     gamepadDeadzone = gamepadManager.getDeadzone()
 
-    const gamepadCheck = setInterval(() => {
-      gamepadConnected = gamepadManager.isConnected()
-    }, 1000)
-
-    return () => clearInterval(gamepadCheck)
+    return gamepadManager.subscribe((status) => {
+      gamepadConnected = status.connected
+    })
   })
 
   function handleVolumeChange(type: 'master' | 'music' | 'sfx', value: number): void {

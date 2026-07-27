@@ -6,6 +6,7 @@ import { EnemySpawner } from '$lib/game/enemySpawner'
 import { enhancedParticles } from '$lib/game/enhancedParticles'
 import { gameEvents } from '$lib/game/eventBus'
 import { gameManager } from '$lib/game/gameManager'
+import { RuntimeInputSystem } from '$lib/game/inputSystem'
 import { particleSystem } from '$lib/game/particleSystem'
 import { PlayerController } from '$lib/game/playerController'
 import { powerUpSystem } from '$lib/game/powerUpSystem'
@@ -75,13 +76,13 @@ export class GameRuntime {
   private playerController: PlayerController
   private enemyController = new EnemyController()
   private enemySpawner: EnemySpawner
+  private inputSystem = new RuntimeInputSystem()
   private playerBullets: Bullet[] = []
   private enemyBullets: Bullet[] = []
   private enemies: Enemy[] = []
   private visibleEnemies: Enemy[] = []
   private enemyContactTimestamps = new Map<string, number>()
   private powerUps: PowerUp[] = []
-  private keysPressed = new Set<string>()
   private animationFrameId = 0
   private lastFrameTime = 0
   private lastDeltaMs = GAME_CONFIG.FRAME_TIME
@@ -94,17 +95,6 @@ export class GameRuntime {
   private idleTween: gsap.core.Tween | null = null
   private tweens: gsap.core.Tween[] = []
   private unsubscribers: Array<() => void> = []
-
-  private readonly movementKeys = new Set([
-    'ArrowUp',
-    'ArrowDown',
-    'ArrowLeft',
-    'ArrowRight',
-    'w',
-    'a',
-    's',
-    'd'
-  ])
 
   constructor(gamePad: HTMLDivElement, onState?: (state: GameRuntimeState) => void) {
     this.gamePad = gamePad
@@ -140,8 +130,7 @@ export class GameRuntime {
       this.animationFrameId = 0
     }
 
-    window.removeEventListener('keydown', this.handleKeyDown)
-    window.removeEventListener('keyup', this.handleKeyUp)
+    this.inputSystem.unbind()
     this.unsubscribers.forEach((unsubscribe) => unsubscribe())
     this.unsubscribers = []
 
@@ -158,8 +147,7 @@ export class GameRuntime {
   }
 
   private bindEvents(): void {
-    window.addEventListener('keydown', this.handleKeyDown)
-    window.addEventListener('keyup', this.handleKeyUp)
+    this.inputSystem.bind()
 
     this.unsubscribers = [
       gameEvents.on('PLAYER_HIT', this.handlePlayerHit),
@@ -215,7 +203,7 @@ export class GameRuntime {
   private updatePlayer(deltaScale: number): void {
     if (this.starting) return
 
-    if (this.keysPressed.has(' ') || this.keysPressed.has('Space')) {
+    if (this.inputSystem.isShooting()) {
       const availableSlots = GAME_CONFIG.LIMITS.PLAYER_BULLETS - this.playerBullets.length
       const newBullets = availableSlots > 0 ? this.playerController.shoot() : []
       if (newBullets.length > 0) {
@@ -226,18 +214,12 @@ export class GameRuntime {
       }
     }
 
-    let inputX = 0
-    let inputY = 0
+    const input = this.inputSystem.getMovementVector()
 
-    if (this.keysPressed.has('ArrowUp') || this.keysPressed.has('w')) inputY -= 1
-    if (this.keysPressed.has('ArrowDown') || this.keysPressed.has('s')) inputY += 1
-    if (this.keysPressed.has('ArrowLeft') || this.keysPressed.has('a')) inputX -= 1
-    if (this.keysPressed.has('ArrowRight') || this.keysPressed.has('d')) inputX += 1
-
-    if (inputX !== 0 || inputY !== 0) {
+    if (input.x !== 0 || input.y !== 0) {
       this.stopIdleTween()
       const bounds = getBoundingBox(0, 0, this.gamePad.clientWidth, this.gamePad.clientHeight)
-      this.playerController.moveBy(inputX, inputY, bounds, deltaScale)
+      this.playerController.moveBy(input.x, input.y, bounds, deltaScale)
     } else {
       this.startIdleTween()
     }
@@ -436,31 +418,6 @@ export class GameRuntime {
       lastDeltaMs: this.lastDeltaMs,
       lastFrameAt: now
     }
-  }
-
-  private handleKeyDown = (event: KeyboardEvent): void => {
-    if (this.starting || !gameManager.isPlaying || gameManager.isPaused) return
-
-    this.keysPressed.add(event.key)
-
-    if (this.movementKeys.has(event.key) || event.key === ' ' || event.key === 'Space') {
-      event.preventDefault()
-    }
-  }
-
-  private handleKeyUp = (event: KeyboardEvent): void => {
-    this.keysPressed.delete(event.key)
-
-    if (!this.hasMovementInput()) {
-      this.startIdleTween()
-    }
-  }
-
-  private hasMovementInput(): boolean {
-    for (const key of this.movementKeys) {
-      if (this.keysPressed.has(key)) return true
-    }
-    return false
   }
 
   private stopIdleTween(): void {

@@ -11,6 +11,7 @@ class InputManager {
   private activeContext: InputContext = 'GLOBAL'
   private currentRoute: GameRoute = 'STARTUP'
   private isInitialized = false
+  private readonly boundHandleKeyDown = (event: KeyboardEvent) => this.handleKeyDown(event)
 
   private constructor() {}
 
@@ -24,7 +25,7 @@ class InputManager {
   initialize(): void {
     if (this.isInitialized) return
 
-    window.addEventListener('keydown', this.handleKeyDown.bind(this))
+    window.addEventListener('keydown', this.boundHandleKeyDown)
     this.isInitialized = true
   }
 
@@ -104,7 +105,7 @@ class InputManager {
   }
 
   cleanup(): void {
-    window.removeEventListener('keydown', this.handleKeyDown.bind(this))
+    window.removeEventListener('keydown', this.boundHandleKeyDown)
     this.clearAll()
     this.isInitialized = false
   }

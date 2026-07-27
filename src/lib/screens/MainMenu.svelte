@@ -1,12 +1,8 @@
 <script lang="ts">
   import Options from '$lib/components/Options.svelte'
-  import Loader from '$lib/components/Loader.svelte'
-  import { replicateLoadFunctions } from '$lib/game/utils'
   import { navigateTo, toggleExit, toggleHighScore, toggleSettings } from '$lib/stores/gameStore'
 
   import UserPill from '$lib/components/UserPill.svelte'
-
-  const load: boolean = false
 
   const menuOptions = [
     {
@@ -32,9 +28,7 @@
     }
   ]
 
-  function handleMenuSelect(value: string): void {
-    console.log(`Menu option selected: ${value}`)
-  }
+  function handleMenuSelect(): void {}
 </script>
 
 <div
@@ -46,15 +40,6 @@
 
     <Options options={menuOptions} layout="vertical" gap="lg" select={handleMenuSelect} />
 
-    {#if load}
-      <Loader
-        steps={replicateLoadFunctions()}
-        onComplete={() => {
-          console.log('Loading complete')
-        }}
-        delayBetween={200}
-      />
-    {/if}
   </div>
 </div>
 

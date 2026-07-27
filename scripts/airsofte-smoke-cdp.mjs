@@ -449,6 +449,114 @@ async function main() {
     5000
   )
 
+  const deterministicSystemAssertions = await evaluate(
+    client,
+    `(async () => {
+      const { gameManager } = await import('/src/lib/game/gameManager.ts')
+      const { gameEvents } = await import('/src/lib/game/eventBus.ts')
+      const { PlayerController } = await import('/src/lib/game/playerController.ts')
+      const { EnemyController } = await import('/src/lib/game/enemyController.ts')
+      const { powerUpSystem } = await import('/src/lib/game/powerUpSystem.ts')
+      const { storyMissionManager } = await import('/src/lib/game/storyMissionData.ts')
+      const { getBoundingBox } = await import('/src/lib/utils/collisionSystem.ts')
+
+      const originalWeapon = gameManager.player.weaponType
+      const originalFireRate = gameManager.player.fireRate
+      const originalWaveCompleting = gameManager.waveCompleting
+
+      gameManager.isPlaying = true
+      gameManager.isPaused = false
+      gameManager.session.bulletsShot = 0
+      gameManager.player.weaponType = 'SPREAD'
+      gameManager.player.fireRate = 0
+
+      const playerController = new PlayerController(120, 420)
+      const playerBullets = playerController.shoot()
+      const playerShooting = {
+        bulletCount: playerBullets.length,
+        bulletsShot: gameManager.session.bulletsShot,
+        allOwnedByPlayer: playerBullets.every((bullet) => bullet.owner === 'PLAYER' && bullet.active)
+      }
+      playerBullets.forEach((bullet) => playerController.releaseBullet(bullet))
+
+      powerUpSystem.clearAll()
+      gameManager.player.health = 50
+      let collectedPowerUp = null
+      const unsubPowerUp = gameEvents.on('POWERUP_COLLECTED', (event) => {
+        collectedPowerUp = event.data
+      })
+      powerUpSystem.spawnPowerUp('HEALTH', 40, 40)
+      const collected = powerUpSystem.checkPlayerCollision(getBoundingBox(35, 35, 120, 120))
+      unsubPowerUp()
+      const powerUpPickup = {
+        collectedType: collected?.type ?? null,
+        eventType: collectedPowerUp?.type ?? null,
+        healthAfterPickup: gameManager.player.health,
+        activePowerUpsAfterPickup: powerUpSystem.getActivePowerUps().length
+      }
+
+      let bossDefeatedEvent = null
+      const unsubBossDefeated = gameEvents.on('BOSS_DEFEATED', (event) => {
+        bossDefeatedEvent = event.data
+      })
+      gameManager.waveCompleting = true
+      const enemyController = new EnemyController()
+      const boss = enemyController.spawnEnemy('BOSS', 160, 80, 'CIRCLE')
+      const bossKilled = enemyController.damageEnemy(boss.id, boss.maxHealth)
+      unsubBossDefeated()
+      const bossDefeat = {
+        bossKilled,
+        eventEnemyType: bossDefeatedEvent?.enemy?.type ?? null,
+        bossActiveAfterDefeat: boss.active
+      }
+
+      const firstMission = storyMissionManager.getMissionById(1)
+      const secondMissionBefore = storyMissionManager.getMissionById(2)
+      storyMissionManager.completeMission(1, 3)
+      const firstMissionAfter = storyMissionManager.getMissionById(1)
+      const secondMissionAfter = storyMissionManager.getMissionById(2)
+      const storyMissionCompletion = {
+        hadMissionOne: Boolean(firstMission),
+        missionOneCompleted: firstMissionAfter?.completed === true,
+        missionOneStars: firstMissionAfter?.stars ?? 0,
+        missionTwoUnlockedBefore: secondMissionBefore?.unlocked ?? null,
+        missionTwoUnlockedAfter: secondMissionAfter?.unlocked ?? null
+      }
+
+      let gameOverEvent = null
+      const unsubGameOver = gameEvents.on('GAME_OVER', (event) => {
+        gameOverEvent = event.data
+      })
+      gameManager.mode = 'QUICK_PLAY'
+      gameManager.session.score = 4321
+      gameManager.session.currentWave = 7
+      gameManager.endGame(false)
+      await new Promise((resolve) => setTimeout(resolve, 700))
+      unsubGameOver()
+      const gameOver = {
+        eventReceived: gameOverEvent !== null,
+        victory: gameOverEvent?.victory ?? null,
+        score: gameOverEvent?.score ?? null,
+        wave: gameOverEvent?.wave ?? null,
+        managerStopped: gameManager.isPlaying === false
+      }
+
+      gameManager.player.weaponType = originalWeapon
+      gameManager.player.fireRate = originalFireRate
+      gameManager.waveCompleting = originalWaveCompleting
+      powerUpSystem.clearAll()
+
+      return {
+        playerShooting,
+        powerUpPickup,
+        bossDefeat,
+        storyMissionCompletion,
+        gameOver
+      }
+    })()`,
+    5000
+  )
+
   const runtimeErrors = client.events
     .filter(
       (event) =>
@@ -517,6 +625,40 @@ async function main() {
   assert(respawnRuntimeAssertions.health === 100, 'Expected player health to reset after respawn')
   assert(respawnRuntimeAssertions.playerDown === false, 'Expected playerDown to clear after respawn')
   assert(respawnRuntimeAssertions.frameAdvanced === true, 'Expected runtime frames to advance after respawn')
+  assert(deterministicSystemAssertions.playerShooting.bulletCount >= 3, 'Expected player spread shooting to create bullets')
+  assert(deterministicSystemAssertions.playerShooting.bulletsShot === 1, 'Expected player shooting to update shot count')
+  assert(
+    deterministicSystemAssertions.playerShooting.allOwnedByPlayer === true,
+    'Expected player bullets to be active and player-owned'
+  )
+  assert(deterministicSystemAssertions.powerUpPickup.collectedType === 'HEALTH', 'Expected health power-up pickup')
+  assert(deterministicSystemAssertions.powerUpPickup.eventType === 'HEALTH', 'Expected power-up collected event')
+  assert(deterministicSystemAssertions.powerUpPickup.healthAfterPickup > 50, 'Expected power-up to heal player')
+  assert(
+    deterministicSystemAssertions.powerUpPickup.activePowerUpsAfterPickup === 0,
+    'Expected collected power-up to leave active pool'
+  )
+  assert(deterministicSystemAssertions.bossDefeat.bossKilled === true, 'Expected boss defeat damage to kill boss')
+  assert(deterministicSystemAssertions.bossDefeat.eventEnemyType === 'BOSS', 'Expected boss defeat event')
+  assert(deterministicSystemAssertions.bossDefeat.bossActiveAfterDefeat === false, 'Expected boss inactive after defeat')
+  assert(
+    deterministicSystemAssertions.storyMissionCompletion.hadMissionOne === true,
+    'Expected story mission one to exist'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionCompletion.missionOneCompleted === true,
+    'Expected story mission completion to persist in manager'
+  )
+  assert(deterministicSystemAssertions.storyMissionCompletion.missionOneStars === 3, 'Expected story stars to update')
+  assert(
+    deterministicSystemAssertions.storyMissionCompletion.missionTwoUnlockedAfter === true,
+    'Expected completing mission one to unlock mission two'
+  )
+  assert(deterministicSystemAssertions.gameOver.eventReceived === true, 'Expected game over event')
+  assert(deterministicSystemAssertions.gameOver.victory === false, 'Expected quick-play game over to be non-victory')
+  assert(deterministicSystemAssertions.gameOver.score === 4321, 'Expected game over score payload')
+  assert(deterministicSystemAssertions.gameOver.wave === 7, 'Expected game over wave payload')
+  assert(deterministicSystemAssertions.gameOver.managerStopped === true, 'Expected game manager to stop on game over')
 
   console.log(
     JSON.stringify(
@@ -529,6 +671,7 @@ async function main() {
         contactCollisionAssertions,
         stabilityAssertions,
         respawnRuntimeAssertions,
+        deterministicSystemAssertions,
         runtimeErrorCount: runtimeErrors.length,
         runtimeErrors: runtimeErrors.slice(0, 5)
       },
