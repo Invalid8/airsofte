@@ -147,6 +147,10 @@ export class ParticleSystem {
     return this.particles
   }
 
+  getActiveCount(): number {
+    return this.particles.length
+  }
+
   clear(): void {
     this.particles.forEach((p) => {
       p.active = false

@@ -1,5 +1,6 @@
 import type { Bullet, BoundingBox } from '$lib/types/gameTypes'
-import { GAME_CONFIG, WEAPON_CONFIG } from '$lib/config/gameConstants'
+import { GAME_CONFIG } from '$lib/config/gameConstants'
+import { WEAPON_CONFIG } from '$lib/game/presets'
 import { gameManager } from './gameManager'
 import { clampToBox, getBoundingBox } from '$lib/utils/collisionSystem'
 import { poolManager } from '$lib/utils/objectPool'

@@ -155,7 +155,8 @@ async function main() {
     `(async () => {
       const { gameManager } = await import('/src/lib/game/gameManager.ts')
       const { gameEvents } = await import('/src/lib/game/eventBus.ts')
-      const { BOSS_ATTACK_PRESETS, ENEMY_CONFIG, GAME_CONFIG } = await import('/src/lib/config/gameConstants.ts')
+      const { GAME_CONFIG } = await import('/src/lib/config/gameConstants.ts')
+      const { BOSS_ATTACK_PRESETS, ENEMY_CONFIG } = await import('/src/lib/game/presets/index.ts')
 
       ENEMY_CONFIG.BOSS.shootInterval = 80
       ENEMY_CONFIG.BOSS.health = 900
@@ -236,7 +237,8 @@ async function main() {
         lives: gameManager.player.lives,
         health: gameManager.player.health,
         shieldActive: gameManager.player.shieldActive,
-        invincible: gameManager.player.invincible
+        invincible: gameManager.player.invincible,
+        runtimeStats: window.__AIRSOFTE_RUNTIME_STATS__ ?? null
       }
     })()`
   )
@@ -307,6 +309,15 @@ async function main() {
   assert(bossResult.playerBulletLimit > 0, 'Expected player bullet limit to be configured')
   assert(postStressState.playing === true, 'Expected game to survive stress wave')
   assert(postStressState.lives >= 1, 'Expected player to survive stress wave')
+  assert(postStressState.runtimeStats !== null, 'Expected runtime stats to be published')
+  assert(
+    postStressState.runtimeStats.activeEnemyBullets <= bossResult.enemyBulletLimit,
+    'Expected enemy bullet count to stay within configured cap'
+  )
+  assert(
+    postStressState.runtimeStats.activePlayerBullets <= bossResult.playerBulletLimit,
+    'Expected player bullet count to stay within configured cap'
+  )
   assert(frameStats.canvas === true, 'Expected game canvas to render')
   assert(frameStats.p95Ms <= 35, `Expected p95 frame time <= 35ms, got ${frameStats.p95Ms}`)
   assert(runtimeErrors.length === 0, `Expected 0 runtime errors, got ${runtimeErrors.length}`)

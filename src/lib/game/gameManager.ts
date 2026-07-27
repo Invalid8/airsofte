@@ -2,9 +2,9 @@ import type { GameSessionState, PlayerStats, Wave, GameDifficulty, Enemy } from 
 import {
   GAME_CONFIG,
   DIFFICULTY_MODIFIERS,
-  SCORE_VALUES,
-  WAVE_TEMPLATES
+  SCORE_VALUES
 } from '$lib/config/gameConstants'
+import { WAVE_TEMPLATES } from '$lib/game/presets'
 import { StorageManager } from '$lib/utils/storageManager'
 import { gameEvents } from './eventBus'
 import { storyMissionManager } from './storyMissionData'

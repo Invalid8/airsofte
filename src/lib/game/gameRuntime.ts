@@ -34,6 +34,22 @@ export type GameRuntimeState = {
   playerInvincible: boolean
 }
 
+export type GameRuntimeStats = {
+  activeEnemies: number
+  activeEnemyBullets: number
+  activePlayerBullets: number
+  activePowerUps: number
+  activeParticles: number
+  lastDeltaMs: number
+  lastFrameAt: number
+}
+
+declare global {
+  interface Window {
+    __AIRSOFTE_RUNTIME_STATS__?: GameRuntimeStats
+  }
+}
+
 export class GameRuntime {
   private gamePad: HTMLDivElement
   private onState: (state: GameRuntimeState) => void
@@ -47,6 +63,7 @@ export class GameRuntime {
   private keysPressed = new Set<string>()
   private animationFrameId = 0
   private lastFrameTime = 0
+  private lastDeltaMs = GAME_CONFIG.FRAME_TIME
   private starting = true
   private isFlashing = false
   private playerOpacity = 1
@@ -159,12 +176,14 @@ export class GameRuntime {
     const deltaMs = this.lastFrameTime ? Math.min(50, now - this.lastFrameTime) : GAME_CONFIG.FRAME_TIME
     const deltaScale = deltaMs / GAME_CONFIG.FRAME_TIME
     this.lastFrameTime = now
+    this.lastDeltaMs = deltaMs
 
     if (gameManager.isPlaying && !gameManager.isPaused) {
       gameManager.update(deltaMs)
       this.updatePlayer(deltaScale)
       this.updateEnemies(deltaMs, deltaScale)
       this.updatePowerUps(deltaMs)
+      this.publishStats(now)
       this.publishState()
     }
 
@@ -369,6 +388,18 @@ export class GameRuntime {
       playerOffsetY: this.playerOffsetY,
       playerInvincible: gameManager.player.invincible || gameManager.player.shieldActive
     })
+  }
+
+  private publishStats(now: number): void {
+    window.__AIRSOFTE_RUNTIME_STATS__ = {
+      activeEnemies: this.enemies.length,
+      activeEnemyBullets: this.enemyBullets.length,
+      activePlayerBullets: this.playerBullets.length,
+      activePowerUps: this.powerUps.length,
+      activeParticles: particleSystem.getActiveCount(),
+      lastDeltaMs: this.lastDeltaMs,
+      lastFrameAt: now
+    }
   }
 
   private handleKeyDown = (event: KeyboardEvent): void => {

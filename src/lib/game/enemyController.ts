@@ -7,11 +7,10 @@ import type {
   BoundingBox
 } from '$lib/types/gameTypes'
 import {
-  BOSS_ATTACK_PRESETS,
-  ENEMY_CONFIG,
   GAME_CONFIG,
   DIFFICULTY_MODIFIERS
 } from '$lib/config/gameConstants'
+import { BOSS_ATTACK_PRESETS, ENEMY_CONFIG } from '$lib/game/presets'
 import { gameManager } from '$lib/game/gameManager'
 import { audioManager } from '$lib/utils/AudioManager'
 import { getBoundingBox } from '$lib/utils/collisionSystem'
