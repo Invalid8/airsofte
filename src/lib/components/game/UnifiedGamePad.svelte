@@ -1,11 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import PlayerPlane from './PlayerPlane.svelte'
-  import EnemyPlane from './EnemyPlane.svelte'
   import GameHUD from './GameHUD.svelte'
-  import PowerUps from './PowerUps.svelte'
   import GameCanvasLayer from './GameCanvasLayer.svelte'
-  // import BossHealthBar from '../BossHealthBar.svelte'
+  import GameRuntimeHost from './GameRuntimeHost.svelte'
   import VictoryScreen from '../VictoryScreen.svelte'
   import ScorePopup from '../ScorePopup.svelte'
   import DialogueSystem from '../DialogueSystem.svelte'
@@ -134,8 +131,6 @@
     <DialogueSystem mission={currentMission} />
   {/if}
 
-  <!-- <BossHealthBar /> -->
-
   <div class="game-wrapper">
     <div class="game-container" bind:this={game_pad}>
       {#if game_pad}
@@ -153,20 +148,21 @@
           {playerOffsetY}
           {playerInvincible}
         />
-        <PowerUps {game_pad} {playerX} {playerY} bind:powerUps />
         <ScorePopup />
-        <PlayerPlane
+        <GameRuntimeHost
           {game_pad}
-          bind:bullets={playerBullets}
-          bind:x={playerX}
-          bind:y={playerY}
-          bind:opacity={playerOpacity}
-          bind:scale={playerScale}
-          bind:rotation={playerRotation}
-          bind:offsetY={playerOffsetY}
-          bind:invincible={playerInvincible}
+          bind:playerBullets
+          bind:enemyBullets
+          bind:enemies
+          bind:powerUps
+          bind:playerX
+          bind:playerY
+          bind:playerOpacity
+          bind:playerScale
+          bind:playerRotation
+          bind:playerOffsetY
+          bind:playerInvincible
         />
-        <EnemyPlane {game_pad} bind:playerBullets bind:enemyBullets bind:enemies {playerX} {playerY} />
       {/if}
     </div>
   </div>

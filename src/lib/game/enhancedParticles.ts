@@ -1,5 +1,5 @@
 import type { PowerUpType } from '$lib/types/gameTypes'
-import { particleSystem, type Particle } from './particleSystem'
+import { particleSystem } from './particleSystem'
 import { audioManager } from '$lib/utils/AudioManager'
 
 export class EnhancedParticleEffects {
@@ -15,14 +15,14 @@ export class EnhancedParticleEffects {
   }
 
   static createBigExplosion(x: number, y: number): void {
-    particleSystem.createExplosion(x, y, 40, '#ff6600')
+    particleSystem.createExplosion(x, y, 28, '#ff6600')
 
     for (let i = 0; i < 3; i++) {
       setTimeout(() => {
         particleSystem.createExplosion(
           x + (Math.random() - 0.5) * 60,
           y + (Math.random() - 0.5) * 60,
-          20,
+          12,
           '#ffaa00'
         )
       }, i * 100)
@@ -33,7 +33,7 @@ export class EnhancedParticleEffects {
         particleSystem.createExplosion(
           x + (Math.random() - 0.5) * 100,
           y + (Math.random() - 0.5) * 100,
-          10,
+          6,
           '#ffffff'
         )
       }, i * 50)
@@ -58,17 +58,16 @@ export class EnhancedParticleEffects {
       particleSystem.createExplosion(x, y, 1, color)
 
       setTimeout(() => {
-        const particle = particleSystem['particlePool']!.acquire()
-        particle.x = x
-        particle.y = y
-        particle.vx = Math.cos(angle) * speed
-        particle.vy = Math.sin(angle) * speed
-        particle.life = 1
-        particle.maxLife = 1
-        particle.size = 4
-        particle.color = color
-        particle.active = true
-        particleSystem['particles'].push(particle)
+        particleSystem.emitParticle({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          maxLife: 1,
+          size: 4,
+          color
+        })
       }, i * 10)
     }
   }
@@ -78,17 +77,16 @@ export class EnhancedParticleEffects {
       const angle = (Math.PI * 2 * i) / 20
       const speed = 4
 
-      const particle = particleSystem['particlePool']!.acquire()
-      particle.x = x
-      particle.y = y
-      particle.vx = Math.cos(angle) * speed
-      particle.vy = Math.sin(angle) * speed
-      particle.life = 1
-      particle.maxLife = 1
-      particle.size = 6
-      particle.color = '#0088ff'
-      particle.active = true
-      particleSystem['particles'].push(particle)
+      particleSystem.emitParticle({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        maxLife: 1,
+        size: 6,
+        color: '#0088ff'
+      })
     }
   }
 
@@ -98,24 +96,23 @@ export class EnhancedParticleEffects {
         const angle = Math.random() * Math.PI * 2
         const distance = Math.random() * 100
 
-        const particle = particleSystem['particlePool']!.acquire()
-        particle.x = x + Math.cos(angle) * distance
-        particle.y = y + Math.sin(angle) * distance
-        particle.vx = -Math.cos(angle) * 3
-        particle.vy = -Math.sin(angle) * 3
-        particle.life = 1
-        particle.maxLife = 1
-        particle.size = 3
-        particle.color = '#00aaff'
-        particle.active = true
-        particleSystem['particles'].push(particle)
+        particleSystem.emitParticle({
+          x: x + Math.cos(angle) * distance,
+          y: y + Math.sin(angle) * distance,
+          vx: -Math.cos(angle) * 3,
+          vy: -Math.sin(angle) * 3,
+          life: 1,
+          maxLife: 1,
+          size: 3,
+          color: '#00aaff'
+        })
       }, i * 10)
     }
   }
 
   static createBossDeathExplosion(x: number, y: number): void {
-    const maxWaves = 4
-    const particlesPerWave = 12
+    const maxWaves = 3
+    const particlesPerWave = 8
 
     for (let wave = 0; wave < maxWaves; wave++) {
       setTimeout(() => {
@@ -128,7 +125,7 @@ export class EnhancedParticleEffects {
           const px = x + Math.cos(angle) * radius
           const py = y + Math.sin(angle) * radius
 
-          particleSystem.createExplosion(px, py, 8, color)
+          particleSystem.createExplosion(px, py, 5, color)
         }
 
         if (wave === 0 || wave === maxWaves - 1) {
@@ -138,16 +135,16 @@ export class EnhancedParticleEffects {
     }
 
     setTimeout(() => {
-      particleSystem.createExplosion(x, y, 50, '#ffffff')
+      particleSystem.createExplosion(x, y, 30, '#ffffff')
 
-      for (let i = 0; i < 15; i++) {
+      for (let i = 0; i < 8; i++) {
         setTimeout(() => {
           const angle = Math.random() * Math.PI * 2
           const distance = Math.random() * 150
           particleSystem.createExplosion(
             x + Math.cos(angle) * distance,
             y + Math.sin(angle) * distance,
-            6,
+            4,
             '#ffaa00'
           )
         }, i * 30)
@@ -157,17 +154,16 @@ export class EnhancedParticleEffects {
 
   static createBulletTrail(x: number, y: number, color: string = '#ffaa00'): void {
     if (Math.random() > 0.5) {
-      const particle = particleSystem['particlePool']!.acquire()
-      particle.x = x + (Math.random() - 0.5) * 5
-      particle.y = y
-      particle.vx = (Math.random() - 0.5) * 0.5
-      particle.vy = 2
-      particle.life = 0.5
-      particle.maxLife = 0.5
-      particle.size = 2
-      particle.color = color
-      particle.active = true
-      particleSystem['particles'].push(particle)
+      particleSystem.emitParticle({
+        x: x + (Math.random() - 0.5) * 5,
+        y,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: 2,
+        life: 0.5,
+        maxLife: 0.5,
+        size: 2,
+        color
+      })
     }
   }
 }
