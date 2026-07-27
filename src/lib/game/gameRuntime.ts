@@ -79,6 +79,7 @@ export class GameRuntime {
   private enemyBullets: Bullet[] = []
   private enemies: Enemy[] = []
   private visibleEnemies: Enemy[] = []
+  private enemyContactTimestamps = new Map<string, number>()
   private powerUps: PowerUp[] = []
   private keysPressed = new Set<string>()
   private animationFrameId = 0
@@ -150,6 +151,7 @@ export class GameRuntime {
     this.tweens = []
     this.enemySpawner.stop()
     this.clearEnemyBullets()
+    this.enemyContactTimestamps.clear()
     this.playerBullets.forEach((bullet) => this.playerController.releaseBullet(bullet))
     this.playerBullets = []
     powerUpSystem.clearAll()
@@ -371,17 +373,32 @@ export class GameRuntime {
       ScreenEffects.flash('rgba(255, 0, 0, 0.25)', 0.12)
     }
 
+    const now = performance.now()
+
     for (const { enemy } of combatSystem.checkPlayerEnemyCollisions(playerBox, this.enemies)) {
       if (!enemy || !enemy.active) continue
 
-      if (!gameManager.player.invincible && !gameManager.player.shieldActive) {
-        gameManager.damagePlayer(30)
-        particleSystem.createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 14, '#ff3300')
-        ScreenEffects.shake(10, 0.3)
-        ScreenEffects.flash('rgba(255, 0, 0, 0.42)', 0.16)
-      }
+      const lastContactAt = this.enemyContactTimestamps.get(enemy.id) ?? 0
+      if (now - lastContactAt < GAME_CONFIG.COLLISION.CONTACT_COOLDOWN_MS) continue
 
-      this.enemyController.damageEnemy(enemy.id, enemy.maxHealth)
+      this.enemyContactTimestamps.set(enemy.id, now)
+
+      if (gameManager.player.invincible) continue
+
+      gameManager.damagePlayer(GAME_CONFIG.COLLISION.PLAYER_CONTACT_DAMAGE)
+      const contactDamage =
+        enemy.type === 'BOSS'
+          ? GAME_CONFIG.COLLISION.BOSS_CONTACT_DAMAGE
+          : GAME_CONFIG.COLLISION.ENEMY_CONTACT_DAMAGE
+      const killed = this.enemyController.damageEnemy(enemy.id, contactDamage)
+
+      particleSystem.createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, 14, '#ff3300')
+      ScreenEffects.shake(10, 0.3)
+      ScreenEffects.flash('rgba(255, 0, 0, 0.42)', 0.16)
+
+      if (killed && enemy.type === 'BOSS') {
+        enhancedParticles.createBossDeathExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2)
+      }
     }
   }
 
@@ -559,8 +576,10 @@ export class GameRuntime {
   }
 
   private handleGameStart = (): void => {
+    this.enemySpawner.stop()
     this.enemyController.clearAllEnemies()
     this.enemies = []
+    this.enemyContactTimestamps.clear()
     this.clearEnemyBullets()
     this.publishState()
     this.publishStats(performance.now())
@@ -569,6 +588,8 @@ export class GameRuntime {
   private handleEnemyDestroyed = (event: GameEvent): void => {
     const { enemy } = event.data
     if (!enemy) return
+
+    this.enemyContactTimestamps.delete(enemy.id)
 
     powerUpSystem.spawnRandomPowerUp(
       enemy.x + enemy.width / 2 - 20,
@@ -587,9 +608,14 @@ export class GameRuntime {
     const pattern = (event.data?.pattern ?? 'STRAIGHT') as MovementPattern
     const count = Math.max(1, Math.min(8, Number(event.data?.count ?? 3)))
     const laneWidth = Math.max(80, this.gamePad.clientWidth / (count + 1))
+    const requestedX = Number(event.data?.x)
+    const requestedY = Number(event.data?.y)
+    const hasRequestedPosition = Number.isFinite(requestedX) && Number.isFinite(requestedY)
 
     for (let i = 0; i < count; i++) {
-      this.enemyController.spawnEnemy(enemyType, laneWidth * (i + 1) - 40, -80 - i * 24, pattern)
+      const x = hasRequestedPosition ? requestedX : laneWidth * (i + 1) - 40
+      const y = hasRequestedPosition ? requestedY - i * 24 : -80 - i * 24
+      this.enemyController.spawnEnemy(enemyType, x, y, pattern)
     }
 
     this.enemies = this.enemyController.getActiveEnemies()
@@ -599,12 +625,14 @@ export class GameRuntime {
 
   private handleEnemyRetreat = (event: GameEvent): void => {
     if (event.data?.clearAll) {
+      this.enemySpawner.stop()
       for (const enemy of this.enemies) {
         enemy.active = false
       }
       this.enemies = this.enemyController.getActiveEnemies()
     }
 
+    this.enemyContactTimestamps.clear()
     this.clearEnemyBullets()
     this.publishState()
     this.publishStats(performance.now())

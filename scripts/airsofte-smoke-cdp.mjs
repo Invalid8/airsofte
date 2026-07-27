@@ -201,13 +201,16 @@ async function main() {
 
       gameEvents.emit('GAME_START', { mode: 'SMOKE_STRESS' })
 
+      gameManager.isPlaying = true
+      gameManager.isPaused = false
       gameManager.currentWave = stressWave
       gameManager.waves = [stressWave]
       gameManager.currentWaveIndex = 98
+      gameManager.session.playing = true
       gameManager.session.currentWave = 99
       gameManager.player.health = gameManager.player.maxHealth
       gameManager.player.lives = 3
-      gameManager.player.invincible = false
+      gameManager.player.invincible = true
       gameManager.player.shieldActive = false
       gameManager.enemiesSpawned = 13
       gameManager.enemiesDestroyedInWave = 0
@@ -277,7 +280,6 @@ async function main() {
       const { gameEvents } = await import('/src/lib/game/eventBus.ts')
 
       gameEvents.emit('CLEAR_ENEMY_BULLETS', {})
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
       const bulletsAfterClear = window.__AIRSOFTE_RUNTIME_STATS__?.activeEnemyBullets ?? -1
 
       gameEvents.emit('SPAWN_REINFORCEMENTS', {
@@ -311,6 +313,66 @@ async function main() {
         bossHealthAfterSpawn,
         bossVisibleAfterRetreat,
         finalStats: window.__AIRSOFTE_RUNTIME_STATS__ ?? null
+      }
+    })()`
+  )
+
+  const contactCollisionAssertions = await evaluate(
+    client,
+    `(async () => {
+      const { gameEvents } = await import('/src/lib/game/eventBus.ts')
+      const { gameManager } = await import('/src/lib/game/gameManager.ts')
+      const { gameRuntimeState } = await import('/src/lib/game/gameRuntime.ts')
+
+      if (gameManager.invincibilityTimeoutId) {
+        clearTimeout(gameManager.invincibilityTimeoutId)
+        gameManager.invincibilityTimeoutId = null
+      }
+
+      gameEvents.emit('ENEMY_RETREAT', { clearAll: true })
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
+      gameManager.isPlaying = true
+      gameManager.playerDown = false
+      gameManager.player.health = 100
+      gameManager.player.lives = 3
+      gameManager.player.invincible = false
+      gameManager.player.shieldActive = false
+
+      gameEvents.emit('SPAWN_REINFORCEMENTS', {
+        enemyType: 'BOMBER',
+        count: 1,
+        pattern: 'STRAIGHT',
+        x: gameRuntimeState.playerX + 15,
+        y: gameRuntimeState.playerY + 15
+      })
+
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
+      const bomberAfterFirstContact = gameRuntimeState.enemies.find((enemy) => enemy.type === 'BOMBER')
+      const healthAfterFirstContact = gameManager.player.health
+      const livesAfterFirstContact = gameManager.player.lives
+      const bomberHealthAfterFirstContact = bomberAfterFirstContact?.health ?? 0
+      const bomberMaxHealth = bomberAfterFirstContact?.maxHealth ?? 0
+      const bomberStillActive = bomberAfterFirstContact?.active === true
+
+      await new Promise((resolve) => {
+        let frames = 0
+        function tick() {
+          frames++
+          if (frames >= 12) resolve()
+          else requestAnimationFrame(tick)
+        }
+        requestAnimationFrame(tick)
+      })
+
+      return {
+        healthAfterFirstContact,
+        healthAfterCooldownWindow: gameManager.player.health,
+        livesAfterFirstContact,
+        bomberStillActive,
+        bomberHealthAfterFirstContact,
+        bomberMaxHealth
       }
     })()`
   )
@@ -366,6 +428,27 @@ async function main() {
     })()`
   )
 
+  const respawnRuntimeAssertions = await evaluate(
+    client,
+    `(async () => {
+      const { gameManager } = await import('/src/lib/game/gameManager.ts')
+      const beforeFrameAt = window.__AIRSOFTE_RUNTIME_STATS__?.lastFrameAt ?? 0
+
+      await new Promise((resolve) => setTimeout(resolve, 2200))
+
+      const afterFrameAt = window.__AIRSOFTE_RUNTIME_STATS__?.lastFrameAt ?? 0
+
+      return {
+        playing: gameManager.isPlaying,
+        lives: gameManager.player.lives,
+        health: gameManager.player.health,
+        playerDown: gameManager.playerDown,
+        frameAdvanced: afterFrameAt > beforeFrameAt
+      }
+    })()`,
+    5000
+  )
+
   const runtimeErrors = client.events
     .filter(
       (event) =>
@@ -406,6 +489,21 @@ async function main() {
   )
   assert(runtimeEventAssertions.bossHealthAfterSpawn > 0, 'Expected spawned boss to have health')
   assert(runtimeEventAssertions.bossVisibleAfterRetreat === false, 'Expected boss health to hide after boss retreat')
+  assert(
+    contactCollisionAssertions.healthAfterFirstContact === 70,
+    `Expected contact to apply one player hit, got ${JSON.stringify(contactCollisionAssertions)}`
+  )
+  assert(
+    contactCollisionAssertions.healthAfterCooldownWindow === contactCollisionAssertions.healthAfterFirstContact,
+    'Expected contact cooldown to prevent stacked collision damage'
+  )
+  assert(contactCollisionAssertions.livesAfterFirstContact === 3, 'Expected contact hit not to cost a life')
+  assert(contactCollisionAssertions.bomberStillActive === true, 'Expected high-health enemy to survive contact')
+  assert(
+    contactCollisionAssertions.bomberHealthAfterFirstContact > 0 &&
+      contactCollisionAssertions.bomberHealthAfterFirstContact < contactCollisionAssertions.bomberMaxHealth,
+    'Expected contact to damage, not one-shot, a high-health enemy'
+  )
   assert(frameStats.canvas === true, 'Expected game canvas to render')
   assert(frameStats.p95Ms <= 35, `Expected p95 frame time <= 35ms, got ${frameStats.p95Ms}`)
   assert(runtimeErrors.length === 0, `Expected 0 runtime errors, got ${runtimeErrors.length}`)
@@ -414,6 +512,11 @@ async function main() {
     'Expected shield/invincibility to block stacked damage'
   )
   assert(stabilityAssertions.lifeDropsOnce === true, 'Expected one life loss per death')
+  assert(respawnRuntimeAssertions.playing === true, 'Expected game to keep playing after respawn')
+  assert(respawnRuntimeAssertions.lives === 2, 'Expected respawn to continue on second life')
+  assert(respawnRuntimeAssertions.health === 100, 'Expected player health to reset after respawn')
+  assert(respawnRuntimeAssertions.playerDown === false, 'Expected playerDown to clear after respawn')
+  assert(respawnRuntimeAssertions.frameAdvanced === true, 'Expected runtime frames to advance after respawn')
 
   console.log(
     JSON.stringify(
@@ -423,7 +526,9 @@ async function main() {
         postStressState,
         frameStats,
         runtimeEventAssertions,
+        contactCollisionAssertions,
         stabilityAssertions,
+        respawnRuntimeAssertions,
         runtimeErrorCount: runtimeErrors.length,
         runtimeErrors: runtimeErrors.slice(0, 5)
       },
