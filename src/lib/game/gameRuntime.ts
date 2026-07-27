@@ -47,6 +47,7 @@ export class GameRuntime {
   private playerRotation = 0
   private playerOffsetY = 0
   private idleTween: gsap.core.Tween | null = null
+  private tweens: gsap.core.Tween[] = []
   private unsubscribers: Array<() => void> = []
 
   private readonly movementKeys = new Set([
@@ -101,6 +102,8 @@ export class GameRuntime {
 
     this.idleTween?.kill()
     this.idleTween = null
+    this.tweens.forEach((tween) => tween.kill())
+    this.tweens = []
     this.enemySpawner.stop()
     this.enemyBullets.forEach((bullet) => this.enemyController.releaseBullet(bullet))
     this.enemyBullets = []
@@ -128,7 +131,7 @@ export class GameRuntime {
     const targetY = startY - 80
     const spawn = { y: this.playerController.y }
 
-    gsap.to(spawn, {
+    this.trackTween(gsap.to(spawn, {
       y: targetY,
       duration: 2,
       ease: 'none',
@@ -140,7 +143,7 @@ export class GameRuntime {
         this.starting = false
         this.startIdleTween()
       }
-    })
+    }))
   }
 
   private tick = (now: number): void => {
@@ -149,6 +152,7 @@ export class GameRuntime {
     this.lastFrameTime = now
 
     if (gameManager.isPlaying && !gameManager.isPaused) {
+      gameManager.update(deltaMs)
       this.updatePlayer(deltaScale)
       this.updateEnemies(deltaMs, deltaScale)
       this.updatePowerUps(deltaMs)
@@ -391,7 +395,7 @@ export class GameRuntime {
     }
 
     const visual = { offsetY: this.playerOffsetY }
-    this.idleTween = gsap.to(visual, {
+    this.idleTween = this.trackTween(gsap.to(visual, {
       offsetY: 10,
       duration: 1,
       yoyo: true,
@@ -401,7 +405,7 @@ export class GameRuntime {
         this.playerOffsetY = visual.offsetY
         this.publishState()
       }
-    })
+    }))
   }
 
   private handlePlayerHit = (): void => {
@@ -411,7 +415,7 @@ export class GameRuntime {
     const flashDuration = gameManager.player.invincible ? 2000 : 500
     const visual = { opacity: this.playerOpacity }
 
-    gsap.to(visual, {
+    this.trackTween(gsap.to(visual, {
       opacity: 0.3,
       duration: 0.1,
       repeat: flashDuration / 200,
@@ -426,7 +430,7 @@ export class GameRuntime {
         this.isFlashing = false
         this.publishState()
       }
-    })
+    }))
   }
 
   private handlePlayerDeath = (): void => {
@@ -436,7 +440,7 @@ export class GameRuntime {
       opacity: this.playerOpacity
     }
 
-    gsap.to(visual, {
+    this.trackTween(gsap.to(visual, {
       scale: 0,
       rotation: 360,
       opacity: 0,
@@ -448,7 +452,7 @@ export class GameRuntime {
         this.playerOpacity = visual.opacity
         this.publishState()
       }
-    })
+    }))
   }
 
   private handlePlayerRespawn = (): void => {
@@ -461,7 +465,7 @@ export class GameRuntime {
     this.playerOpacity = 0
     this.playerRotation = 0
 
-    gsap.to(visual, {
+    this.trackTween(gsap.to(visual, {
       scale: 1,
       opacity: 1,
       duration: 0.5,
@@ -471,7 +475,12 @@ export class GameRuntime {
         this.playerOpacity = visual.opacity
         this.publishState()
       }
-    })
+    }))
+  }
+
+  private trackTween(tween: gsap.core.Tween): gsap.core.Tween {
+    this.tweens.push(tween)
+    return tween
   }
 
   private handleWaveStart = (): void => {

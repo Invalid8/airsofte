@@ -49,9 +49,6 @@ export class GameManager {
   private enemiesDestroyedInWave = 0
   private currentWaveIndex: number = 0
 
-  private gameLoopId: number | null = null
-  private lastFrameTime: number = 0
-  private startTime: number = 0
   private comboTimeoutId: number | null = null
   private invincibilityTimeoutId: number | null = null
   private waveCompleting = false
@@ -102,12 +99,7 @@ export class GameManager {
     this.isPlaying = true
     this.isPaused = false
     this.session.playing = true
-    this.startTime = performance.now()
-    this.lastFrameTime = this.startTime
-
     this.initializeWaveEnemyCount()
-
-    this.startGameLoop()
 
     gameEvents.emit('GAME_START', { mode, difficulty: this.difficulty, missionId })
 
@@ -117,23 +109,6 @@ export class GameManager {
         hasBoss: this.currentWave?.enemies.some((e) => e.type === 'BOSS')
       })
     }, 1500)
-  }
-
-  private startGameLoop(): void {
-    const loop = (timestamp: number) => {
-      if (!this.isPlaying) return
-
-      const deltaTime = timestamp - this.lastFrameTime
-      this.lastFrameTime = timestamp
-
-      if (!this.isPaused) {
-        this.updateTime(deltaTime)
-      }
-
-      this.gameLoopId = requestAnimationFrame(loop)
-    }
-
-    this.gameLoopId = requestAnimationFrame(loop)
   }
 
   private resetSession(): void {
@@ -183,7 +158,6 @@ export class GameManager {
     if (!this.isPlaying) return
     this.isPaused = false
     this.session.playing = true
-    this.lastFrameTime = performance.now()
     gameEvents.emit('GAME_RESUMED')
   }
 
@@ -191,11 +165,6 @@ export class GameManager {
     this.isPlaying = false
     this.isPaused = false
     this.session.playing = false
-
-    if (this.gameLoopId) {
-      cancelAnimationFrame(this.gameLoopId)
-      this.gameLoopId = null
-    }
 
     const finalScore = this.session.score
     const finalWave = this.session.currentWave
@@ -208,6 +177,11 @@ export class GameManager {
         stats: { ...this.session }
       })
     }, 500)
+  }
+
+  update(deltaTime: number): void {
+    if (!this.isPlaying || this.isPaused) return
+    this.updateTime(deltaTime)
   }
 
   private updateTime(deltaTime: number): void {
