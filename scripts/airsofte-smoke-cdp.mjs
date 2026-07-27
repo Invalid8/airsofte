@@ -243,6 +243,35 @@ async function main() {
     })()`
   )
 
+  const runtimeEventAssertions = await evaluate(
+    client,
+    `(async () => {
+      const { gameEvents } = await import('/src/lib/game/eventBus.ts')
+
+      gameEvents.emit('CLEAR_ENEMY_BULLETS', {})
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      const bulletsAfterClear = window.__AIRSOFTE_RUNTIME_STATS__?.activeEnemyBullets ?? -1
+
+      gameEvents.emit('SPAWN_REINFORCEMENTS', {
+        enemyType: 'SCOUT',
+        count: 3,
+        pattern: 'ZIGZAG'
+      })
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      const enemiesAfterReinforcements = window.__AIRSOFTE_RUNTIME_STATS__?.activeEnemies ?? 0
+
+      gameEvents.emit('ENEMY_RETREAT', { clearAll: true })
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      const enemiesAfterRetreat = window.__AIRSOFTE_RUNTIME_STATS__?.activeEnemies ?? -1
+
+      return {
+        bulletsAfterClear,
+        enemiesAfterReinforcements,
+        enemiesAfterRetreat
+      }
+    })()`
+  )
+
   const stabilityAssertions = await evaluate(
     client,
     `(async () => {
@@ -318,6 +347,12 @@ async function main() {
     postStressState.runtimeStats.activePlayerBullets <= bossResult.playerBulletLimit,
     'Expected player bullet count to stay within configured cap'
   )
+  assert(runtimeEventAssertions.bulletsAfterClear === 0, 'Expected clear-bullets event to empty enemy bullets')
+  assert(
+    runtimeEventAssertions.enemiesAfterReinforcements >= 3,
+    'Expected reinforcement event to spawn enemies'
+  )
+  assert(runtimeEventAssertions.enemiesAfterRetreat === 0, 'Expected retreat event to clear enemies')
   assert(frameStats.canvas === true, 'Expected game canvas to render')
   assert(frameStats.p95Ms <= 35, `Expected p95 frame time <= 35ms, got ${frameStats.p95Ms}`)
   assert(runtimeErrors.length === 0, `Expected 0 runtime errors, got ${runtimeErrors.length}`)
@@ -333,6 +368,7 @@ async function main() {
         bossResult,
         postStressState,
         frameStats,
+        runtimeEventAssertions,
         stabilityAssertions,
         runtimeErrorCount: runtimeErrors.length,
         runtimeErrors: runtimeErrors.slice(0, 5)

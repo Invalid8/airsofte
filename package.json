@@ -19,6 +19,7 @@
     "build:tauri": "tauri build --bundles deb,rpm",
     "build:tauri:all": "tauri build",
     "preview": "vite preview",
+    "audit:assets": "node scripts/airsofte-asset-audit.mjs",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "typecheck": "npm run typecheck:node && npm run check",
