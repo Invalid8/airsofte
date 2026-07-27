@@ -1,4 +1,10 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "sveltekit",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build:web",
+  "outputDirectory": "build",
+  "devCommand": "npm run dev -- --host 0.0.0.0",
   "rewrites": [
     { "source": "/registerSW.js", "destination": "/registerSW.js" },
     { "source": "/:path*", "destination": "/index.html" }
