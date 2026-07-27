@@ -12,7 +12,7 @@
   import { storyMissionManager } from '$lib/game/storyMissionData'
   import { gameEvents } from '$lib/game/eventBus'
   import { syncGameState, navigateTo, gameState } from '$lib/stores/gameStore'
-  import type { Bullet, Enemy, GameEvent, PowerUp, StoryMission } from '$lib/types/gameTypes'
+  import type { GameEvent, StoryMission } from '$lib/types/gameTypes'
 
   let {
     mode = 'QUICK_PLAY',
@@ -23,17 +23,6 @@
   } = $props()
 
   let game_pad = $state<HTMLDivElement>()
-  let playerBullets = $state<Bullet[]>([])
-  let enemyBullets = $state<Bullet[]>([])
-  let enemies = $state<Enemy[]>([])
-  let powerUps = $state<PowerUp[]>([])
-  let playerX = $state(0)
-  let playerY = $state(0)
-  let playerOpacity = $state(1)
-  let playerScale = $state(1)
-  let playerRotation = $state(0)
-  let playerOffsetY = $state(0)
-  let playerInvincible = $state(false)
   let showVictory = $state(false)
   let gameEnded = $state(false)
   let currentMission = $state<StoryMission | null>(null)
@@ -134,35 +123,9 @@
   <div class="game-wrapper">
     <div class="game-container" bind:this={game_pad}>
       {#if game_pad}
-        <GameCanvasLayer
-          {game_pad}
-          {playerBullets}
-          {enemyBullets}
-          {enemies}
-          {powerUps}
-          {playerX}
-          {playerY}
-          {playerOpacity}
-          {playerScale}
-          {playerRotation}
-          {playerOffsetY}
-          {playerInvincible}
-        />
+        <GameCanvasLayer {game_pad} />
         <ScorePopup />
-        <GameRuntimeHost
-          {game_pad}
-          bind:playerBullets
-          bind:enemyBullets
-          bind:enemies
-          bind:powerUps
-          bind:playerX
-          bind:playerY
-          bind:playerOpacity
-          bind:playerScale
-          bind:playerRotation
-          bind:playerOffsetY
-          bind:playerInvincible
-        />
+        <GameRuntimeHost {game_pad} />
       {/if}
     </div>
   </div>

@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from 'svelte'
   import type { Bullet, Enemy, PowerUp } from '$lib/types/gameTypes'
   import { gameManager } from '$lib/game/gameManager'
+  import { gameRuntimeState } from '$lib/game/gameRuntime'
   import { GAME_CONFIG } from '$lib/config/gameConstants'
   import { particleSystem } from '$lib/game/particleSystem'
   import PlayerShip from '$lib/assets/sprites/player-ship-i.png'
@@ -16,31 +17,9 @@
   import PowerUpScore from '$lib/assets/sprites/powerup-score.png'
 
   let {
-    game_pad,
-    playerBullets = [],
-    enemyBullets = [],
-    enemies = [],
-    powerUps = [],
-    playerX = 0,
-    playerY = 0,
-    playerOpacity = 1,
-    playerScale = 1,
-    playerRotation = 0,
-    playerOffsetY = 0,
-    playerInvincible = false
+    game_pad
   }: {
     game_pad: HTMLDivElement
-    playerBullets?: Bullet[]
-    enemyBullets?: Bullet[]
-    enemies?: Enemy[]
-    powerUps?: PowerUp[]
-    playerX?: number
-    playerY?: number
-    playerOpacity?: number
-    playerScale?: number
-    playerRotation?: number
-    playerOffsetY?: number
-    playerInvincible?: boolean
   } = $props()
 
   type Star = {
@@ -60,6 +39,17 @@
   let height = 0
   let lastFrame = 0
   let stars: Star[] = []
+  let playerBullets: Bullet[] = []
+  let enemyBullets: Bullet[] = []
+  let enemies: Enemy[] = []
+  let powerUps: PowerUp[] = []
+  let playerX = 0
+  let playerY = 0
+  let playerOpacity = 1
+  let playerScale = 1
+  let playerRotation = 0
+  let playerOffsetY = 0
+  let playerInvincible = false
 
   const images = new Map<string, HTMLImageElement>()
   const imageSources = {
@@ -476,6 +466,7 @@
     const deltaMs = lastFrame ? Math.min(32, now - lastFrame) : 16
     const delta = deltaMs / 1000
     lastFrame = now
+    syncRuntimeState()
 
     ctx.clearRect(0, 0, width, height)
     drawBackground(delta)
@@ -488,6 +479,20 @@
     drawParticles(deltaMs)
 
     animationFrameId = requestAnimationFrame(render)
+  }
+
+  function syncRuntimeState(): void {
+    playerBullets = gameRuntimeState.playerBullets
+    enemyBullets = gameRuntimeState.enemyBullets
+    enemies = gameRuntimeState.enemies
+    powerUps = gameRuntimeState.powerUps
+    playerX = gameRuntimeState.playerX
+    playerY = gameRuntimeState.playerY
+    playerOpacity = gameRuntimeState.playerOpacity
+    playerScale = gameRuntimeState.playerScale
+    playerRotation = gameRuntimeState.playerRotation
+    playerOffsetY = gameRuntimeState.playerOffsetY
+    playerInvincible = gameRuntimeState.playerInvincible
   }
 
   onMount(() => {

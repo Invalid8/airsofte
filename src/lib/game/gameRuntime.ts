@@ -34,6 +34,20 @@ export type GameRuntimeState = {
   playerInvincible: boolean
 }
 
+export const gameRuntimeState: GameRuntimeState = {
+  playerBullets: [],
+  enemyBullets: [],
+  enemies: [],
+  powerUps: [],
+  playerX: 0,
+  playerY: 0,
+  playerOpacity: 1,
+  playerScale: 1,
+  playerRotation: 0,
+  playerOffsetY: 0,
+  playerInvincible: false
+}
+
 export type GameRuntimeStats = {
   activeEnemies: number
   activeEnemyBullets: number
@@ -52,7 +66,7 @@ declare global {
 
 export class GameRuntime {
   private gamePad: HTMLDivElement
-  private onState: (state: GameRuntimeState) => void
+  private onState?: (state: GameRuntimeState) => void
   private playerController: PlayerController
   private enemyController = new EnemyController()
   private enemySpawner: EnemySpawner
@@ -85,7 +99,7 @@ export class GameRuntime {
     'd'
   ])
 
-  constructor(gamePad: HTMLDivElement, onState: (state: GameRuntimeState) => void) {
+  constructor(gamePad: HTMLDivElement, onState?: (state: GameRuntimeState) => void) {
     this.gamePad = gamePad
     this.onState = onState
 
@@ -375,19 +389,18 @@ export class GameRuntime {
   }
 
   private publishState(): void {
-    this.onState({
-      playerBullets: this.playerBullets,
-      enemyBullets: this.enemyBullets,
-      enemies: this.enemies,
-      powerUps: this.powerUps,
-      playerX: this.playerController.x,
-      playerY: this.playerController.y,
-      playerOpacity: this.playerOpacity,
-      playerScale: this.playerScale,
-      playerRotation: this.playerRotation,
-      playerOffsetY: this.playerOffsetY,
-      playerInvincible: gameManager.player.invincible || gameManager.player.shieldActive
-    })
+    gameRuntimeState.playerBullets = this.playerBullets
+    gameRuntimeState.enemyBullets = this.enemyBullets
+    gameRuntimeState.enemies = this.enemies
+    gameRuntimeState.powerUps = this.powerUps
+    gameRuntimeState.playerX = this.playerController.x
+    gameRuntimeState.playerY = this.playerController.y
+    gameRuntimeState.playerOpacity = this.playerOpacity
+    gameRuntimeState.playerScale = this.playerScale
+    gameRuntimeState.playerRotation = this.playerRotation
+    gameRuntimeState.playerOffsetY = this.playerOffsetY
+    gameRuntimeState.playerInvincible = gameManager.player.invincible || gameManager.player.shieldActive
+    this.onState?.(gameRuntimeState)
   }
 
   private publishStats(now: number): void {
