@@ -150,6 +150,34 @@ async function main() {
   await waitFor(client, 'Boolean(document.querySelector("canvas"))', 10000)
   await sleep(2000)
 
+  const waveProgressionAssertions = await evaluate(
+    client,
+    `(async () => {
+      const { gameManager } = await import('/src/lib/game/gameManager.ts')
+
+      gameManager.mode = 'QUICK_PLAY'
+      gameManager.difficulty = 'Normal'
+      gameManager.currentWaveIndex = 1
+      gameManager.session.currentWave = 2
+      gameManager.waveCompleting = false
+
+      gameManager.nextQuickPlayWave()
+      const waveAfterSecond = gameManager.session.currentWave
+      const waveThreeEnemyGroups = gameManager.currentWave?.enemies.length ?? 0
+
+      gameManager.nextQuickPlayWave()
+      const waveAfterThird = gameManager.session.currentWave
+      const waveFourEnemyGroups = gameManager.currentWave?.enemies.length ?? 0
+
+      return {
+        waveAfterSecond,
+        waveThreeEnemyGroups,
+        waveAfterThird,
+        waveFourEnemyGroups
+      }
+    })()`
+  )
+
   const bossResult = await evaluate(
     client,
     `(async () => {
@@ -264,10 +292,25 @@ async function main() {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
       const enemiesAfterRetreat = window.__AIRSOFTE_RUNTIME_STATS__?.activeEnemies ?? -1
 
+      gameEvents.emit('SPAWN_REINFORCEMENTS', {
+        enemyType: 'BOSS',
+        count: 1,
+        pattern: 'CIRCLE'
+      })
+      const bossVisibleAfterSpawn = window.__AIRSOFTE_RUNTIME_STATS__?.bossHealthVisible === true
+      const bossHealthAfterSpawn = window.__AIRSOFTE_RUNTIME_STATS__?.bossHealth ?? 0
+
+      gameEvents.emit('ENEMY_RETREAT', { clearAll: true })
+      const bossVisibleAfterRetreat = window.__AIRSOFTE_RUNTIME_STATS__?.bossHealthVisible === true
+
       return {
         bulletsAfterClear,
         enemiesAfterReinforcements,
-        enemiesAfterRetreat
+        enemiesAfterRetreat,
+        bossVisibleAfterSpawn,
+        bossHealthAfterSpawn,
+        bossVisibleAfterRetreat,
+        finalStats: window.__AIRSOFTE_RUNTIME_STATS__ ?? null
       }
     })()`
   )
@@ -336,6 +379,10 @@ async function main() {
   assert(bossResult.bossPresetCount >= 3, 'Expected boss attack presets to be configured')
   assert(bossResult.enemyBulletLimit > 0, 'Expected enemy bullet limit to be configured')
   assert(bossResult.playerBulletLimit > 0, 'Expected player bullet limit to be configured')
+  assert(waveProgressionAssertions.waveAfterSecond === 3, 'Expected quick play to advance from wave 2 to 3')
+  assert(waveProgressionAssertions.waveAfterThird === 4, 'Expected quick play to continue from wave 3 to 4')
+  assert(waveProgressionAssertions.waveThreeEnemyGroups > 0, 'Expected wave 3 to configure enemy groups')
+  assert(waveProgressionAssertions.waveFourEnemyGroups > 0, 'Expected wave 4 to configure enemy groups')
   assert(postStressState.playing === true, 'Expected game to survive stress wave')
   assert(postStressState.lives >= 1, 'Expected player to survive stress wave')
   assert(postStressState.runtimeStats !== null, 'Expected runtime stats to be published')
@@ -353,6 +400,12 @@ async function main() {
     'Expected reinforcement event to spawn enemies'
   )
   assert(runtimeEventAssertions.enemiesAfterRetreat === 0, 'Expected retreat event to clear enemies')
+  assert(
+    runtimeEventAssertions.bossVisibleAfterSpawn === true,
+    `Expected boss health to show for a live boss: ${JSON.stringify(runtimeEventAssertions)}`
+  )
+  assert(runtimeEventAssertions.bossHealthAfterSpawn > 0, 'Expected spawned boss to have health')
+  assert(runtimeEventAssertions.bossVisibleAfterRetreat === false, 'Expected boss health to hide after boss retreat')
   assert(frameStats.canvas === true, 'Expected game canvas to render')
   assert(frameStats.p95Ms <= 35, `Expected p95 frame time <= 35ms, got ${frameStats.p95Ms}`)
   assert(runtimeErrors.length === 0, `Expected 0 runtime errors, got ${runtimeErrors.length}`)
@@ -366,6 +419,7 @@ async function main() {
     JSON.stringify(
       {
         bossResult,
+        waveProgressionAssertions,
         postStressState,
         frameStats,
         runtimeEventAssertions,

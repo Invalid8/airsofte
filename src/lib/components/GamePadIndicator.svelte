@@ -1,25 +1,16 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte'
+  import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
   import { gamepadManager } from '$lib/utils/gamepadManager'
 
   let isConnected = $state(false)
   let gamepadName = $state<string | null>(null)
-  let checkInterval: number
 
   onMount(() => {
-    checkInterval = window.setInterval(() => {
-      isConnected = gamepadManager.isConnected()
-      gamepadName = gamepadManager.getGamepadInfo()
-    }, 1000)
-
-    return () => {
-      clearInterval(checkInterval)
-    }
-  })
-
-  onDestroy(() => {
-    clearInterval(checkInterval)
+    return gamepadManager.subscribe((status) => {
+      isConnected = status.connected
+      gamepadName = status.name
+    })
   })
 </script>
 

@@ -54,6 +54,11 @@ export type GameRuntimeStats = {
   activePlayerBullets: number
   activePowerUps: number
   activeParticles: number
+  bossAlive: boolean
+  bossHealth: number
+  bossMaxHealth: number
+  bossHealthPercent: number
+  bossHealthVisible: boolean
   lastDeltaMs: number
   lastFrameAt: number
 }
@@ -396,12 +401,21 @@ export class GameRuntime {
   }
 
   private publishStats(now: number): void {
+    const boss = this.enemies.find((enemy) => enemy.active && enemy.type === 'BOSS') ?? null
+    const bossHealth = boss?.health ?? 0
+    const bossMaxHealth = boss?.maxHealth ?? 0
+
     window.__AIRSOFTE_RUNTIME_STATS__ = {
       activeEnemies: this.enemies.length,
       activeEnemyBullets: this.enemyBullets.length,
       activePlayerBullets: this.playerBullets.length,
       activePowerUps: this.powerUps.length,
       activeParticles: particleSystem.getActiveCount(),
+      bossAlive: Boolean(boss),
+      bossHealth,
+      bossMaxHealth,
+      bossHealthPercent: bossMaxHealth > 0 ? Math.max(0, bossHealth / bossMaxHealth) : 0,
+      bossHealthVisible: Boolean(boss),
       lastDeltaMs: this.lastDeltaMs,
       lastFrameAt: now
     }
@@ -549,6 +563,7 @@ export class GameRuntime {
     this.enemies = []
     this.clearEnemyBullets()
     this.publishState()
+    this.publishStats(performance.now())
   }
 
   private handleEnemyDestroyed = (event: GameEvent): void => {
@@ -564,6 +579,7 @@ export class GameRuntime {
   private handleClearEnemyBullets = (): void => {
     this.clearEnemyBullets()
     this.publishState()
+    this.publishStats(performance.now())
   }
 
   private handleSpawnReinforcements = (event: GameEvent): void => {
@@ -578,18 +594,20 @@ export class GameRuntime {
 
     this.enemies = this.enemyController.getActiveEnemies()
     this.publishState()
+    this.publishStats(performance.now())
   }
 
   private handleEnemyRetreat = (event: GameEvent): void => {
     if (event.data?.clearAll) {
       for (const enemy of this.enemies) {
-        if (enemy.type !== 'BOSS') enemy.active = false
+        enemy.active = false
       }
       this.enemies = this.enemyController.getActiveEnemies()
     }
 
     this.clearEnemyBullets()
     this.publishState()
+    this.publishStats(performance.now())
   }
 
   private clearEnemyBullets(): void {

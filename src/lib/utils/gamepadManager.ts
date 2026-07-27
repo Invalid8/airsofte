@@ -4,6 +4,11 @@ type GamepadButton = {
   timestamp: number
 }
 
+export type GamepadStatus = {
+  connected: boolean
+  name: string | null
+}
+
 type GamepadMapping = {
   moveUp: number[]
   moveDown: number[]
@@ -35,6 +40,7 @@ class GamepadManager {
   private axisStates: Map<number, number> = new Map()
   private activeKeys: Set<string> = new Set()
   private animationFrameId: number | null = null
+  private statusListeners: Set<(status: GamepadStatus) => void> = new Set()
 
   private constructor() {
     this.setupEventListeners()
@@ -52,6 +58,7 @@ class GamepadManager {
       console.log('🎮 Gamepad connected:', e.gamepad.id)
       this.connected = true
       this.gamepadIndex = e.gamepad.index
+      this.notifyStatus()
       this.startPolling()
     })
 
@@ -63,6 +70,7 @@ class GamepadManager {
       this.axisStates.clear()
       this.releaseAllKeys()
       this.stopPolling()
+      this.notifyStatus()
     })
   }
 
@@ -92,6 +100,8 @@ class GamepadManager {
 
     if (!gamepad) {
       this.connected = false
+      this.gamepadIndex = -1
+      this.notifyStatus()
       return
     }
 
@@ -221,6 +231,27 @@ class GamepadManager {
     const gamepads = navigator.getGamepads()
     const gamepad = gamepads[this.gamepadIndex]
     return gamepad ? gamepad.id : null
+  }
+
+  getStatus(): GamepadStatus {
+    return {
+      connected: this.connected,
+      name: this.getGamepadInfo()
+    }
+  }
+
+  subscribe(callback: (status: GamepadStatus) => void): () => void {
+    this.statusListeners.add(callback)
+    callback(this.getStatus())
+
+    return () => {
+      this.statusListeners.delete(callback)
+    }
+  }
+
+  private notifyStatus(): void {
+    const status = this.getStatus()
+    this.statusListeners.forEach((callback) => callback(status))
   }
 
   setDeadzone(value: number): void {

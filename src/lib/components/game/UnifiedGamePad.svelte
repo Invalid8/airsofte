@@ -85,17 +85,44 @@
       missionStarted = true
     }
 
-    const unsubGameOver = gameEvents.on('GAME_OVER', handleGameOver)
-
-    const syncInterval = setInterval(() => {
+    const syncIfActive = () => {
       if (!gameEnded && missionStarted) {
         syncGameState()
       }
-    }, 100)
+    }
+
+    const stateSyncEvents = [
+      'GAME_START',
+      'GAME_PAUSED',
+      'GAME_RESUMED',
+      'SCORE_UPDATED',
+      'COMBO_UPDATED',
+      'COMBO_RESET',
+      'PLAYER_HIT',
+      'PLAYER_DEATH',
+      'PLAYER_RESPAWN',
+      'PLAYER_HEALED',
+      'PLAYER_STATE_CHANGED',
+      'LIFE_GAINED',
+      'SHIELD_ACTIVATED',
+      'SHIELD_BROKEN',
+      'SHIELD_DEACTIVATED',
+      'WEAPON_CHANGED',
+      'WEAPON_EXPIRED',
+      'POWERUP_COLLECTED',
+      'WAVE_START',
+      'WAVE_COMPLETE'
+    ]
+
+    const unsubscribers = [
+      gameEvents.on('GAME_OVER', handleGameOver),
+      ...stateSyncEvents.map((eventType) => gameEvents.on(eventType, syncIfActive))
+    ]
+
+    syncIfActive()
 
     return () => {
-      unsubGameOver()
-      clearInterval(syncInterval)
+      unsubscribers.forEach((unsubscribe) => unsubscribe())
     }
   })
 

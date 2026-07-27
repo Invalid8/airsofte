@@ -302,6 +302,10 @@ export class GameManager {
     gameEvents.emit('COMBO_RESET')
   }
 
+  private emitPlayerStateChanged(): void {
+    gameEvents.emit('PLAYER_STATE_CHANGED', { player: { ...this.player } })
+  }
+
   damagePlayer(damage: number): void {
     if (!this.isPlaying || this.playerDown || this.player.health <= 0) return
 
@@ -365,32 +369,38 @@ export class GameManager {
 
     this.player.invincible = true
     this.player.invincibleUntil = performance.now() + duration
+    this.emitPlayerStateChanged()
 
     this.invincibilityTimeoutId = window.setTimeout(() => {
       this.invincibilityTimeoutId = null
       if (this.playerDown) return
       this.player.invincible = false
       this.player.invincibleUntil = 0
+      this.emitPlayerStateChanged()
     }, duration)
   }
 
   healPlayer(amount: number): void {
     this.player.health = Math.min(this.player.health + amount, this.player.maxHealth)
     gameEvents.emit('PLAYER_HEALED', { amount, health: this.player.health })
+    this.emitPlayerStateChanged()
   }
 
   addLife(): void {
     this.player.lives++
     gameEvents.emit('LIFE_GAINED', { lives: this.player.lives })
+    this.emitPlayerStateChanged()
   }
 
   activateShield(duration: number): void {
     this.player.shieldActive = true
     gameEvents.emit('SHIELD_ACTIVATED')
+    this.emitPlayerStateChanged()
 
     setTimeout(() => {
       this.player.shieldActive = false
       gameEvents.emit('SHIELD_DEACTIVATED')
+      this.emitPlayerStateChanged()
     }, duration)
   }
 
@@ -398,11 +408,13 @@ export class GameManager {
     const previousWeapon = this.player.weaponType
     this.player.weaponType = weaponType
     gameEvents.emit('WEAPON_CHANGED', { from: previousWeapon, to: weaponType })
+    this.emitPlayerStateChanged()
 
     if (duration) {
       setTimeout(() => {
         this.player.weaponType = 'SINGLE'
         gameEvents.emit('WEAPON_EXPIRED', { weapon: weaponType })
+        this.emitPlayerStateChanged()
       }, duration)
     }
   }
