@@ -8,6 +8,7 @@ import { WAVE_TEMPLATES, WEAPON_CONFIG } from '$lib/game/presets'
 import { StorageManager } from '$lib/utils/storageManager'
 import { gameEvents } from './eventBus'
 import { storyMissionManager } from './storyMissionData'
+import { ScoreSystem } from './scoreSystem'
 import { StatusEffectSystem } from './statusEffectSystem'
 import { TimedActionSystem } from './timedActionSystem'
 import { buildWaveFromTemplate, buildWaveSet } from './waveFactory'
@@ -54,6 +55,7 @@ export class GameManager {
 
   private statusEffects = new StatusEffectSystem()
   private timedActions = new TimedActionSystem()
+  private scoreSystem = new ScoreSystem(this.session, () => this.difficulty, this.timedActions)
   private waveCompleting = false
   private playerDown = false
 
@@ -127,6 +129,7 @@ export class GameManager {
     this.playerDown = false
     this.statusEffects.clearAll()
     this.timedActions.cancelAll()
+    this.scoreSystem.setSession(this.session)
   }
 
   private resetPlayer(): void {
@@ -213,19 +216,12 @@ export class GameManager {
   }
 
   addScore(points: number): void {
-    const modifier = DIFFICULTY_MODIFIERS[this.difficulty].scoreMultiplier
-    const comboBonus = this.session.comboMultiplier
-    const finalScore = Math.floor(points * modifier * comboBonus)
-
-    this.session.score += finalScore
-    gameEvents.emit('SCORE_UPDATED', { points: finalScore, total: this.session.score })
+    this.scoreSystem.addScore(points)
   }
 
   onEnemyDestroyed(enemy: Enemy): void {
-    this.session.enemiesDefeated++
     this.enemiesDestroyedInWave++
-    this.addScore(enemy.scoreValue)
-    this.incrementCombo()
+    this.scoreSystem.onEnemyDestroyed(enemy.scoreValue)
 
     gameEvents.emit('ENEMY_DESTROYED', { enemy })
 
@@ -250,41 +246,7 @@ export class GameManager {
   }
 
   onBulletFired(): void {
-    this.session.bulletsShot++
-    this.updateAccuracy()
-  }
-
-  private updateAccuracy(): void {
-    if (this.session.bulletsShot === 0) {
-      this.session.accuracy = 0
-    } else {
-      this.session.accuracy = (this.session.enemiesDefeated / this.session.bulletsShot) * 100
-    }
-  }
-
-  private incrementCombo(): void {
-    const maxIndex = GAME_CONFIG.COMBO.MULTIPLIERS.length - 1
-    const currentIndex = GAME_CONFIG.COMBO.MULTIPLIERS.indexOf(this.session.comboMultiplier as any)
-
-    if (currentIndex < maxIndex) {
-      this.session.comboMultiplier = GAME_CONFIG.COMBO.MULTIPLIERS[currentIndex + 1]
-    }
-
-    this.resetComboTimer()
-    gameEvents.emit('COMBO_UPDATED', { multiplier: this.session.comboMultiplier })
-  }
-
-  private resetComboTimer(): void {
-    this.session.comboTimer = GAME_CONFIG.COMBO.TIMEOUT
-
-    this.timedActions.schedule('combo', GAME_CONFIG.COMBO.TIMEOUT, () => this.resetCombo())
-  }
-
-  private resetCombo(): void {
-    this.session.comboMultiplier = 1
-    this.session.comboTimer = 0
-    this.timedActions.cancel('combo')
-    gameEvents.emit('COMBO_RESET')
+    this.scoreSystem.onBulletFired()
   }
 
   private emitPlayerStateChanged(): void {
@@ -305,7 +267,7 @@ export class GameManager {
     }
 
     this.player.health = Math.max(0, this.player.health - damage)
-    this.resetCombo()
+    this.scoreSystem.resetCombo()
 
     gameEvents.emit('PLAYER_HIT', { damage, health: this.player.health })
 

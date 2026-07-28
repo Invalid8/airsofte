@@ -36,5 +36,21 @@ export const WAVE_TEMPLATES: readonly WaveTemplate[] = [
     id: 4,
     enemies: [{ type: 'BOSS' as EnemyType, count: 1, spawnDelay: 0, pattern: 'CIRCLE' as const }],
     spawnInterval: 600
+  },
+  {
+    id: 5,
+    enemies: [
+      { type: 'SCOUT' as EnemyType, count: 5, spawnDelay: 320, pattern: 'SPIRAL' as const },
+      { type: 'BASIC' as EnemyType, count: 5, spawnDelay: 450, pattern: 'WAVE' as const }
+    ],
+    spawnInterval: 760
+  },
+  {
+    id: 6,
+    enemies: [
+      { type: 'BOMBER' as EnemyType, count: 2, spawnDelay: 900, pattern: 'TELEPORT' as const },
+      { type: 'SCOUT' as EnemyType, count: 6, spawnDelay: 360, pattern: 'ZIGZAG' as const }
+    ],
+    spawnInterval: 820
   }
 ] as const
