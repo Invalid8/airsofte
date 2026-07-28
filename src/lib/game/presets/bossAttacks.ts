@@ -8,24 +8,27 @@ export const BOSS_ATTACK_PRESETS: readonly BossAttackPreset[] = [
     spread: 28,
     intervalMultiplier: 1,
     speedMultiplier: 1,
-    aimed: false
+    aimed: false,
+    movementPattern: 'CIRCLE'
   },
   {
     id: 'boss-aimed-burst',
     healthThreshold: 0.33,
     bulletCount: 4,
     spread: 32,
-    intervalMultiplier: 0.95,
+    intervalMultiplier: 1,
     speedMultiplier: 1.08,
-    aimed: true
+    aimed: true,
+    movementPattern: 'CIRCLE'
   },
   {
     id: 'boss-final-pattern',
     healthThreshold: 0,
-    bulletCount: 4,
+    bulletCount: 3,
     spread: 42,
-    intervalMultiplier: 0.92,
+    intervalMultiplier: 1.08,
     speedMultiplier: 1.12,
-    aimed: true
+    aimed: true,
+    movementPattern: 'CHASE'
   }
 ] as const

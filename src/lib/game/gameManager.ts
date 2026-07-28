@@ -9,6 +9,8 @@ import { StorageManager } from '$lib/utils/storageManager'
 import { gameEvents } from './eventBus'
 import { storyMissionManager } from './storyMissionData'
 import { StatusEffectSystem } from './statusEffectSystem'
+import { TimedActionSystem } from './timedActionSystem'
+import { buildWaveFromTemplate, buildWaveSet } from './waveFactory'
 
 type GameMode = 'QUICK_PLAY' | 'STORY_MODE'
 
@@ -50,8 +52,8 @@ export class GameManager {
   private enemiesDestroyedInWave = 0
   private currentWaveIndex: number = 0
 
-  private comboTimeoutId: number | null = null
   private statusEffects = new StatusEffectSystem()
+  private timedActions = new TimedActionSystem()
   private waveCompleting = false
   private playerDown = false
 
@@ -104,12 +106,7 @@ export class GameManager {
 
     gameEvents.emit('GAME_START', { mode, difficulty: this.difficulty, missionId })
 
-    setTimeout(() => {
-      gameEvents.emit('WAVE_START', {
-        wave: this.session.currentWave,
-        hasBoss: this.currentWave?.enemies.some((e) => e.type === 'BOSS')
-      })
-    }, 1500)
+    this.scheduleWaveStart(1500)
   }
 
   private resetSession(): void {
@@ -129,6 +126,7 @@ export class GameManager {
     this.waveCompleting = false
     this.playerDown = false
     this.statusEffects.clearAll()
+    this.timedActions.cancelAll()
   }
 
   private resetPlayer(): void {
@@ -167,14 +165,18 @@ export class GameManager {
     const finalScore = this.session.score
     const finalWave = this.session.currentWave
 
-    setTimeout(() => {
+    this.timedActions.cancel('combo')
+    this.timedActions.cancel('waveStart')
+    this.timedActions.cancel('waveComplete')
+    this.timedActions.cancel('respawn')
+    this.timedActions.schedule('gameOver', 500, () => {
       gameEvents.emit('GAME_OVER', {
         victory: victory && this.mode === 'STORY_MODE',
         score: finalScore,
         wave: finalWave,
         stats: { ...this.session }
       })
-    }, 500)
+    })
   }
 
   update(deltaTime: number): void {
@@ -203,17 +205,7 @@ export class GameManager {
   private initializeWaves(): void {
     const modifier = DIFFICULTY_MODIFIERS[this.difficulty]
 
-    this.waves = WAVE_TEMPLATES.map((template) => ({
-      id: template.id,
-      spawnInterval: template.spawnInterval,
-      completed: false,
-      enemies: template.enemies.map((e) => ({
-        type: e.type,
-        pattern: e.pattern,
-        spawnDelay: e.spawnDelay,
-        count: Math.ceil(e.count * modifier.enemyCountMultiplier)
-      }))
-    }))
+    this.waves = buildWaveSet(WAVE_TEMPLATES, modifier.enemyCountMultiplier)
 
     this.currentWaveIndex = 0
     this.currentWave = this.waves[0]
@@ -283,20 +275,15 @@ export class GameManager {
   }
 
   private resetComboTimer(): void {
-    if (this.comboTimeoutId) {
-      clearTimeout(this.comboTimeoutId)
-    }
-
     this.session.comboTimer = GAME_CONFIG.COMBO.TIMEOUT
 
-    this.comboTimeoutId = window.setTimeout(() => {
-      this.resetCombo()
-    }, GAME_CONFIG.COMBO.TIMEOUT)
+    this.timedActions.schedule('combo', GAME_CONFIG.COMBO.TIMEOUT, () => this.resetCombo())
   }
 
   private resetCombo(): void {
     this.session.comboMultiplier = 1
     this.session.comboTimer = 0
+    this.timedActions.cancel('combo')
     gameEvents.emit('COMBO_RESET')
   }
 
@@ -340,13 +327,9 @@ export class GameManager {
     gameEvents.emit('PLAYER_DEATH', { lives: this.player.lives })
 
     if (this.player.lives <= 0) {
-      setTimeout(() => {
-        this.endGame(false)
-      }, 1500)
+      this.timedActions.schedule('gameOver', 1500, () => this.endGame(false))
     } else {
-      setTimeout(() => {
-        this.respawnPlayer()
-      }, GAME_CONFIG.PLAYER.RESPAWN_DELAY)
+      this.timedActions.schedule('respawn', GAME_CONFIG.PLAYER.RESPAWN_DELAY, () => this.respawnPlayer())
     }
   }
 
@@ -453,10 +436,10 @@ export class GameManager {
       bonus: noDamageTaken
     })
 
-    setTimeout(() => {
+    this.timedActions.schedule('waveComplete', 2500, () => {
       this.waveCompleting = false
       this.nextWave()
-    }, 2500)
+    })
   }
 
   private nextWave(): void {
@@ -474,28 +457,17 @@ export class GameManager {
     const template = WAVE_TEMPLATES[templateIndex]
     const modifier = DIFFICULTY_MODIFIERS[this.difficulty]
 
-    this.currentWave = {
-      id: this.currentWaveIndex + 1,
-      spawnInterval: template.spawnInterval,
-      completed: false,
-      enemies: template.enemies.map((e) => ({
-        type: e.type,
-        pattern: e.pattern,
-        spawnDelay: e.spawnDelay,
-        count: Math.ceil(e.count * modifier.enemyCountMultiplier)
-      }))
-    }
+    this.currentWave = buildWaveFromTemplate(
+      template,
+      this.currentWaveIndex + 1,
+      modifier.enemyCountMultiplier
+    )
 
     this.session.currentWave = this.currentWaveIndex + 1
 
     this.initializeWaveEnemyCount()
 
-    setTimeout(() => {
-      gameEvents.emit('WAVE_START', {
-        wave: this.session.currentWave,
-        hasBoss: this.currentWave?.enemies.some((e) => e.type === 'BOSS')
-      })
-    }, 100)
+    this.scheduleWaveStart(100)
   }
 
   private nextStoryWave(): void {
@@ -511,12 +483,16 @@ export class GameManager {
 
     this.initializeWaveEnemyCount()
 
-    setTimeout(() => {
+    this.scheduleWaveStart(100)
+  }
+
+  private scheduleWaveStart(delay: number): void {
+    this.timedActions.schedule('waveStart', delay, () => {
       gameEvents.emit('WAVE_START', {
         wave: this.session.currentWave,
         hasBoss: this.currentWave?.enemies.some((e) => e.type === 'BOSS')
       })
-    }, 100)
+    })
   }
 
   saveHighScore(playerName: string = 'Player', userId?: string): boolean {

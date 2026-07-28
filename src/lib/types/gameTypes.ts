@@ -186,6 +186,7 @@ export type BossAttackPreset = {
   intervalMultiplier: number
   speedMultiplier: number
   aimed: boolean
+  movementPattern: MovementPattern
 }
 
 export type SaveGame = {
@@ -270,6 +271,7 @@ export type GameEvent = {
     | 'SPAWN_REINFORCEMENTS'
     | 'CLEAR_ENEMY_BULLETS'
     | 'ENEMY_RETREAT'
+    | 'RUNTIME_FRAME'
   data?: any
   timestamp: number
 }

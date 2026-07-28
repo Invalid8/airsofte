@@ -195,6 +195,7 @@ export class GameRuntime {
       this.updatePowerUps(deltaMs)
       this.publishStats(now)
       this.publishState()
+      gameEvents.emit('RUNTIME_FRAME', { now, deltaMs })
     }
 
     this.animationFrameId = requestAnimationFrame(this.tick)

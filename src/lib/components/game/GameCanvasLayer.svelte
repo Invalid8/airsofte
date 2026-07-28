@@ -3,8 +3,10 @@
   import type { Bullet, Enemy, PowerUp } from '$lib/types/gameTypes'
   import { gameManager } from '$lib/game/gameManager'
   import { gameRuntimeState } from '$lib/game/gameRuntime'
+  import { gameEvents } from '$lib/game/eventBus'
   import { GAME_CONFIG } from '$lib/config/gameConstants'
   import { particleSystem } from '$lib/game/particleSystem'
+  import type { GameEvent } from '$lib/types/gameTypes'
   import PlayerShip from '$lib/assets/sprites/player-ship-i.png'
   import EnemyBasic from '$lib/assets/sprites/enemy-basic.png'
   import EnemyScout from '$lib/assets/sprites/enemy-scout.png'
@@ -34,10 +36,9 @@
   let canvas: HTMLCanvasElement | undefined
   let ctx: CanvasRenderingContext2D | null = null
   let resizeObserver: ResizeObserver | null = null
-  let animationFrameId = 0
+  let unsubscribeRuntimeFrame: (() => void) | null = null
   let width = 0
   let height = 0
-  let lastFrame = 0
   let stars: Star[] = []
   let playerBullets: Bullet[] = []
   let enemyBullets: Bullet[] = []
@@ -457,15 +458,12 @@
     }
   }
 
-  function render(now: number): void {
+  function render(now: number, deltaMs: number): void {
     if (!ctx) {
-      animationFrameId = requestAnimationFrame(render)
       return
     }
 
-    const deltaMs = lastFrame ? Math.min(32, now - lastFrame) : 16
-    const delta = deltaMs / 1000
-    lastFrame = now
+    const delta = Math.min(32, deltaMs) / 1000
     syncRuntimeState()
 
     ctx.clearRect(0, 0, width, height)
@@ -477,8 +475,10 @@
     for (const enemy of enemies) drawEnemy(enemy, now)
     drawPlayer(now)
     drawParticles(deltaMs)
+  }
 
-    animationFrameId = requestAnimationFrame(render)
+  function handleRuntimeFrame(event: GameEvent): void {
+    render(Number(event.data?.now ?? performance.now()), Number(event.data?.deltaMs ?? 16))
   }
 
   function syncRuntimeState(): void {
@@ -500,12 +500,13 @@
     resizeCanvas()
     resizeObserver = new ResizeObserver(resizeCanvas)
     resizeObserver.observe(game_pad)
-    animationFrameId = requestAnimationFrame(render)
+    unsubscribeRuntimeFrame = gameEvents.on('RUNTIME_FRAME', handleRuntimeFrame)
+    render(performance.now(), 16)
   })
 
   onDestroy(() => {
     resizeObserver?.disconnect()
-    cancelAnimationFrame(animationFrameId)
+    unsubscribeRuntimeFrame?.()
     particleSystem.clear()
   })
 </script>
