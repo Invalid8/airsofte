@@ -10,11 +10,18 @@ export type BoundingBox = {
   height: number
 }
 
-export type WeaponType = 'SINGLE' | 'DOUBLE' | 'TRIPLE' | 'SPREAD'
+export type WeaponType = 'SINGLE' | 'DOUBLE' | 'TRIPLE' | 'SPREAD' | 'NOSE_CANNON' | 'SIDE_CANNONS'
 
 export type EnemyType = 'BASIC' | 'SCOUT' | 'BOMBER' | 'BOSS'
 
-export type PowerUpType = 'HEALTH' | 'WEAPON' | 'SHIELD' | 'SPEED' | 'SCORE'
+export type PowerUpType =
+  | 'HEALTH'
+  | 'WEAPON'
+  | 'SHIELD'
+  | 'SPEED'
+  | 'SCORE'
+  | 'NOSE_CANNON'
+  | 'SIDE_CANNONS'
 
 export type MovementPattern =
   | 'STRAIGHT'
@@ -67,6 +74,7 @@ export type Enemy = {
     radius?: number
     opacity?: number
     scale?: number
+    bossPhaseId?: string
     teleportState?: {
       isTeleporting: boolean
       teleportProgress: number
@@ -165,6 +173,7 @@ export type StoryMission = {
     target: number
     current: number
     description: string
+    enemyType?: EnemyType
   }>
   waves: Wave[]
   dialogue?: Array<{

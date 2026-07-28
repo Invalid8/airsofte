@@ -96,6 +96,7 @@ export class StoryMissionRuntime {
 
     const enemies = sourceWave.enemies
       .filter((enemy) => enemy.type !== 'BOSS')
+      .slice(0, 2)
       .map((enemy) => ({
         ...enemy,
         count: Math.max(1, Math.ceil(enemy.count * 0.6)),

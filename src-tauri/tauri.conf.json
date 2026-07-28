@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Airsofte",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "identifier": "com.dalgoridim.airsofte",
   "build": {
     "beforeDevCommand": "npm run dev -- --host 127.0.0.1 --port 1420",

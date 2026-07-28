@@ -229,7 +229,7 @@ export class EnemyController {
         break
 
       case 'TELEPORT':
-        MovementPatterns.updateTeleport(enemy, deltaTime, bounds)
+        MovementPatterns.updateTeleport(enemy, deltaTime, bounds, playerX, playerY)
         break
 
       case 'SPIRAL':
@@ -251,9 +251,30 @@ export class EnemyController {
 
       if (isBoss) {
         const bossPreset = this.getBossAttackPreset(enemy)
+        this.emitBossPhaseChange(enemy, bossPreset)
         if (enemy.y < bossPreset.minY) enemy.y = bossPreset.minY
         if (enemy.y > bossPreset.maxY) enemy.y = bossPreset.maxY
       }
+    }
+  }
+
+  private emitBossPhaseChange(enemy: Enemy, preset: BossAttackPreset): void {
+    if (enemy.patternData?.bossPhaseId === preset.id) return
+
+    if (!enemy.patternData) {
+      enemy.patternData = {}
+    }
+
+    const previousPhase = enemy.patternData.bossPhaseId
+    enemy.patternData.bossPhaseId = preset.id
+
+    if (previousPhase) {
+      gameEvents.emit('CLEAR_ENEMY_BULLETS', {})
+      gameEvents.emit('SHOW_MESSAGE', {
+        text: 'Boss attack pattern shifted',
+        duration: 2200,
+        color: '#ff6644'
+      })
     }
   }
 

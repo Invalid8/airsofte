@@ -1,4 +1,4 @@
-import type { EnemyType, MovementPattern } from './gameTypes'
+import type { EnemyType, MovementPattern, WeaponType } from './gameTypes'
 
 export type MissionObjectiveType =
   | 'DESTROY'
@@ -14,6 +14,7 @@ export type JSONMissionObjective = {
   type: MissionObjectiveType
   target: number
   description: string
+  enemyType?: EnemyType
 }
 
 export type JSONWaveEnemy = {
@@ -36,7 +37,7 @@ export type JSONDialogue = {
 
 export type JSONMissionRewards = {
   scoreMultiplier: number
-  unlockWeapon?: 'SINGLE' | 'DOUBLE' | 'TRIPLE' | 'SPREAD'
+  unlockWeapon?: WeaponType
   bonusPoints?: number
 }
 

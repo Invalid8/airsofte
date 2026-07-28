@@ -60,7 +60,7 @@ export const GAME_CONFIG = {
     PLAYER_BULLETS: 120,
     ENEMY_BULLETS: 100,
     BOSS_BULLETS_PER_VOLLEY: 4,
-    PARTICLES: 560
+    PARTICLES: 500
   }
 } as const
 

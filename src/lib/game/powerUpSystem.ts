@@ -145,6 +145,14 @@ export class PowerUpSystem {
         gameManager.changeWeapon(randomWeapon, POWERUP_CONFIG.WEAPON.duration)
         break
 
+      case 'NOSE_CANNON':
+        gameManager.changeWeapon('NOSE_CANNON', POWERUP_CONFIG.NOSE_CANNON.duration)
+        break
+
+      case 'SIDE_CANNONS':
+        gameManager.changeWeapon('SIDE_CANNONS', POWERUP_CONFIG.SIDE_CANNONS.duration)
+        break
+
       case 'SHIELD':
         gameManager.activateShield(POWERUP_CONFIG.SHIELD.duration!)
         break

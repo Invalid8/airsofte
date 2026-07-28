@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "lastUpdated": "2026-01-24",
+  "version": "1.1.5",
+  "lastUpdated": "2026-07-28",
   "missions": [
     {
       "id": 1,
@@ -62,7 +62,7 @@
       ],
       "hasBoss": false,
       "rewards": {
-        "scoreMultiplier": 1.0,
+        "scoreMultiplier": 1,
         "bonusPoints": 500
       }
     },
@@ -310,7 +310,13 @@
         {
           "type": "DESTROY",
           "target": 1,
+          "enemyType": "BOSS",
           "description": "Defeat the Guardian Boss"
+        },
+        {
+          "type": "SURVIVE",
+          "target": 75000,
+          "description": "Survive the Guardian assault"
         }
       ],
       "waves": [
@@ -367,9 +373,319 @@
         "scoreValue": 5000
       },
       "rewards": {
-        "scoreMultiplier": 2.0,
+        "scoreMultiplier": 2,
         "unlockWeapon": "SPREAD",
         "bonusPoints": 2500
+      }
+    },
+    {
+      "id": 6,
+      "title": "Twin Barrel Run",
+      "description": "Field-test side cannons against crossing attack lanes.",
+      "unlocked": false,
+      "objectives": [
+        {
+          "type": "DESTROY",
+          "target": 24,
+          "description": "Destroy 24 enemies"
+        },
+        {
+          "type": "COLLECT",
+          "target": 2,
+          "description": "Collect 2 cannon power-ups"
+        }
+      ],
+      "events": [
+        {
+          "type": "SUPPLY_DROP",
+          "triggerCondition": "WAVE_START",
+          "conditionValue": 1,
+          "data": {
+            "powerUpType": "SIDE_CANNONS",
+            "guaranteed": true
+          }
+        },
+        {
+          "type": "SUPPLY_DROP",
+          "triggerCondition": "ENEMIES_REMAINING",
+          "conditionValue": 6,
+          "data": {
+            "powerUpType": "NOSE_CANNON",
+            "guaranteed": true
+          }
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "type": "BASIC",
+              "count": 8,
+              "pattern": "WAVE",
+              "spawnDelay": 420
+            },
+            {
+              "type": "SCOUT",
+              "count": 5,
+              "pattern": "ZIGZAG",
+              "spawnDelay": 360
+            }
+          ],
+          "spawnInterval": 850
+        },
+        {
+          "enemies": [
+            {
+              "type": "SCOUT",
+              "count": 7,
+              "pattern": "CIRCLE",
+              "spawnDelay": 360
+            },
+            {
+              "type": "BASIC",
+              "count": 6,
+              "pattern": "DIAGONAL",
+              "spawnDelay": 420
+            }
+          ],
+          "spawnInterval": 780
+        }
+      ],
+      "dialogue": [
+        {
+          "character": "Commander",
+          "text": "Engineering has mounted cannons on the nose and both wing housings. Pick your firing lane and keep pressure on them.",
+          "timing": "START"
+        },
+        {
+          "character": "Commander",
+          "text": "Side cannons are best when the enemy tries to cross your path. Let them fly into the angle.",
+          "timing": "MID"
+        },
+        {
+          "character": "Commander",
+          "text": "Clean field test. Those cannon mounts are cleared for live operations.",
+          "timing": "END"
+        }
+      ],
+      "hasBoss": false,
+      "rewards": {
+        "scoreMultiplier": 1.35,
+        "unlockWeapon": "SIDE_CANNONS",
+        "bonusPoints": 1200
+      }
+    },
+    {
+      "id": 7,
+      "title": "Blink Corridor",
+      "description": "Fight enemies using short-range teleportation and unstable approach vectors.",
+      "unlocked": false,
+      "objectives": [
+        {
+          "type": "DESTROY",
+          "target": 18,
+          "description": "Destroy 18 teleport-capable enemies"
+        },
+        {
+          "type": "SURVIVE",
+          "target": 90000,
+          "description": "Survive the blink corridor"
+        }
+      ],
+      "events": [
+        {
+          "type": "SUPPLY_DROP",
+          "triggerCondition": "HEALTH_LOW",
+          "conditionValue": 45,
+          "data": {
+            "powerUpType": "SHIELD",
+            "guaranteed": true
+          }
+        },
+        {
+          "type": "ALLY_SUPPORT",
+          "triggerCondition": "TIME_ELAPSED",
+          "conditionValue": 45000,
+          "data": {}
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "type": "SCOUT",
+              "count": 7,
+              "pattern": "TELEPORT",
+              "spawnDelay": 520
+            },
+            {
+              "type": "BASIC",
+              "count": 4,
+              "pattern": "WAVE",
+              "spawnDelay": 500
+            }
+          ],
+          "spawnInterval": 900
+        },
+        {
+          "enemies": [
+            {
+              "type": "BOMBER",
+              "count": 3,
+              "pattern": "TELEPORT",
+              "spawnDelay": 900
+            },
+            {
+              "type": "SCOUT",
+              "count": 6,
+              "pattern": "TELEPORT",
+              "spawnDelay": 480
+            }
+          ],
+          "spawnInterval": 860
+        }
+      ],
+      "dialogue": [
+        {
+          "character": "Commander",
+          "text": "These pilots blink out before impact. Track where they reappear, not where they vanish.",
+          "timing": "START"
+        },
+        {
+          "character": "Commander",
+          "text": "They are trying to flank your cannon arcs. Stay centered and punish the exit point.",
+          "timing": "MID"
+        },
+        {
+          "character": "Commander",
+          "text": "Blink signatures are fading. Corridor is ours.",
+          "timing": "END"
+        }
+      ],
+      "hasBoss": false,
+      "rewards": {
+        "scoreMultiplier": 1.45,
+        "unlockWeapon": "NOSE_CANNON",
+        "bonusPoints": 1500
+      }
+    },
+    {
+      "id": 8,
+      "title": "The Rift Carrier",
+      "description": "Destroy a carrier protected by teleport escorts and shifting boss attack phases.",
+      "unlocked": false,
+      "objectives": [
+        {
+          "type": "DESTROY",
+          "target": 1,
+          "enemyType": "BOSS",
+          "description": "Destroy the Rift Carrier"
+        },
+        {
+          "type": "DESTROY",
+          "target": 20,
+          "description": "Clear 20 escort fighters"
+        }
+      ],
+      "events": [
+        {
+          "type": "SUPPLY_DROP",
+          "triggerCondition": "WAVE_START",
+          "conditionValue": 2,
+          "data": {
+            "powerUpType": "SIDE_CANNONS",
+            "guaranteed": true
+          }
+        },
+        {
+          "type": "SUPPLY_DROP",
+          "triggerCondition": "HEALTH_LOW",
+          "conditionValue": 40,
+          "data": {
+            "powerUpType": "HEALTH",
+            "guaranteed": true
+          }
+        }
+      ],
+      "waves": [
+        {
+          "enemies": [
+            {
+              "type": "SCOUT",
+              "count": 8,
+              "pattern": "TELEPORT",
+              "spawnDelay": 450
+            },
+            {
+              "type": "BASIC",
+              "count": 6,
+              "pattern": "SPIRAL",
+              "spawnDelay": 500
+            }
+          ],
+          "spawnInterval": 820
+        },
+        {
+          "enemies": [
+            {
+              "type": "BOMBER",
+              "count": 3,
+              "pattern": "TELEPORT",
+              "spawnDelay": 900
+            },
+            {
+              "type": "SCOUT",
+              "count": 6,
+              "pattern": "ZIGZAG",
+              "spawnDelay": 420
+            }
+          ],
+          "spawnInterval": 780
+        },
+        {
+          "enemies": [
+            {
+              "type": "BOSS",
+              "count": 1,
+              "pattern": "CIRCLE",
+              "spawnDelay": 0
+            },
+            {
+              "type": "SCOUT",
+              "count": 6,
+              "pattern": "TELEPORT",
+              "spawnDelay": 650
+            }
+          ],
+          "spawnInterval": 950
+        }
+      ],
+      "dialogue": [
+        {
+          "character": "Commander",
+          "text": "Rift Carrier entering weapons range. It will shed escorts before exposing the core.",
+          "timing": "START"
+        },
+        {
+          "character": "Commander",
+          "text": "Boss phase shift detected. Old bullet patterns are clearing, but the next pattern will be sharper.",
+          "timing": "MID"
+        },
+        {
+          "character": "Commander",
+          "text": "Carrier down. Rift activity is collapsing across the sector.",
+          "timing": "END"
+        }
+      ],
+      "hasBoss": true,
+      "bossConfig": {
+        "health": 3600,
+        "pattern": "CIRCLE",
+        "scoreValue": 6500
+      },
+      "rewards": {
+        "scoreMultiplier": 2.2,
+        "bonusPoints": 3000
       }
     }
   ]

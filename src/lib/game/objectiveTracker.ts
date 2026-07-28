@@ -1,4 +1,4 @@
-import type { StoryMission } from '$lib/types/gameTypes'
+import type { Enemy, StoryMission } from '$lib/types/gameTypes'
 import { gameEvents } from './eventBus'
 import { storyMissionManager } from './storyMissionData'
 
@@ -37,8 +37,8 @@ export class ObjectiveTracker {
 
   private setupEventListeners(): void {
     this.unsubscribers = [
-      gameEvents.on('ENEMY_DESTROYED', () => {
-        this.updateObjective('DESTROY', 1)
+      gameEvents.on('ENEMY_DESTROYED', (event) => {
+        this.updateObjective('DESTROY', 1, { enemy: event.data?.enemy })
       }),
       gameEvents.on('POWERUP_COLLECTED', () => {
         this.updateObjective('COLLECT', 1)
@@ -59,13 +59,17 @@ export class ObjectiveTracker {
     ]
   }
 
-  updateObjective(type: string, value: number): void {
+  updateObjective(type: string, value: number, context: { enemy?: Enemy } = {}): void {
     if (!this.currentMission) return
 
     const mission = this.currentMission
 
     mission.objectives.forEach((objective, index) => {
       if (objective.type === type && this.objectiveStatuses.get(index) === 'ACTIVE') {
+        if (objective.enemyType && context.enemy?.type !== objective.enemyType) {
+          return
+        }
+
         objective.current = Math.min(objective.current + value, objective.target)
 
         if (objective.current >= objective.target) {

@@ -28,7 +28,7 @@ export const POWERUP_CONFIG: Record<
     value: 0,
     dropWeight: 0.28,
     duration: 15000,
-    weaponChoices: ['DOUBLE', 'TRIPLE', 'SPREAD'],
+    weaponChoices: ['DOUBLE', 'TRIPLE', 'SPREAD', 'NOSE_CANNON', 'SIDE_CANNONS'],
     sprite: '$lib/assets/sprites/powerup-weapon.png'
   },
   SHIELD: {
@@ -56,5 +56,23 @@ export const POWERUP_CONFIG: Record<
     value: 500,
     dropWeight: 0.16,
     sprite: '$lib/assets/sprites/powerup-score.png'
+  },
+  NOSE_CANNON: {
+    width: 42,
+    height: 42,
+    speed: 2.2,
+    value: 0,
+    dropWeight: 0.08,
+    duration: 14000,
+    sprite: '$lib/assets/sprites/powerup-weapon.png'
+  },
+  SIDE_CANNONS: {
+    width: 42,
+    height: 42,
+    speed: 2.1,
+    value: 0,
+    dropWeight: 0.08,
+    duration: 14000,
+    sprite: '$lib/assets/sprites/powerup-weapon.png'
   }
 }

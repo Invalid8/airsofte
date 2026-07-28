@@ -46,7 +46,9 @@ export class EnhancedParticleEffects {
       WEAPON: '#ff6600',
       SHIELD: '#0088ff',
       SPEED: '#ffff00',
-      SCORE: '#aa00ff'
+      SCORE: '#aa00ff',
+      NOSE_CANNON: '#ffcc33',
+      SIDE_CANNONS: '#ff8844'
     }
 
     const color = type in colors ? colors[type as PowerUpType] : '#00ff88'

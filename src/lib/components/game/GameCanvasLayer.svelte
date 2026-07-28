@@ -63,7 +63,9 @@
     WEAPON: PowerUpWeapon,
     SHIELD: PowerUpShield,
     SPEED: PowerUpSpeed,
-    SCORE: PowerUpScore
+    SCORE: PowerUpScore,
+    NOSE_CANNON: PowerUpWeapon,
+    SIDE_CANNONS: PowerUpWeapon
   }
 
   function loadImages(): void {
@@ -377,10 +379,18 @@
     }
 
     if (weaponActive) {
+      const weaponType = gameManager.player.weaponType
+      const weaponColor =
+        weaponType === 'NOSE_CANNON'
+          ? '#ffcc33'
+          : weaponType === 'SIDE_CANNONS'
+            ? '#ff8844'
+            : '#ffaa22'
+
       ctx.save()
       ctx.globalAlpha = 0.2 + pulse * 0.12
-      ctx.strokeStyle = '#ffaa22'
-      ctx.shadowColor = '#ffaa22'
+      ctx.strokeStyle = weaponColor
+      ctx.shadowColor = weaponColor
       ctx.shadowBlur = 16
       ctx.lineWidth = 3
       ctx.setLineDash([10, 12])
@@ -388,6 +398,19 @@
       ctx.beginPath()
       ctx.arc(centerX, centerY, 84 + pulse * 4, 0, Math.PI * 2)
       ctx.stroke()
+      ctx.restore()
+
+      ctx.save()
+      ctx.globalAlpha = 0.5 + pulse * 0.18
+      ctx.fillStyle = weaponColor
+      ctx.shadowColor = weaponColor
+      ctx.shadowBlur = 18
+      if (weaponType === 'NOSE_CANNON') {
+        ctx.fillRect(centerX - 4, centerY - 72, 8, 34)
+      } else if (weaponType === 'SIDE_CANNONS') {
+        ctx.fillRect(centerX - 66, centerY - 6, 10, 30)
+        ctx.fillRect(centerX + 56, centerY - 6, 10, 30)
+      }
       ctx.restore()
     }
 

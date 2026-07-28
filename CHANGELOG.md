@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.6
+
+- Added Story Mode missions 6-8 with cannon trials, teleport-heavy waves, and a rift carrier boss fight.
+- Added nose cannon and side cannon weapon modes with dedicated power-up pickups and visible player effects.
+- Made boss objectives target actual boss kills instead of any enemy destruction.
+- Tuned teleport movement, boss phase changes, continuation waves, and particle limits for cleaner pacing.
+- Removed unused legacy story/progression helper modules.
+
 ## 1.1.5
 
 - Rebuilt Story Mode flow around a dedicated mission runtime.

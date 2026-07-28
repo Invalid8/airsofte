@@ -481,6 +481,26 @@ async function main() {
       }
       playerBullets.forEach((bullet) => playerController.releaseBullet(bullet))
 
+      gameManager.player.weaponType = 'NOSE_CANNON'
+      const noseController = new PlayerController(240, 420)
+      const noseBullets = noseController.shoot()
+      const noseCannon = {
+        bulletCount: noseBullets.length,
+        damage: noseBullets[0]?.damage ?? 0,
+        fasterThanBase: Math.abs(noseBullets[0]?.vy ?? 0) > 10
+      }
+      noseBullets.forEach((bullet) => noseController.releaseBullet(bullet))
+
+      gameManager.player.weaponType = 'SIDE_CANNONS'
+      const sideController = new PlayerController(240, 420)
+      const sideBullets = sideController.shoot()
+      const sideCannons = {
+        bulletCount: sideBullets.length,
+        hasLeftAngle: sideBullets.some((bullet) => bullet.vx < 0),
+        hasRightAngle: sideBullets.some((bullet) => bullet.vx > 0)
+      }
+      sideBullets.forEach((bullet) => sideController.releaseBullet(bullet))
+
       powerUpSystem.clearAll()
       gameManager.player.health = 50
       let collectedPowerUp = null
@@ -541,6 +561,8 @@ async function main() {
       }
 
       const missionTwo = storyMissionManager.getMissionById(2)
+      const allStoryMissions = storyMissionManager.getMissions()
+      const missionFive = storyMissionManager.getMissionById(5)
       objectiveTracker.startMission(missionTwo)
       objectiveTracker.updateObjective('DESTROY', 6)
       objectiveTracker.updateObjective('COLLECT', 2)
@@ -562,6 +584,11 @@ async function main() {
       objectiveTracker.reset()
       missionEventManager.clearEvents()
       const storyObjectiveAndEvents = {
+        missionCount: allStoryMissions.length,
+        missionFiveBossTarget:
+          missionFive?.objectives.some(
+            (objective) => objective.type === 'DESTROY' && objective.enemyType === 'BOSS'
+          ) === true,
         missionTwoHasEvents: (missionTwo?.events?.length ?? 0) > 0,
         destroyProgress: missionTwoAfterObjectives?.objectives.find((objective) => objective.type === 'DESTROY')?.current ?? 0,
         collectProgress: missionTwoAfterObjectives?.objectives.find((objective) => objective.type === 'COLLECT')?.current ?? 0,
@@ -618,6 +645,8 @@ async function main() {
 
       return {
         playerShooting,
+        noseCannon,
+        sideCannons,
         powerUpPickup,
         speedBoost,
         bossDefeat,
@@ -705,6 +734,18 @@ async function main() {
     deterministicSystemAssertions.playerShooting.allOwnedByPlayer === true,
     'Expected player bullets to be active and player-owned'
   )
+  assert(deterministicSystemAssertions.noseCannon.bulletCount === 1, 'Expected nose cannon to fire one bullet')
+  assert(deterministicSystemAssertions.noseCannon.damage > 10, 'Expected nose cannon to hit harder than base')
+  assert(
+    deterministicSystemAssertions.noseCannon.fasterThanBase === true,
+    'Expected nose cannon bullet to travel faster than base'
+  )
+  assert(deterministicSystemAssertions.sideCannons.bulletCount === 2, 'Expected side cannons to fire two bullets')
+  assert(
+    deterministicSystemAssertions.sideCannons.hasLeftAngle === true &&
+      deterministicSystemAssertions.sideCannons.hasRightAngle === true,
+    'Expected side cannons to fire from both angled mounts'
+  )
   assert(deterministicSystemAssertions.powerUpPickup.collectedType === 'HEALTH', 'Expected health power-up pickup')
   assert(deterministicSystemAssertions.powerUpPickup.eventType === 'HEALTH', 'Expected power-up collected event')
   assert(deterministicSystemAssertions.powerUpPickup.healthAfterPickup > 50, 'Expected power-up to heal player')
@@ -738,6 +779,14 @@ async function main() {
   assert(
     deterministicSystemAssertions.storyObjectiveAndEvents.missionTwoHasEvents === true,
     'Expected mission events to load from mission JSON'
+  )
+  assert(
+    deterministicSystemAssertions.storyObjectiveAndEvents.missionCount >= 8,
+    'Expected expanded story mode mission list'
+  )
+  assert(
+    deterministicSystemAssertions.storyObjectiveAndEvents.missionFiveBossTarget === true,
+    'Expected Guardian objective to target the boss specifically'
   )
   assert(
     deterministicSystemAssertions.storyObjectiveAndEvents.destroyProgress === 6,

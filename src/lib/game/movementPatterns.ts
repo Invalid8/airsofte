@@ -109,7 +109,13 @@ export class MovementPatterns {
     } as TeleportState
   }
 
-  static updateTeleport(enemy: Enemy, deltaTime: number, bounds?: BoundingBox): void {
+  static updateTeleport(
+    enemy: Enemy,
+    deltaTime: number,
+    bounds?: BoundingBox,
+    playerX?: number,
+    playerY?: number
+  ): void {
     if (!enemy.patternData?.teleportState) {
       this.initializeTeleport(enemy)
     }
@@ -119,7 +125,7 @@ export class MovementPatterns {
     const dt = frameScale(deltaTime)
 
     if (teleportState.isTeleporting) {
-      teleportState.teleportProgress += deltaTime / 600
+      teleportState.teleportProgress += deltaTime / 520
 
       if (teleportState.teleportProgress < 0.5) {
         const fadeOut = 1 - teleportState.teleportProgress * 2
@@ -144,19 +150,28 @@ export class MovementPatterns {
         enemy.patternData!.scale = 1
       }
     } else {
-      enemy.y += enemy.speed * 0.5 * dt
+      enemy.y += enemy.speed * 0.45 * dt
 
       const timeSinceLastTeleport = now - teleportState.lastTeleport
 
       if (timeSinceLastTeleport >= teleportState.teleportCooldown && bounds) {
         const margin = 80
-        const targetX = margin + Math.random() * (bounds.width - enemy.width - margin * 2)
-        const targetY = enemy.y + (Math.random() * 100 - 50)
+        const randomX = margin + Math.random() * (bounds.width - enemy.width - margin * 2)
+        const playerBiasedX =
+          playerX === undefined
+            ? randomX
+            : playerX + (Math.random() < 0.5 ? -140 : 140) + (Math.random() - 0.5) * 80
+        const targetX = Math.max(margin, Math.min(playerBiasedX, bounds.width - enemy.width - margin))
+        const targetY =
+          playerY === undefined
+            ? enemy.y + (Math.random() * 100 - 50)
+            : Math.min(playerY - 220, enemy.y + 130)
 
         teleportState.targetX = targetX
-        teleportState.targetY = Math.max(0, Math.min(targetY, bounds.height - enemy.height))
+        teleportState.targetY = Math.max(20, Math.min(targetY, bounds.height * 0.58))
         teleportState.isTeleporting = true
         teleportState.teleportProgress = 0
+        teleportState.teleportCooldown = 2200 + Math.random() * 1200
       }
     }
   }

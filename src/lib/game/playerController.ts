@@ -128,52 +128,54 @@ export class PlayerController {
     const bullets: Bullet[] = []
 
     const centerX = this.x + this.width / 2
-
-    if (config.bulletCount === 1) {
+    const createBullet = (x: number, y: number, vx: number, vy: number): Bullet => {
       const bullet = this.bulletPool!.acquire()
-      bullet.x = centerX - bullet.width / 2
-      bullet.y = this.y
-      bullet.vx = 0
-      bullet.vy = -bullet.speed
+      bullet.x = x - bullet.width / 2
+      bullet.y = y
+      bullet.vx = vx
+      bullet.vy = vy
       bullet.active = true
       bullet.damage = config.damage
-      bullets.push(bullet)
+      return bullet
+    }
+
+    if (config.layout === 'NOSE') {
+      bullets.push(createBullet(centerX, this.y - 8, 0, -GAME_CONFIG.BULLET.PLAYER.SPEED * 1.18))
+      return bullets
+    }
+
+    if (config.layout === 'SIDE') {
+      const sideY = this.y + this.height * 0.42
+      bullets.push(
+        createBullet(this.x + this.width * 0.18, sideY, -GAME_CONFIG.BULLET.PLAYER.SPEED * 0.28, -GAME_CONFIG.BULLET.PLAYER.SPEED * 0.96),
+        createBullet(this.x + this.width * 0.82, sideY, GAME_CONFIG.BULLET.PLAYER.SPEED * 0.28, -GAME_CONFIG.BULLET.PLAYER.SPEED * 0.96)
+      )
+      return bullets
+    }
+
+    if (config.bulletCount === 1) {
+      bullets.push(createBullet(centerX, this.y, 0, -GAME_CONFIG.BULLET.PLAYER.SPEED))
     } else if (config.bulletCount === 2) {
       const offset = config.spread / 2
-
-      const leftBullet = this.bulletPool!.acquire()
-      leftBullet.x = centerX - offset - leftBullet.width / 2
-      leftBullet.y = this.y
-      leftBullet.vx = 0
-      leftBullet.vy = -leftBullet.speed
-      leftBullet.active = true
-      leftBullet.damage = config.damage
-      bullets.push(leftBullet)
-
-      const rightBullet = this.bulletPool!.acquire()
-      rightBullet.x = centerX + offset - rightBullet.width / 2
-      rightBullet.y = this.y
-      rightBullet.vx = 0
-      rightBullet.vy = -rightBullet.speed
-      rightBullet.active = true
-      rightBullet.damage = config.damage
-      bullets.push(rightBullet)
+      bullets.push(
+        createBullet(centerX - offset, this.y, 0, -GAME_CONFIG.BULLET.PLAYER.SPEED),
+        createBullet(centerX + offset, this.y, 0, -GAME_CONFIG.BULLET.PLAYER.SPEED)
+      )
     } else {
       const angleStep = config.spread / (config.bulletCount - 1)
       const startAngle = -config.spread / 2
 
       for (let i = 0; i < config.bulletCount; i++) {
-        const bullet = this.bulletPool!.acquire()
         const angle = startAngle + angleStep * i
         const angleRad = (angle * Math.PI) / 180
-
-        bullet.x = centerX - bullet.width / 2
-        bullet.y = this.y
-        bullet.vx = Math.sin(angleRad) * bullet.speed
-        bullet.vy = -Math.cos(angleRad) * bullet.speed
-        bullet.active = true
-        bullet.damage = config.damage
-        bullets.push(bullet)
+        bullets.push(
+          createBullet(
+            centerX,
+            this.y,
+            Math.sin(angleRad) * GAME_CONFIG.BULLET.PLAYER.SPEED,
+            -Math.cos(angleRad) * GAME_CONFIG.BULLET.PLAYER.SPEED
+          )
+        )
       }
     }
 
