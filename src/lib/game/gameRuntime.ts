@@ -157,6 +157,7 @@ export class GameRuntime {
       gameEvents.on('GAME_START', this.handleGameStart),
       gameEvents.on('ENEMY_DESTROYED', this.handleEnemyDestroyed),
       gameEvents.on('CLEAR_ENEMY_BULLETS', this.handleClearEnemyBullets),
+      gameEvents.on('SPAWN_POWERUP', this.handleSpawnPowerUp),
       gameEvents.on('SPAWN_REINFORCEMENTS', this.handleSpawnReinforcements),
       gameEvents.on('ENEMY_RETREAT', this.handleEnemyRetreat)
     ]
@@ -577,6 +578,24 @@ export class GameRuntime {
     }
 
     this.enemies = this.enemyController.getActiveEnemies()
+    this.publishState()
+    this.publishStats(performance.now())
+  }
+
+  private handleSpawnPowerUp = (event: GameEvent): void => {
+    const type = event.data?.type
+    const x = Number(event.data?.x)
+    const y = Number(event.data?.y)
+    const fallbackX = this.gamePad.clientWidth / 2 - 20
+    const fallbackY = Math.max(40, this.gamePad.clientHeight * 0.18)
+
+    powerUpSystem.spawnPowerUp(
+      type ?? 'HEALTH',
+      Number.isFinite(x) ? x : fallbackX,
+      Number.isFinite(y) ? y : fallbackY
+    )
+
+    this.powerUps = powerUpSystem.getActivePowerUps()
     this.publishState()
     this.publishStats(performance.now())
   }

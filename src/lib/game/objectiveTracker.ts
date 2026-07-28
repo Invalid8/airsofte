@@ -1,5 +1,6 @@
 import type { StoryMission } from '$lib/types/gameTypes'
 import { gameEvents } from './eventBus'
+import { storyMissionManager } from './storyMissionData'
 
 export type ObjectiveStatus = 'ACTIVE' | 'COMPLETED' | 'FAILED' | 'BONUS'
 export type BonusObjective = {
@@ -16,8 +17,10 @@ export class ObjectiveTracker {
   private comboTracker: number = 0
   private noDamageTaken: boolean = true
   private missionStartTime: number = 0
+  private unsubscribers: Array<() => void> = []
 
   startMission(mission: StoryMission): void {
+    this.clearEventListeners()
     this.currentMission = mission
     this.objectiveStatuses.clear()
     this.bonusObjectives = []
@@ -33,41 +36,43 @@ export class ObjectiveTracker {
   }
 
   private setupEventListeners(): void {
-    gameEvents.on('ENEMY_DESTROYED', () => {
-      this.updateObjective('DESTROY', 1)
-    })
-
-    gameEvents.on('POWERUP_COLLECTED', () => {
-      this.updateObjective('COLLECT', 1)
-    })
-
-    gameEvents.on('PLAYER_HIT', () => {
-      this.noDamageTaken = false
-      this.checkNoDamageObjective()
-    })
-
-    gameEvents.on('COMBO_UPDATED', (event) => {
-      if (event.data?.multiplier > this.comboTracker) {
-        this.comboTracker = event.data.multiplier
-        this.updateObjective('COMBO', this.comboTracker)
-      }
-    })
-
-    gameEvents.on('ADD_BONUS_OBJECTIVE', (event) => {
-      this.addBonusObjective(event.data)
-    })
+    this.unsubscribers = [
+      gameEvents.on('ENEMY_DESTROYED', () => {
+        this.updateObjective('DESTROY', 1)
+      }),
+      gameEvents.on('POWERUP_COLLECTED', () => {
+        this.updateObjective('COLLECT', 1)
+      }),
+      gameEvents.on('PLAYER_HIT', () => {
+        this.noDamageTaken = false
+        this.checkNoDamageObjective()
+      }),
+      gameEvents.on('COMBO_UPDATED', (event) => {
+        if (event.data?.multiplier > this.comboTracker) {
+          this.comboTracker = event.data.multiplier
+          this.updateObjective('COMBO', this.comboTracker)
+        }
+      }),
+      gameEvents.on('ADD_BONUS_OBJECTIVE', (event) => {
+        this.addBonusObjective(event.data)
+      })
+    ]
   }
 
   updateObjective(type: string, value: number): void {
     if (!this.currentMission) return
 
-    this.currentMission.objectives.forEach((objective, index) => {
+    const mission = this.currentMission
+
+    mission.objectives.forEach((objective, index) => {
       if (objective.type === type && this.objectiveStatuses.get(index) === 'ACTIVE') {
         objective.current = Math.min(objective.current + value, objective.target)
 
         if (objective.current >= objective.target) {
           this.completeObjective(index)
         }
+
+        storyMissionManager.updateObjective(mission.id, index, objective.current)
 
         gameEvents.emit('OBJECTIVE_UPDATED', {
           index,
@@ -81,15 +86,18 @@ export class ObjectiveTracker {
   checkSurviveObjective(): void {
     if (!this.currentMission) return
 
+    const mission = this.currentMission
     const elapsed = Date.now() - this.missionStartTime
 
-    this.currentMission.objectives.forEach((objective, index) => {
+    mission.objectives.forEach((objective, index) => {
       if (objective.type === 'SURVIVE' && this.objectiveStatuses.get(index) === 'ACTIVE') {
         objective.current = elapsed
 
         if (elapsed >= objective.target) {
           this.completeObjective(index)
         }
+
+        storyMissionManager.updateObjective(mission.id, index, objective.current)
 
         gameEvents.emit('OBJECTIVE_UPDATED', {
           index,
@@ -194,11 +202,17 @@ export class ObjectiveTracker {
   }
 
   reset(): void {
+    this.clearEventListeners()
     this.currentMission = null
     this.objectiveStatuses.clear()
     this.bonusObjectives = []
     this.comboTracker = 0
     this.noDamageTaken = true
+  }
+
+  private clearEventListeners(): void {
+    this.unsubscribers.forEach((unsubscribe) => unsubscribe())
+    this.unsubscribers = []
   }
 }
 

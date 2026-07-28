@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.4
+
+- Rewired Story Mode objectives, mission events, and persistent mission progress.
+- Added live objective display to the in-game HUD.
+- Preserved mission JSON events and rewards during mission loading.
+- Added smoke coverage for story objective persistence and scripted mission power-up drops.
+
 ## 1.1.3
 
 - Migrated the desktop shell to Tauri while keeping the web build as the source of truth.

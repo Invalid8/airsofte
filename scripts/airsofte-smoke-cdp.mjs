@@ -294,6 +294,10 @@ async function main() {
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
       const enemiesAfterRetreat = window.__AIRSOFTE_RUNTIME_STATS__?.activeEnemies ?? -1
 
+      gameEvents.emit('SPAWN_POWERUP', { type: 'HEALTH' })
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      const powerUpsAfterScriptedDrop = window.__AIRSOFTE_RUNTIME_STATS__?.activePowerUps ?? -1
+
       gameEvents.emit('SPAWN_REINFORCEMENTS', {
         enemyType: 'BOSS',
         count: 1,
@@ -309,6 +313,7 @@ async function main() {
         bulletsAfterClear,
         enemiesAfterReinforcements,
         enemiesAfterRetreat,
+        powerUpsAfterScriptedDrop,
         bossVisibleAfterSpawn,
         bossHealthAfterSpawn,
         bossVisibleAfterRetreat,
@@ -449,6 +454,9 @@ async function main() {
       const { EnemyController } = await import('/src/lib/game/enemyController.ts')
       const { powerUpSystem } = await import('/src/lib/game/powerUpSystem.ts')
       const { storyMissionManager } = await import('/src/lib/game/storyMissionData.ts')
+      const { objectiveTracker } = await import('/src/lib/game/objectiveTracker.ts')
+      const { missionEventManager } = await import('/src/lib/game/missionEventManager.ts')
+      const { StorageManager } = await import('/src/lib/utils/storageManager.ts')
       const { getBoundingBox } = await import('/src/lib/utils/collisionSystem.ts')
 
       const originalWeapon = gameManager.player.weaponType
@@ -525,7 +533,36 @@ async function main() {
         missionOneCompleted: firstMissionAfter?.completed === true,
         missionOneStars: firstMissionAfter?.stars ?? 0,
         missionTwoUnlockedBefore: secondMissionBefore?.unlocked ?? null,
-        missionTwoUnlockedAfter: secondMissionAfter?.unlocked ?? null
+        missionTwoUnlockedAfter: secondMissionAfter?.unlocked ?? null,
+        persistedMissionOneCompleted: StorageManager.getPlayerProgress().storyMissions.find((mission) => mission.id === 1)?.completed === true
+      }
+
+      const missionTwo = storyMissionManager.getMissionById(2)
+      objectiveTracker.startMission(missionTwo)
+      objectiveTracker.updateObjective('DESTROY', 6)
+      objectiveTracker.updateObjective('COLLECT', 2)
+      const missionTwoAfterObjectives = storyMissionManager.getMissionById(2)
+
+      let scriptedDrop = null
+      const unsubScriptedDrop = gameEvents.on('SPAWN_POWERUP', (event) => {
+        scriptedDrop = event.data
+      })
+      missionEventManager.startMission(missionTwo.events ?? [])
+      missionEventManager.update({
+        timeElapsed: 10000,
+        currentWave: 1,
+        enemiesRemaining: 5,
+        playerHealth: 100,
+        playerMaxHealth: 100
+      })
+      unsubScriptedDrop()
+      objectiveTracker.reset()
+      missionEventManager.clearEvents()
+      const storyObjectiveAndEvents = {
+        missionTwoHasEvents: (missionTwo?.events?.length ?? 0) > 0,
+        destroyProgress: missionTwoAfterObjectives?.objectives.find((objective) => objective.type === 'DESTROY')?.current ?? 0,
+        collectProgress: missionTwoAfterObjectives?.objectives.find((objective) => objective.type === 'COLLECT')?.current ?? 0,
+        scriptedDropType: scriptedDrop?.type ?? null
       }
 
       let gameOverEvent = null
@@ -557,6 +594,7 @@ async function main() {
         speedBoost,
         bossDefeat,
         storyMissionCompletion,
+        storyObjectiveAndEvents,
         gameOver
       }
     })()`,
@@ -597,6 +635,7 @@ async function main() {
     'Expected reinforcement event to spawn enemies'
   )
   assert(runtimeEventAssertions.enemiesAfterRetreat === 0, 'Expected retreat event to clear enemies')
+  assert(runtimeEventAssertions.powerUpsAfterScriptedDrop >= 1, 'Expected scripted power-up drop to spawn')
   assert(
     runtimeEventAssertions.bossVisibleAfterSpawn === true,
     `Expected boss health to show for a live boss: ${JSON.stringify(runtimeEventAssertions)}`
@@ -662,6 +701,26 @@ async function main() {
   assert(
     deterministicSystemAssertions.storyMissionCompletion.missionTwoUnlockedAfter === true,
     'Expected completing mission one to unlock mission two'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionCompletion.persistedMissionOneCompleted === true,
+    'Expected story mission completion to persist to storage'
+  )
+  assert(
+    deterministicSystemAssertions.storyObjectiveAndEvents.missionTwoHasEvents === true,
+    'Expected mission events to load from mission JSON'
+  )
+  assert(
+    deterministicSystemAssertions.storyObjectiveAndEvents.destroyProgress === 6,
+    'Expected story objective destroy progress to persist'
+  )
+  assert(
+    deterministicSystemAssertions.storyObjectiveAndEvents.collectProgress === 2,
+    'Expected story objective collect progress to persist'
+  )
+  assert(
+    deterministicSystemAssertions.storyObjectiveAndEvents.scriptedDropType === 'HEALTH',
+    'Expected mission event manager to emit scripted health drop'
   )
   assert(deterministicSystemAssertions.gameOver.eventReceived === true, 'Expected game over event')
   assert(deterministicSystemAssertions.gameOver.victory === false, 'Expected quick-play game over to be non-victory')

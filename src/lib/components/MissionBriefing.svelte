@@ -12,6 +12,11 @@
     onStart: () => void
     onCancel: () => void
   } = $props()
+
+  function formatObjectiveTarget(target: number, type: string): string {
+    if (type === 'SURVIVE') return `${Math.floor(target / 1000)} seconds`
+    return String(target)
+  }
 </script>
 
 <div class="briefing-overlay" in:fade={{ duration: 300 }}>
@@ -35,8 +40,7 @@
               <div class="objective-details">
                 <div class="objective-desc">{objective.description}</div>
                 <div class="objective-target">
-                  Target: <strong>{objective.target}</strong>
-                  {objective.type === 'SURVIVE' ? 'seconds' : ''}
+                  Target: <strong>{formatObjectiveTarget(objective.target, objective.type)}</strong>
                 </div>
               </div>
             </div>

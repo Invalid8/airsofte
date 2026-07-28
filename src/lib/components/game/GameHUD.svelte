@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy, onMount } from 'svelte'
   import {
     currentScore,
     playerHealth,
@@ -6,6 +7,9 @@
     currentWave,
     gameState
   } from '$lib/stores/gameStore'
+  import { gameEvents } from '$lib/game/eventBus'
+  import { gameManager } from '$lib/game/gameManager'
+  import { objectiveTracker } from '$lib/game/objectiveTracker'
 
   let showCombo = $derived(
     $gameState.session?.comboMultiplier && $gameState.session.comboMultiplier > 1
@@ -18,6 +22,54 @@
   let healthPercentage = $derived(maxHealth > 0 ? (safeHealth / maxHealth) * 100 : 0)
   let shieldActive = $derived($gameState.player?.shieldActive ?? false)
   let invincible = $derived($gameState.player?.invincible ?? false)
+  let storyObjectives = $state<
+    Array<{
+      description: string
+      current: number
+      target: number
+      status: string
+    }>
+  >([])
+
+  function refreshObjectives(): void {
+    if (gameManager.mode !== 'STORY_MODE') {
+      storyObjectives = []
+      return
+    }
+
+    storyObjectives =
+      objectiveTracker.getMissionSummary().objectives?.map((objective) => ({
+        description: objective.description,
+        current: objective.current,
+        target: objective.target,
+        status: objective.status ?? 'ACTIVE'
+      })) ?? []
+  }
+
+  function formatObjectiveValue(value: number, target: number): string {
+    if (target >= 10000) return `${Math.floor(value / 1000)}s / ${Math.floor(target / 1000)}s`
+    return `${Math.floor(value)} / ${target}`
+  }
+
+  onMount(() => {
+    const unsubscribers = [
+      gameEvents.on('GAME_START', refreshObjectives),
+      gameEvents.on('OBJECTIVE_UPDATED', refreshObjectives),
+      gameEvents.on('OBJECTIVE_COMPLETED', refreshObjectives),
+      gameEvents.on('OBJECTIVE_FAILED', refreshObjectives),
+      gameEvents.on('GAME_OVER', refreshObjectives)
+    ]
+
+    refreshObjectives()
+
+    return () => {
+      unsubscribers.forEach((unsubscribe) => unsubscribe())
+    }
+  })
+
+  onDestroy(() => {
+    storyObjectives = []
+  })
 </script>
 
 <div class="hud fixed top-0 left-0 right-0 pointer-events-none z-50 p-3 sm:p-6">
@@ -74,6 +126,16 @@
     {#if invincible}
       <div class="text-center text-sm text-cyan-400 animate-pulse hud mt-1">INVINCIBLE</div>
     {/if}
+
+    {#if storyObjectives.length > 0}
+      <div class="mobile-objectives">
+        {#each storyObjectives as objective, i (i)}
+          <div class:objective-complete={objective.status === 'COMPLETED'} class:objective-failed={objective.status === 'FAILED'}>
+            {objective.description}: {formatObjectiveValue(objective.current, objective.target)}
+          </div>
+        {/each}
+      </div>
+    {/if}
   </div>
 
   <div class="hidden sm:flex justify-between items-start gap-4">
@@ -101,6 +163,27 @@
         </div>
       {/if}
     </div>
+
+    {#if storyObjectives.length > 0}
+      <div class="objective-panel">
+        <div class="label text-base tracking-wider opacity-70">OBJECTIVES</div>
+        <div class="objective-list">
+          {#each storyObjectives as objective, i (i)}
+            <div
+              class="objective-row"
+              class:objective-complete={objective.status === 'COMPLETED'}
+              class:objective-failed={objective.status === 'FAILED'}
+            >
+              <span class="objective-index">{i + 1}</span>
+              <span class="objective-text">{objective.description}</span>
+              <span class="objective-progress">
+                {formatObjectiveValue(objective.current, objective.target)}
+              </span>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
 
     <div class="right-panel text-right">
       <div class="lives-display flex items-center justify-end gap-2">
@@ -168,12 +251,63 @@
   .lives-display,
   .health-display,
   .weapon-display,
-  .combo-display {
+  .combo-display,
+  .objective-panel {
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid rgba(0, 170, 255, 0.5);
     border-radius: 8px;
     padding: 8px 10px;
     min-width: 100px;
+  }
+
+  .objective-panel {
+    width: min(34rem, 42vw);
+    padding: 10px 12px;
+  }
+
+  .objective-list {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .objective-row {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    line-height: 1.25;
+  }
+
+  .objective-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .objective-progress {
+    color: #9eeaff;
+  }
+
+  .objective-complete {
+    color: #00ff88;
+  }
+
+  .objective-failed {
+    color: #ff6b6b;
+  }
+
+  .mobile-objectives {
+    margin-top: 8px;
+    display: grid;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 170, 255, 0.35);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 0.68rem;
+    line-height: 1.25;
   }
 
   .health-bar {
@@ -200,7 +334,8 @@
     .lives-display,
     .health-display,
     .weapon-display,
-    .combo-display {
+    .combo-display,
+    .objective-panel {
       background: transparent;
       border: none;
       padding: 0;

@@ -66,6 +66,14 @@ export class MissionLoader {
         spawnInterval: wave.spawnInterval,
         completed: false
       })),
+      events: json.events?.map((event, index) => ({
+        id: `mission_${json.id}_event_${index}`,
+        type: event.type as any,
+        triggerTime: event.triggerTime,
+        triggerCondition: event.triggerCondition as any,
+        conditionValue: event.conditionValue,
+        data: event.data
+      })),
       dialogue: json.dialogue,
       hasBoss: json.hasBoss,
       bossConfig: json.bossConfig
@@ -94,7 +102,8 @@ export class MissionLoader {
             ],
             scoreValue: json.bossConfig.scoreValue
           }
-        : undefined
+        : undefined,
+      rewards: json.rewards
     }
   }
 

@@ -53,6 +53,13 @@ export type JSONMission = {
   unlocked: boolean
   objectives: JSONMissionObjective[]
   waves: JSONWave[]
+  events?: Array<{
+    type: string
+    triggerTime?: number
+    triggerCondition?: string
+    conditionValue?: number
+    data?: any
+  }>
   dialogue?: JSONDialogue[]
   hasBoss: boolean
   bossConfig?: JSONBossConfig

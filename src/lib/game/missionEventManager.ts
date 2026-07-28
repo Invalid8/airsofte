@@ -1,4 +1,4 @@
-import type { PowerUpType } from '$lib/types/gameTypes'
+import type { MissionEventPreset, PowerUpType } from '$lib/types/gameTypes'
 import { gameEvents } from './eventBus'
 import { audioManager } from '$lib/utils/AudioManager'
 
@@ -10,20 +10,14 @@ export type MissionEventType =
   | 'HAZARD_INCOMING'
   | 'BONUS_OBJECTIVE'
 
-export type MissionEvent = {
-  id: string
-  type: MissionEventType
-  triggerTime?: number
-  triggerCondition?: 'WAVE_START' | 'WAVE_END' | 'ENEMIES_REMAINING' | 'HEALTH_LOW' | 'TIME_ELAPSED'
-  conditionValue?: number
-  data?: any
+export type MissionEvent = MissionEventPreset & {
   executed: boolean
 }
 
 export type SupplyDropData = {
   powerUpType: PowerUpType
-  x: number
-  y: number
+  x?: number
+  y?: number
   guaranteed: boolean
 }
 
@@ -39,7 +33,7 @@ export class MissionEventManager {
   private missionStartTime: number = 0
   private currentWave: number = 0
 
-  startMission(events: MissionEvent[] = []): void {
+  startMission(events: MissionEventPreset[] = []): void {
     this.events = events.map((e) => ({ ...e, executed: false }))
     this.missionStartTime = Date.now()
     this.currentWave = 0

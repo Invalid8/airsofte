@@ -1,5 +1,6 @@
 import type { StoryMission, MissionStars } from '$lib/types/gameTypes'
 import { missionLoader } from './missionLoader'
+import { StorageManager } from '$lib/utils/storageManager'
 
 export class StoryMissionManager {
   private missions: StoryMission[] = []
@@ -20,7 +21,7 @@ export class StoryMissionManager {
     const loadedMissions = missionLoader.loadMissions()
 
     if (loadedMissions.length > 0) {
-      this.missions = loadedMissions
+      this.missions = this.mergeSavedProgress(loadedMissions)
       console.log(`✅ Story Manager: Loaded ${this.missions.length} missions from JSON`)
     } else {
       console.warn('⚠️ Story Manager: No missions loaded, using fallback')
@@ -59,22 +60,23 @@ export class StoryMissionManager {
   }
 
   getMissions(): StoryMission[] {
-    return this.missions.map((m) => ({ ...m }))
+    return this.missions.map((mission) => this.cloneMission(mission))
   }
 
   getMissionById(id: number): StoryMission | undefined {
     const mission = this.missions.find((m) => m.id === id)
-    return mission ? { ...mission } : undefined
+    return mission ? this.cloneMission(mission) : undefined
   }
 
   getUnlockedMissions(): StoryMission[] {
-    return this.missions.filter((m) => m.unlocked).map((m) => ({ ...m }))
+    return this.missions.filter((m) => m.unlocked).map((mission) => this.cloneMission(mission))
   }
 
   unlockMission(id: number): void {
     const mission = this.missions.find((m) => m.id === id)
     if (mission) {
       mission.unlocked = true
+      this.saveProgress()
     }
   }
 
@@ -91,6 +93,12 @@ export class StoryMissionManager {
       if (nextMission) {
         nextMission.unlocked = true
       }
+
+      if (mission.rewards?.unlockWeapon) {
+        StorageManager.unlockWeapon(mission.rewards.unlockWeapon)
+      }
+
+      this.saveProgress()
     }
   }
 
@@ -137,6 +145,7 @@ export class StoryMissionManager {
         progress,
         mission.objectives[objectiveIndex].target
       )
+      this.saveProgress()
     }
   }
 
@@ -152,6 +161,7 @@ export class StoryMissionManager {
     if (mission) {
       mission.objectives.forEach((obj) => (obj.current = 0))
       mission.waves.forEach((wave) => (wave.completed = false))
+      this.saveProgress()
     }
   }
 
@@ -162,12 +172,54 @@ export class StoryMissionManager {
       mission.stars = 0
       this.resetMission(mission.id)
     })
+    this.saveProgress()
   }
 
   reloadFromJSON(): void {
     console.log('🔄 Reloading missions from JSON...')
     this.missions = []
     this.loadMissions()
+  }
+
+  private mergeSavedProgress(missions: StoryMission[]): StoryMission[] {
+    const progress = StorageManager.getPlayerProgress()
+
+    if (progress.storyMissions.length === 0) {
+      const initialized = missions.map((mission) => this.cloneMission(mission))
+      StorageManager.savePlayerProgress({
+        ...progress,
+        storyMissions: initialized
+      })
+      return initialized
+    }
+
+    return missions.map((mission) => {
+      const saved = progress.storyMissions.find((item) => item.id === mission.id)
+      if (!saved) return this.cloneMission(mission)
+
+      return {
+        ...this.cloneMission(mission),
+        unlocked: saved.unlocked || mission.unlocked,
+        completed: saved.completed,
+        stars: saved.stars,
+        objectives: mission.objectives.map((objective, index) => ({
+          ...objective,
+          current: saved.objectives?.[index]?.current ?? 0
+        }))
+      }
+    })
+  }
+
+  private saveProgress(): void {
+    const progress = StorageManager.getPlayerProgress()
+    StorageManager.savePlayerProgress({
+      ...progress,
+      storyMissions: this.missions.map((mission) => this.cloneMission(mission))
+    })
+  }
+
+  private cloneMission(mission: StoryMission): StoryMission {
+    return JSON.parse(JSON.stringify(mission)) as StoryMission
   }
 }
 

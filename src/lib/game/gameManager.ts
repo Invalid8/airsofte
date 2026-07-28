@@ -1,4 +1,4 @@
-import type { GameSessionState, PlayerStats, Wave, GameDifficulty, Enemy } from '$lib/types/gameTypes'
+import type { GameSessionState, PlayerStats, Wave, GameDifficulty, Enemy, StoryMission } from '$lib/types/gameTypes'
 import {
   GAME_CONFIG,
   DIFFICULTY_MODIFIERS,
@@ -7,6 +7,8 @@ import {
 import { WAVE_TEMPLATES, WEAPON_CONFIG } from '$lib/game/presets'
 import { StorageManager } from '$lib/utils/storageManager'
 import { gameEvents } from './eventBus'
+import { missionEventManager } from './missionEventManager'
+import { objectiveTracker } from './objectiveTracker'
 import { storyMissionManager } from './storyMissionData'
 import { ScoreSystem } from './scoreSystem'
 import { StatusEffectSystem } from './statusEffectSystem'
@@ -58,6 +60,7 @@ export class GameManager {
   private scoreSystem = new ScoreSystem(this.session, () => this.difficulty, this.timedActions)
   private waveCompleting = false
   private playerDown = false
+  private activeStoryMission: StoryMission | null = null
 
   private constructor() {
     this.loadSettings()
@@ -127,8 +130,11 @@ export class GameManager {
     this.enemiesDestroyedInWave = 0
     this.waveCompleting = false
     this.playerDown = false
+    this.activeStoryMission = null
     this.statusEffects.clearAll()
     this.timedActions.cancelAll()
+    objectiveTracker.reset()
+    missionEventManager.clearEvents()
     this.scoreSystem.setSession(this.session)
   }
 
@@ -185,6 +191,7 @@ export class GameManager {
   update(deltaTime: number): void {
     if (!this.isPlaying || this.isPaused) return
     this.updateTime(deltaTime)
+    this.updateStorySystems()
   }
 
   private updateTime(deltaTime: number): void {
@@ -194,6 +201,11 @@ export class GameManager {
   private initializeStoryMission(missionId: number): void {
     const mission = storyMissionManager.getMissionById(missionId)
     if (!mission) return
+
+    storyMissionManager.resetMission(missionId)
+    this.activeStoryMission = mission
+    objectiveTracker.startMission(mission)
+    missionEventManager.startMission(mission.events ?? [])
 
     this.waves = mission.waves.map((wave) => ({
       ...wave,
@@ -449,6 +461,19 @@ export class GameManager {
     this.initializeWaveEnemyCount()
 
     this.scheduleWaveStart(100)
+  }
+
+  private updateStorySystems(): void {
+    if (this.mode !== 'STORY_MODE' || !this.activeStoryMission) return
+
+    objectiveTracker.checkSurviveObjective()
+    missionEventManager.update({
+      timeElapsed: this.session.timeElapsed,
+      currentWave: this.session.currentWave,
+      enemiesRemaining: Math.max(0, this.enemiesSpawned - this.enemiesDestroyedInWave),
+      playerHealth: this.player.health,
+      playerMaxHealth: this.player.maxHealth
+    })
   }
 
   private scheduleWaveStart(delay: number): void {

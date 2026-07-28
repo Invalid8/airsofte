@@ -138,6 +138,21 @@ export type HighScore = {
 
 export type MissionStars = 0 | 1 | 2 | 3 | number
 
+export type MissionEventPreset = {
+  id: string
+  type:
+    | 'REINFORCEMENTS'
+    | 'SUPPLY_DROP'
+    | 'ALLY_SUPPORT'
+    | 'ENEMY_RETREAT'
+    | 'HAZARD_INCOMING'
+    | 'BONUS_OBJECTIVE'
+  triggerTime?: number
+  triggerCondition?: 'WAVE_START' | 'WAVE_END' | 'ENEMIES_REMAINING' | 'HEALTH_LOW' | 'TIME_ELAPSED'
+  conditionValue?: number
+  data?: any
+}
+
 export type StoryMission = {
   id: number
   title: string
@@ -157,6 +172,7 @@ export type StoryMission = {
     text: string
     timing: 'START' | 'MID' | 'END'
   }>
+  events?: MissionEventPreset[]
   hasBoss: boolean
   bossConfig?: BossConfig
   rewards?: {
@@ -251,6 +267,7 @@ export type GameEvent = {
     | 'WEAPON_EXPIRED'
     | 'SPEED_BOOST_ACTIVATED'
     | 'SPEED_BOOST_EXPIRED'
+    | 'POWERUP_SPAWNED'
     | 'POWERUP_COLLECTED'
     | 'WAVE_COMPLETE'
     | 'BOSS_DEFEATED'
@@ -273,6 +290,8 @@ export type GameEvent = {
     | 'SPAWN_REINFORCEMENTS'
     | 'CLEAR_ENEMY_BULLETS'
     | 'ENEMY_RETREAT'
+    | 'SPAWN_POWERUP'
+    | 'MISSION_EVENT'
     | 'RUNTIME_FRAME'
   data?: any
   timestamp: number
