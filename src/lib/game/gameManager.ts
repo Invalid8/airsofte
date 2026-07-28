@@ -1,4 +1,4 @@
-import type { GameSessionState, PlayerStats, Wave, GameDifficulty, Enemy, StoryMission } from '$lib/types/gameTypes'
+import type { GameSessionState, PlayerStats, Wave, GameDifficulty, Enemy } from '$lib/types/gameTypes'
 import {
   GAME_CONFIG,
   DIFFICULTY_MODIFIERS,
@@ -7,12 +7,10 @@ import {
 import { WAVE_TEMPLATES, WEAPON_CONFIG } from '$lib/game/presets'
 import { StorageManager } from '$lib/utils/storageManager'
 import { gameEvents } from './eventBus'
-import { missionEventManager } from './missionEventManager'
-import { objectiveTracker } from './objectiveTracker'
-import { storyMissionManager } from './storyMissionData'
 import { ScoreSystem } from './scoreSystem'
 import { StatusEffectSystem } from './statusEffectSystem'
 import { TimedActionSystem } from './timedActionSystem'
+import { storyMissionRuntime } from './storyMissionRuntime'
 import { buildWaveFromTemplate, buildWaveSet } from './waveFactory'
 
 type GameMode = 'QUICK_PLAY' | 'STORY_MODE'
@@ -60,7 +58,6 @@ export class GameManager {
   private scoreSystem = new ScoreSystem(this.session, () => this.difficulty, this.timedActions)
   private waveCompleting = false
   private playerDown = false
-  private activeStoryMission: StoryMission | null = null
 
   private constructor() {
     this.loadSettings()
@@ -130,11 +127,9 @@ export class GameManager {
     this.enemiesDestroyedInWave = 0
     this.waveCompleting = false
     this.playerDown = false
-    this.activeStoryMission = null
     this.statusEffects.clearAll()
     this.timedActions.cancelAll()
-    objectiveTracker.reset()
-    missionEventManager.clearEvents()
+    storyMissionRuntime.reset()
     this.scoreSystem.setSession(this.session)
   }
 
@@ -199,18 +194,10 @@ export class GameManager {
   }
 
   private initializeStoryMission(missionId: number): void {
-    const mission = storyMissionManager.getMissionById(missionId)
+    const mission = storyMissionRuntime.startMission(missionId)
     if (!mission) return
 
-    storyMissionManager.resetMission(missionId)
-    this.activeStoryMission = mission
-    objectiveTracker.startMission(mission)
-    missionEventManager.startMission(mission.events ?? [])
-
-    this.waves = mission.waves.map((wave) => ({
-      ...wave,
-      completed: false
-    }))
+    this.waves = storyMissionRuntime.getInitialWaves()
 
     this.currentWaveIndex = 0
     this.currentWave = this.waves[0]
@@ -450,13 +437,15 @@ export class GameManager {
   private nextStoryWave(): void {
     this.currentWaveIndex++
 
-    if (this.currentWaveIndex >= this.waves.length) {
+    const decision = storyMissionRuntime.decideNextWave(this.currentWaveIndex)
+    if (decision.type === 'MISSION_COMPLETE') {
       this.endGame(true)
       return
     }
 
-    this.currentWave = this.waves[this.currentWaveIndex]
-    this.session.currentWave = this.currentWaveIndex + 1
+    this.currentWave = decision.wave
+    this.waves[this.currentWaveIndex] = decision.wave
+    this.session.currentWave = decision.displayWave
 
     this.initializeWaveEnemyCount()
 
@@ -464,16 +453,13 @@ export class GameManager {
   }
 
   private updateStorySystems(): void {
-    if (this.mode !== 'STORY_MODE' || !this.activeStoryMission) return
+    if (this.mode !== 'STORY_MODE') return
 
-    objectiveTracker.checkSurviveObjective()
-    missionEventManager.update({
-      timeElapsed: this.session.timeElapsed,
-      currentWave: this.session.currentWave,
-      enemiesRemaining: Math.max(0, this.enemiesSpawned - this.enemiesDestroyedInWave),
-      playerHealth: this.player.health,
-      playerMaxHealth: this.player.maxHealth
-    })
+    storyMissionRuntime.update(
+      this.session,
+      this.player,
+      Math.max(0, this.enemiesSpawned - this.enemiesDestroyedInWave)
+    )
   }
 
   private scheduleWaveStart(delay: number): void {

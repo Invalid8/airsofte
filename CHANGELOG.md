@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.5
+
+- Rebuilt Story Mode flow around a dedicated mission runtime.
+- Made mission victory depend on all required objectives, not just reaching the end of authored waves.
+- Added continuation waves when objectives remain after designed waves are exhausted.
+- Removed duplicate mission completion from the gameplay UI path.
+- Added smoke coverage for the "single objective completed too early" Story Mode regression.
+
 ## 1.1.4
 
 - Rewired Story Mode objectives, mission events, and persistent mission progress.

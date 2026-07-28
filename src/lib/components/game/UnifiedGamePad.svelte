@@ -9,9 +9,9 @@
   import MissionBriefing from '../MissionBriefing.svelte'
   import ToastNotification from '../ToastNotification.svelte'
   import { gameManager } from '$lib/game/gameManager'
-  import { storyMissionManager } from '$lib/game/storyMissionData'
   import { gameEvents } from '$lib/game/eventBus'
   import { syncGameState, navigateTo, gameState } from '$lib/stores/gameStore'
+  import { storyMissionManager } from '$lib/game/storyMissionData'
   import type { GameEvent, StoryMission } from '$lib/types/gameTypes'
 
   let {
@@ -34,24 +34,12 @@
     gameEnded = true
 
     if (event.data?.victory === true && mode === 'STORY_MODE') {
-      handleMissionComplete()
       showVictory = true
     } else {
       showVictory = false
       setTimeout(() => {
         navigateTo('GAME_OVER')
       }, 500)
-    }
-  }
-
-  function handleMissionComplete(): void {
-    if (currentMission) {
-      storyMissionManager.completeMission(currentMission.id)
-
-      const nextMission = storyMissionManager.getMissionById(currentMission.id + 1)
-      if (nextMission) {
-        storyMissionManager.unlockMission(nextMission.id)
-      }
     }
   }
 

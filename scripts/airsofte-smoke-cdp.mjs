@@ -328,8 +328,10 @@ async function main() {
       const { gameEvents } = await import('/src/lib/game/eventBus.ts')
       const { gameManager } = await import('/src/lib/game/gameManager.ts')
       const { gameRuntimeState } = await import('/src/lib/game/gameRuntime.ts')
+      const { powerUpSystem } = await import('/src/lib/game/powerUpSystem.ts')
 
       gameManager.clearTimedStatusEffects()
+      powerUpSystem.clearAll()
 
       gameEvents.emit('ENEMY_RETREAT', { clearAll: true })
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
@@ -454,6 +456,7 @@ async function main() {
       const { EnemyController } = await import('/src/lib/game/enemyController.ts')
       const { powerUpSystem } = await import('/src/lib/game/powerUpSystem.ts')
       const { storyMissionManager } = await import('/src/lib/game/storyMissionData.ts')
+      const { storyMissionRuntime } = await import('/src/lib/game/storyMissionRuntime.ts')
       const { objectiveTracker } = await import('/src/lib/game/objectiveTracker.ts')
       const { missionEventManager } = await import('/src/lib/game/missionEventManager.ts')
       const { StorageManager } = await import('/src/lib/utils/storageManager.ts')
@@ -565,6 +568,31 @@ async function main() {
         scriptedDropType: scriptedDrop?.type ?? null
       }
 
+      const runtimeMissionOne = storyMissionRuntime.startMission(1)
+      gameManager.mode = 'STORY_MODE'
+      gameManager.isPlaying = true
+      gameManager.isPaused = false
+      gameManager.session.playing = true
+      gameManager.waves = storyMissionRuntime.getInitialWaves()
+      gameManager.currentWaveIndex = gameManager.waves.length - 1
+      gameManager.currentWave = gameManager.waves[gameManager.currentWaveIndex]
+      gameManager.session.currentWave = gameManager.waves.length
+      objectiveTracker.updateObjective('DESTROY', 10)
+      const allObjectivesAfterDestroy = objectiveTracker.areAllObjectivesComplete()
+      gameManager.nextStoryWave()
+      const storyMissionFlow = {
+        missionStarted: Boolean(runtimeMissionOne),
+        allObjectivesAfterDestroy,
+        keptPlayingAfterSingleObjective: gameManager.isPlaying,
+        continuationWave: gameManager.session.currentWave,
+        continuationHasEnemies: (gameManager.currentWave?.enemies.length ?? 0) > 0,
+        continuationIsSynthetic: (gameManager.currentWave?.id ?? 0) >= 10000
+      }
+      objectiveTracker.updateObjective('SURVIVE', 60000)
+      gameManager.nextStoryWave()
+      storyMissionFlow.completedAfterAllObjectives = gameManager.isPlaying === false
+      storyMissionRuntime.reset()
+
       let gameOverEvent = null
       const unsubGameOver = gameEvents.on('GAME_OVER', (event) => {
         gameOverEvent = event.data
@@ -595,6 +623,7 @@ async function main() {
         bossDefeat,
         storyMissionCompletion,
         storyObjectiveAndEvents,
+        storyMissionFlow,
         gameOver
       }
     })()`,
@@ -648,7 +677,7 @@ async function main() {
   )
   assert(
     contactCollisionAssertions.healthAfterCooldownWindow === contactCollisionAssertions.healthAfterFirstContact,
-    'Expected contact cooldown to prevent stacked collision damage'
+    `Expected contact cooldown to prevent stacked collision damage, got ${JSON.stringify(contactCollisionAssertions)}`
   )
   assert(contactCollisionAssertions.livesAfterFirstContact === 3, 'Expected contact hit not to cost a life')
   assert(contactCollisionAssertions.bomberStillActive === true, 'Expected high-health enemy to survive contact')
@@ -658,7 +687,7 @@ async function main() {
     'Expected contact to damage, not one-shot, a high-health enemy'
   )
   assert(frameStats.canvas === true, 'Expected game canvas to render')
-  assert(frameStats.p95Ms <= 35, `Expected p95 frame time <= 35ms, got ${frameStats.p95Ms}`)
+  assert(frameStats.p95Ms <= 35, `Expected p95 frame time <= 35ms, got ${JSON.stringify(frameStats)}`)
   assert(runtimeErrors.length === 0, `Expected 0 runtime errors, got ${runtimeErrors.length}`)
   assert(
     stabilityAssertions.shieldBlocksStackedDamage === true,
@@ -721,6 +750,34 @@ async function main() {
   assert(
     deterministicSystemAssertions.storyObjectiveAndEvents.scriptedDropType === 'HEALTH',
     'Expected mission event manager to emit scripted health drop'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionFlow.missionStarted === true,
+    'Expected story runtime to start mission one'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionFlow.allObjectivesAfterDestroy === false,
+    'Expected destroy objective alone not to satisfy mission one'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionFlow.keptPlayingAfterSingleObjective === true,
+    'Expected story mission to keep playing after one objective completes'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionFlow.continuationWave === 3,
+    'Expected story mission to continue beyond designed waves when objectives remain'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionFlow.continuationHasEnemies === true,
+    'Expected continuation story wave to keep gameplay active'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionFlow.continuationIsSynthetic === true,
+    'Expected exhausted story mission to use a synthetic continuation wave'
+  )
+  assert(
+    deterministicSystemAssertions.storyMissionFlow.completedAfterAllObjectives === true,
+    'Expected story mission to complete only after all required objectives are done'
   )
   assert(deterministicSystemAssertions.gameOver.eventReceived === true, 'Expected game over event')
   assert(deterministicSystemAssertions.gameOver.victory === false, 'Expected quick-play game over to be non-victory')
