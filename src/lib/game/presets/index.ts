@@ -1,5 +1,6 @@
 export { BOSS_ATTACK_PRESETS } from './bossAttacks'
 export { ENEMY_CONFIG } from './enemies'
+export { MOVEMENT_PATTERN_PRESETS } from './movementPatterns'
 export { POWERUP_CONFIG } from './powerUps'
 export { WAVE_TEMPLATES } from './waves'
 export { WEAPON_CONFIG } from './weapons'

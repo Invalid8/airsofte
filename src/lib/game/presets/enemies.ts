@@ -9,6 +9,7 @@ export const ENEMY_CONFIG: Record<
     speed: number
     scoreValue: number
     shootInterval: number
+    speedScale: number
     sprite: string
   }
 > = {
@@ -19,6 +20,7 @@ export const ENEMY_CONFIG: Record<
     speed: 2,
     scoreValue: 100,
     shootInterval: 2000,
+    speedScale: 0.62,
     sprite: '$lib/assets/sprites/enemy-basic.png'
   },
   SCOUT: {
@@ -28,6 +30,7 @@ export const ENEMY_CONFIG: Record<
     speed: 4,
     scoreValue: 150,
     shootInterval: 1500,
+    speedScale: 0.58,
     sprite: '$lib/assets/sprites/enemy-scout.png'
   },
   BOMBER: {
@@ -37,6 +40,7 @@ export const ENEMY_CONFIG: Record<
     speed: 1,
     scoreValue: 300,
     shootInterval: 3000,
+    speedScale: 0.64,
     sprite: '$lib/assets/sprites/enemy-bomber.png'
   },
   BOSS: {
@@ -46,6 +50,7 @@ export const ENEMY_CONFIG: Record<
     speed: 1.5,
     scoreValue: 5000,
     shootInterval: 800,
+    speedScale: 0.7,
     sprite: '$lib/assets/sprites/boss-1.png'
   }
 }

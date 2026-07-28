@@ -187,6 +187,8 @@ export type BossAttackPreset = {
   speedMultiplier: number
   aimed: boolean
   movementPattern: MovementPattern
+  minY: number
+  maxY: number
 }
 
 export type SaveGame = {

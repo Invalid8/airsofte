@@ -10,7 +10,7 @@ import {
   GAME_CONFIG,
   DIFFICULTY_MODIFIERS
 } from '$lib/config/gameConstants'
-import { BOSS_ATTACK_PRESETS, ENEMY_CONFIG } from '$lib/game/presets'
+import { BOSS_ATTACK_PRESETS, ENEMY_CONFIG, MOVEMENT_PATTERN_PRESETS } from '$lib/game/presets'
 import { gameManager } from '$lib/game/gameManager'
 import { audioManager } from '$lib/utils/AudioManager'
 import { getBoundingBox } from '$lib/utils/collisionSystem'
@@ -61,9 +61,8 @@ export class EnemyController {
     const config = ENEMY_CONFIG[type]
     const modifier = DIFFICULTY_MODIFIERS[gameManager.difficulty]
 
-    const baseSpeed = config.speed
     const adjustedSpeed =
-      type === 'BOSS' ? baseSpeed * 0.7 : baseSpeed * modifier.enemySpeedMultiplier * 0.6
+      config.speed * config.speedScale * (type === 'BOSS' ? 1 : modifier.enemySpeedMultiplier)
 
     const enemy: Enemy = {
       id: `enemy_${this.enemyIdCounter++}`,
@@ -104,18 +103,20 @@ export class EnemyController {
     x: number,
     y: number
   ): Enemy['patternData'] {
+    const preset = MOVEMENT_PATTERN_PRESETS[pattern]
+
     switch (pattern) {
       case 'WAVE':
         return {
-          amplitude: 50,
-          frequency: 0.02,
+          amplitude: preset?.amplitude ?? 50,
+          frequency: preset?.frequency ?? 0.02,
           startX: x,
           startY: y
         }
       case 'ZIGZAG':
         return {
-          amplitude: 60,
-          frequency: 0.03,
+          amplitude: preset?.amplitude ?? 60,
+          frequency: preset?.frequency ?? 0.03,
           startX: x,
           startY: y
         }
@@ -124,7 +125,7 @@ export class EnemyController {
           angle: 0,
           startX: x,
           startY: y,
-          radius: 100
+          radius: preset?.radius ?? 100
         }
       case 'CHASE':
         return {
@@ -141,7 +142,7 @@ export class EnemyController {
       case 'SPIRAL':
         return {
           angle: 0,
-          radius: 150,
+          radius: preset?.radius ?? 150,
           startX: x,
           startY: y
         }
@@ -249,10 +250,9 @@ export class EnemyController {
       if (enemy.x > maxX) enemy.x = maxX
 
       if (isBoss) {
-        const maxY = 250
-        const minY = 50
-        if (enemy.y < minY) enemy.y = minY
-        if (enemy.y > maxY) enemy.y = maxY
+        const bossPreset = this.getBossAttackPreset(enemy)
+        if (enemy.y < bossPreset.minY) enemy.y = bossPreset.minY
+        if (enemy.y > bossPreset.maxY) enemy.y = bossPreset.maxY
       }
     }
   }

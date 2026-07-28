@@ -95,7 +95,7 @@ export class PlayerController {
 
   shoot(): Bullet[] {
     const now = Date.now()
-    const fireRate = gameManager.player.fireRate
+    const fireRate = WEAPON_CONFIG[gameManager.player.weaponType].fireRate
 
     if (!this.canShoot || now - this.lastShotTime < fireRate) {
       return []

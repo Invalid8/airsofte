@@ -9,7 +9,9 @@ export const BOSS_ATTACK_PRESETS: readonly BossAttackPreset[] = [
     intervalMultiplier: 1,
     speedMultiplier: 1,
     aimed: false,
-    movementPattern: 'CIRCLE'
+    movementPattern: 'CIRCLE',
+    minY: 48,
+    maxY: 230
   },
   {
     id: 'boss-aimed-burst',
@@ -19,7 +21,9 @@ export const BOSS_ATTACK_PRESETS: readonly BossAttackPreset[] = [
     intervalMultiplier: 1,
     speedMultiplier: 1.08,
     aimed: true,
-    movementPattern: 'CIRCLE'
+    movementPattern: 'CIRCLE',
+    minY: 48,
+    maxY: 245
   },
   {
     id: 'boss-final-pattern',
@@ -29,6 +33,8 @@ export const BOSS_ATTACK_PRESETS: readonly BossAttackPreset[] = [
     intervalMultiplier: 1.08,
     speedMultiplier: 1.12,
     aimed: true,
-    movementPattern: 'CHASE'
+    movementPattern: 'CHASE',
+    minY: 54,
+    maxY: 260
   }
 ] as const

@@ -4,7 +4,7 @@ import {
   DIFFICULTY_MODIFIERS,
   SCORE_VALUES
 } from '$lib/config/gameConstants'
-import { WAVE_TEMPLATES } from '$lib/game/presets'
+import { WAVE_TEMPLATES, WEAPON_CONFIG } from '$lib/game/presets'
 import { StorageManager } from '$lib/utils/storageManager'
 import { gameEvents } from './eventBus'
 import { storyMissionManager } from './storyMissionData'
@@ -39,7 +39,7 @@ export class GameManager {
     maxHealth: GAME_CONFIG.PLAYER.MAX_HEALTH,
     lives: GAME_CONFIG.PLAYER.MAX_LIVES,
     speed: GAME_CONFIG.PLAYER.SPEED,
-    fireRate: GAME_CONFIG.PLAYER.FIRE_RATE,
+    fireRate: WEAPON_CONFIG.SINGLE.fireRate,
     weaponType: 'SINGLE',
     shieldActive: false,
     invincible: false,
@@ -135,7 +135,7 @@ export class GameManager {
       maxHealth: GAME_CONFIG.PLAYER.MAX_HEALTH,
       lives: GAME_CONFIG.PLAYER.MAX_LIVES,
       speed: GAME_CONFIG.PLAYER.SPEED,
-      fireRate: GAME_CONFIG.PLAYER.FIRE_RATE,
+      fireRate: WEAPON_CONFIG.SINGLE.fireRate,
       weaponType: 'SINGLE',
       shieldActive: false,
       invincible: false,
@@ -380,12 +380,14 @@ export class GameManager {
   changeWeapon(weaponType: PlayerStats['weaponType'], duration?: number): void {
     const previousWeapon = this.player.weaponType
     this.player.weaponType = weaponType
+    this.player.fireRate = WEAPON_CONFIG[weaponType].fireRate
     gameEvents.emit('WEAPON_CHANGED', { from: previousWeapon, to: weaponType })
     this.emitPlayerStateChanged()
 
     if (duration) {
       this.statusEffects.start('weapon', duration, () => {
         this.player.weaponType = 'SINGLE'
+        this.player.fireRate = WEAPON_CONFIG.SINGLE.fireRate
         gameEvents.emit('WEAPON_EXPIRED', { weapon: weaponType })
         this.emitPlayerStateChanged()
       })
@@ -412,6 +414,7 @@ export class GameManager {
     this.player.invincibleUntil = 0
     this.player.shieldActive = false
     this.player.weaponType = 'SINGLE'
+    this.player.fireRate = WEAPON_CONFIG.SINGLE.fireRate
     this.player.speed = GAME_CONFIG.PLAYER.SPEED
     this.emitPlayerStateChanged()
   }

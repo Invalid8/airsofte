@@ -63,7 +63,8 @@ export class MovementPatterns {
       enemy.y = centerY + Math.sin(enemy.patternData.angle) * 50
     } else {
       const centerX = enemy.patternData.startX || 0
-      enemy.x = centerX + Math.cos(enemy.patternData.angle) * 100
+      const radius = enemy.patternData.radius || 100
+      enemy.x = centerX + Math.cos(enemy.patternData.angle) * radius
 
       if (enemy.patternData.startY !== undefined) {
         enemy.patternData.startY += enemy.speed * dt

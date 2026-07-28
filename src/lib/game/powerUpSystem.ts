@@ -66,16 +66,16 @@ export class PowerUpSystem {
 
     if (Math.random() > spawnRate) return null
 
-    const types: PowerUpType[] = ['HEALTH', 'WEAPON', 'SHIELD', 'SPEED', 'SCORE']
-    const weights = [0.15, 0.3, 0.2, 0.2, 0.15]
+    const types = Object.keys(POWERUP_CONFIG) as PowerUpType[]
+    const totalWeight = types.reduce((total, type) => total + POWERUP_CONFIG[type].dropWeight, 0)
 
-    let random = Math.random()
+    let random = Math.random() * totalWeight
     let selectedType: PowerUpType = 'SCORE'
 
-    for (let i = 0; i < types.length; i++) {
-      random -= weights[i]
+    for (const type of types) {
+      random -= POWERUP_CONFIG[type].dropWeight
       if (random <= 0) {
-        selectedType = types[i]
+        selectedType = type
         break
       }
     }
@@ -140,7 +140,7 @@ export class PowerUpSystem {
         break
 
       case 'WEAPON':
-        const weaponTypes = ['DOUBLE', 'TRIPLE', 'SPREAD'] as const
+        const weaponTypes = POWERUP_CONFIG.WEAPON.weaponChoices!
         const randomWeapon = weaponTypes[Math.floor(Math.random() * weaponTypes.length)]
         gameManager.changeWeapon(randomWeapon, POWERUP_CONFIG.WEAPON.duration)
         break
